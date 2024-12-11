@@ -1,5 +1,3 @@
-#include "Search/Search.h"
+#include "Search/LocalSearchStep.h"
 
-namespace Search::Step {
-
-}
+namespace Search::Step { }

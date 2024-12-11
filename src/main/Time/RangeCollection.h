@@ -3,6 +3,7 @@
 
 #include "Time/Range.h"
 
+#include <algorithm>
 #include <vector>
 
 namespace Time {
@@ -57,12 +58,12 @@ namespace Time {
 
         [[nodiscard]] bool intersects(const Ray& ray) const {
             if (ray.type() == RAY) [[unlikely]] {
-                return std::any_of(m_Ranges.cbegin(), m_Ranges.cend(), [ray](const Range& range) -> bool {
+                return std::ranges::any_of(m_Ranges, [ray](const Range& range) -> bool {
                     return range.m_End > ray.m_Start;
                 });
             }
             const auto r = static_cast<const Range&>(ray); // NOLINT(*-pro-type-static-cast-downcast)
-            return std::any_of(m_Ranges.cbegin(), m_Ranges.cend(), [r](const Range& range) -> bool {
+            return std::ranges::any_of(m_Ranges.cbegin(), m_Ranges.cend(), [r](const Range& range) -> bool {
                 return r.intersects(range);
             });
         }

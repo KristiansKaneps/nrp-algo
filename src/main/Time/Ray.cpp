@@ -8,5 +8,5 @@ namespace Time {
 
     inline Range Ray::rangeFrom(const Instant& start) const { return Range {start, m_Start}; }
 
-    inline bool Ray::intersects(const RangeCollection& other) const { return other.intersects(*this); }
+    bool Ray::intersects(const RangeCollection& other) const { return other.intersects(*this); }
 }

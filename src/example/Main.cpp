@@ -1,3 +1,4 @@
+#include "Application.h"
 #include "Domain/Entities/Shift.h"
 #include "Domain/Entities/Employee.h"
 #include "Domain/Entities/Day.h"
@@ -6,7 +7,7 @@
 #include "Domain/Constraints/NoOverlapConstraint.h"
 #include "Domain/Constraints/RequiredSkillConstraint.h"
 
-#include "Search/Search.h"
+#include "Search/LocalSearch.h"
 #include "State/State.h"
 
 #include "Time/RangeCollection.h"
@@ -129,4 +130,7 @@ int main(int argc, char **argv) {
     // std::cout << "Press any key to exit..." << std::endl;
     // std::cin.get();
     // std::cout << "Exited." << std::endl;
+
+    Application app(1280, 720, "Example Application");
+    app.start();
 }

@@ -1,5 +1,3 @@
-#include "Search/Search.h"
+#include "Search/LocalSearch.h"
 
-namespace Search {
-
-}
+namespace Search { }

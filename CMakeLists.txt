@@ -26,24 +26,31 @@ file(GLOB_RECURSE EXAMPLE_HEADER_FILES
 )
 
 # Libraries
-set(LIB_BITARRAY_DIR ${CMAKE_SOURCE_DIR}/lib/bitarray)
-file(GLOB_RECURSE LIB_BITARRAY
-        ${LIB_BITARRAY_DIR}/*.h
-        ${LIB_BITARRAY_DIR}/*.c
-)
+if (WIN32)
+    set(LIB_BITARRAY "")
+else()
+    set(LIB_BITARRAY_DIR ${CMAKE_SOURCE_DIR}/lib/bitarray)
+    file(GLOB_RECURSE LIB_BITARRAY
+            ${LIB_BITARRAY_DIR}/*.h
+            ${LIB_BITARRAY_DIR}/*.c
+    )
+endif()
+
+include(${CMAKE_SOURCE_DIR}/lib/raylib/FindRaylib.cmake)
 
 # Example executable
 add_executable(${PROJECT_NAME}_exec
         ${LIBRARY_SOURCE_FILES} ${LIBRARY_HEADER_FILES}
-        ${EXAMPLE_HEADER_FILES} ${LIBRARY_HEADER_FILES}
+        ${EXAMPLE_SOURCE_FILES} ${EXAMPLE_HEADER_FILES}
         ${LIB_BITARRAY}
-        src/example/Main.cpp
 )
 
 target_include_directories(${PROJECT_NAME}_exec
         PUBLIC ${CMAKE_SOURCE_DIR}/src/main
         PUBLIC ${LIB_BITARRAY_DIR}
 )
+
+target_link_libraries(${PROJECT_NAME}_exec raylib)
 
 # Main library
 add_library(${PROJECT_NAME} STATIC
