@@ -63,7 +63,7 @@ add_library(${PROJECT_NAME} STATIC
 )
 
 target_include_directories(${PROJECT_NAME}
-        PUBLIC  ${LIB_BITARRAY_DIR}
+        PUBLIC ${LIB_BITARRAY_DIR}
 )
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
