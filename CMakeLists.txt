@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.28)
 set(CMAKE_CXX_STANDARD 23)
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
 project(nrp C CXX)
 
 # Add all Source Files
@@ -61,3 +65,9 @@ add_library(${PROJECT_NAME} STATIC
 target_include_directories(${PROJECT_NAME}
         PUBLIC  ${LIB_BITARRAY_DIR}
 )
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(STATUS "CXX Release Flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
+else()
+    message(STATUS "CXX Debug Flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
+endif()
