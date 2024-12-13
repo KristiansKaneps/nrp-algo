@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "Database.h"
 #include "Domain/Entities/Shift.h"
 #include "Domain/Entities/Employee.h"
 #include "Domain/Entities/Day.h"
@@ -12,9 +13,13 @@
 
 #include "Time/RangeCollection.h"
 
+#include "WindowsUtils.c"
+
 using namespace Domain;
 
 int main(int argc, char **argv) {
+    SetConsoleOutputToUTF8();
+
     std::tm tm = {};
     std::stringstream ss("2024-12-01T00:00:00Z");
     ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S%z");
@@ -131,6 +136,12 @@ int main(int argc, char **argv) {
     // std::cin.get();
     // std::cout << "Exited." << std::endl;
 
-    Application app(1280, 720, "Example Application");
-    app.start();
+    Database database;
+    database.execute("select u.name, u.surname from users u");
+    for (uint32_t i = 0; i < database.tupleCount(); ++i) {
+        std::cout << database.value(i, 0) << " " << database.value(i, 1) << std::endl;
+    }
+
+    // Application app(1280, 720, "Example Application");
+    // app.start();
 }

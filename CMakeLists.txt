@@ -41,6 +41,8 @@ else()
 endif()
 
 include(${CMAKE_SOURCE_DIR}/lib/raylib/FindRaylib.cmake)
+#include(${CMAKE_SOURCE_DIR}/lib/postgres/FindPostgres.cmake) # Use project's (not system's) PostgreSQL
+find_package(PostgreSQL)
 
 # Example executable
 add_executable(${PROJECT_NAME}_exec
@@ -54,7 +56,10 @@ target_include_directories(${PROJECT_NAME}_exec
         PUBLIC ${LIB_BITARRAY_DIR}
 )
 
-target_link_libraries(${PROJECT_NAME}_exec raylib)
+target_link_libraries(${PROJECT_NAME}_exec PRIVATE
+        raylib
+        PostgreSQL::PostgreSQL
+)
 
 # Main library
 add_library(${PROJECT_NAME} STATIC
