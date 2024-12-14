@@ -36,7 +36,7 @@ namespace Time {
                 if (range.m_Start < m_MinBound) m_MinBound = range.m_Start;
                 if (range.m_End > m_MaxBound) m_MaxBound = range.m_End;
             }
-            m_Ranges.insert(std::upper_bound(m_Ranges.cbegin(), m_Ranges.cend(), range), range);
+            m_Ranges.insert(std::ranges::upper_bound(std::as_const(m_Ranges), range), range);
         }
 
         virtual void remove(const Range& range) {
