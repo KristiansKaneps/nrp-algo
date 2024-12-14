@@ -7,7 +7,8 @@
 
 class Database {
 public:
-    Database() : m_ConnClosed(false), m_Conn(PQconnectdb("postgresql://postgres:root@localhost/shiftapp")) {
+    Database() : m_ConnClosed(false),
+                 m_Conn(PQconnectdb("postgresql://postgres:root@localhost/shiftapp")) {
         if (PQstatus(m_Conn) != CONNECTION_OK) {
             std::cerr << PQerrorMessage(m_Conn) << std::endl;
             m_ConnClosed = true;
@@ -22,13 +23,10 @@ public:
         assert(atoi(PQgetvalue(res, 0, 0)) == 1 && "Test query failed.");
         PQclear(res);
     }
-    ~Database() {
-        close();
-    }
 
-    [[nodiscard]] const char *errorMessage() const {
-        return PQerrorMessage(m_Conn);
-    }
+    ~Database() { close(); }
+
+    [[nodiscard]] const char *errorMessage() const { return PQerrorMessage(m_Conn); }
 
     void close() {
         clearRes();
@@ -39,7 +37,9 @@ public:
     }
 
     void printTables() const {
-        PGresult *res = PQexec(m_Conn, "SELECT table_schema || '.' || table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')");
+        PGresult *res = PQexec(
+            m_Conn,
+            "SELECT table_schema || '.' || table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')");
         if (PQresultStatus(res) != PGRES_TUPLES_OK) [[unlikely]] {
             PQclear(res);
             return;
@@ -77,7 +77,9 @@ public:
         PQclear(res);
     }
 
-    void execute(const char* query) {
+    void execute(const std::string& query) { execute(query.c_str()); }
+
+    void execute(const char *query) {
         if (m_Res != nullptr) PQclear(m_Res);
         m_Res = PQexec(m_Conn, query);
         if (!strncmp(query, "SELECT", 6)) {
@@ -92,18 +94,19 @@ public:
         }
     }
 
-    [[nodiscard]] uint32_t attributeCount() const {
-        return m_AttributeCount;
+    [[nodiscard]] uint32_t attributeCount() const { return m_AttributeCount; }
+
+    [[nodiscard]] uint32_t tupleCount() const { return m_TupleCount; }
+
+    [[nodiscard]] bool isNull(const uint32_t tupleIndex, const uint32_t attributeIndex) const {
+        return PQgetisnull(m_Res, static_cast<int>(tupleIndex), static_cast<int>(attributeIndex));
     }
 
-    [[nodiscard]] uint32_t tupleCount() const {
-        return m_TupleCount;
-    }
-
-    [[nodiscard]] const char* value(const uint32_t tupleIndex, const uint32_t attributeIndex) const {
+    [[nodiscard]] const char *value(const uint32_t tupleIndex, const uint32_t attributeIndex) const {
         if (m_Res == nullptr) [[unlikely]] return nullptr;
         return PQgetvalue(m_Res, static_cast<int>(tupleIndex), static_cast<int>(attributeIndex));
     }
+
 protected:
     void clearRes() {
         if (m_Res != nullptr) PQclear(m_Res);
