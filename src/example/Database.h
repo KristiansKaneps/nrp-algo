@@ -2,6 +2,8 @@
 #define DATABASE_H
 
 #include <cassert>
+#include <cstdint>
+#include <cstring>
 #include <iostream>
 #include <libpq-fe.h>
 
@@ -25,6 +27,9 @@ public:
     }
 
     ~Database() { close(); }
+
+    [[nodiscard]] bool isConnected() const { return !m_ConnClosed; }
+    [[nodiscard]] bool isDisconnected() const { return m_ConnClosed; }
 
     [[nodiscard]] const char *errorMessage() const { return PQerrorMessage(m_Conn); }
 

@@ -15,14 +15,24 @@ namespace State {
     template<typename X, typename Y, typename Z, typename W>
     class State {
     public:
-        State(const Time::Range& range, const Axes::Axis<X>& x, const Axes::Axis<Y>& y,
-              const Axes::Axis<Z>& z, const Axes::Axis<W>& w) : m_Range(range),
-                                                                m_Matrix(x.size() * y.size() * z.size() * w.size()),
+        State(const Time::Range& range, const Axes::Axis<X>* x, const Axes::Axis<Y>* y,
+              const Axes::Axis<Z>* z, const Axes::Axis<W>* w) : m_Size(x->size(), y->size(), z->size(), w->size()),
+                                                                m_Range(range),
+                                                                m_Matrix(m_Size.volume()),
                                                                 m_X(x),
                                                                 m_Y(y),
                                                                 m_Z(z),
-                                                                m_W(w),
-                                                                m_Size(x.size(), y.size(), z.size(), w.size()) { }
+                                                                m_W(w) { }
+
+        State(const State &other) : m_Size(other.m_Size),
+                                    m_Range(other.m_Range),
+                                    m_Matrix(other.m_Matrix),
+                                    m_X(other.m_X),
+                                    m_Y(other.m_Y),
+                                    m_Z(other.m_Z),
+                                    m_W(other.m_W) { }
+
+        State &operator=(const State &other) = default;
 
         ~State() = default;
 
@@ -49,15 +59,15 @@ namespace State {
 
         [[nodiscard]] state_size_t flatSize() const { return m_Matrix.size(); }
 
-        [[nodiscard]] const Axes::Axis<X>& x() const { return m_X; }
-        [[nodiscard]] const Axes::Axis<Y>& y() const { return m_Y; }
-        [[nodiscard]] const Axes::Axis<Z>& z() const { return m_Z; }
-        [[nodiscard]] const Axes::Axis<W>& w() const { return m_W; }
+        [[nodiscard]] const Axes::Axis<X>& x() const { return *m_X; }
+        [[nodiscard]] const Axes::Axis<Y>& y() const { return *m_Y; }
+        [[nodiscard]] const Axes::Axis<Z>& z() const { return *m_Z; }
+        [[nodiscard]] const Axes::Axis<W>& w() const { return *m_W; }
 
-        [[nodiscard]] const Axes::AxisEntity& x(const axis_size_t xIndex) const { return m_X[xIndex]; }
-        [[nodiscard]] const Axes::AxisEntity& y(const axis_size_t yIndex) const { return m_Y[yIndex]; }
-        [[nodiscard]] const Axes::AxisEntity& z(const axis_size_t zIndex) const { return m_Z[zIndex]; }
-        [[nodiscard]] const Axes::AxisEntity& w(const axis_size_t wIndex) const { return m_W[wIndex]; }
+        [[nodiscard]] const Axes::AxisEntity& x(const axis_size_t xIndex) const { return (*m_X)[xIndex]; }
+        [[nodiscard]] const Axes::AxisEntity& y(const axis_size_t yIndex) const { return (*m_Y)[yIndex]; }
+        [[nodiscard]] const Axes::AxisEntity& z(const axis_size_t zIndex) const { return (*m_Z)[zIndex]; }
+        [[nodiscard]] const Axes::AxisEntity& w(const axis_size_t wIndex) const { return (*m_W)[wIndex]; }
 
         [[nodiscard]] state_size_t offsetX(const axis_size_t y, const axis_size_t z, const axis_size_t w) const {
             return y * m_Size.depth * m_Size.concepts + z * m_Size.concepts + w;
@@ -175,6 +185,7 @@ namespace State {
         void random() { m_Matrix.random(); }
 
     protected:
+        Size m_Size;
         Time::Range m_Range;
         BitArray::BitArray m_Matrix;
 
@@ -197,11 +208,10 @@ namespace State {
         }
 
     private:
-        const Axes::Axis<X> m_X;
-        const Axes::Axis<Y> m_Y;
-        const Axes::Axis<Z> m_Z;
-        const Axes::Axis<W> m_W;
-        const Size m_Size;
+        const Axes::Axis<X> *m_X;
+        const Axes::Axis<Y> *m_Y;
+        const Axes::Axis<Z> *m_Z;
+        const Axes::Axis<W> *m_W;
     };
 }
 

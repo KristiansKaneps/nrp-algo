@@ -143,7 +143,7 @@ namespace BitMatrix {
         void validateZ(BitArray::BitArray& dst, const dimension_size_t srcOffset) const {
             assert(srcOffset <= m_Array.m_Size && "Offset (srcOffset) should not exceed total matrix size.");
             const size_t iterationCount = dst.m_Size >> 6; // 64 == 2^6
-            assert(dst.m_Size <= m_ZSize && "Destionation (dst) size should not exceed Z axis size.");
+            assert(dst.m_Size <= m_ZSize && "Destination (dst) size should not exceed Z axis size.");
             for (size_t i = 0; i < iterationCount; ++i) {
                 const uint64_t srcWord = m_Array.word(srcOffset + (i << 6));
                 const uint64_t dstWord = dst.word(i << 6);

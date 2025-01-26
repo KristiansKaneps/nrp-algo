@@ -7,8 +7,8 @@
 #include <vector>
 #include <random>
 
-#ifndef _WIN32
-#include "bit_array.h"
+#ifdef _WIN32
+#pragma intrinsic(__popcnt64) // Required for MSVC
 #endif
 
 namespace BitMatrix {
@@ -40,6 +40,7 @@ namespace BitArray {
         }
 
         virtual void setAll() = 0;
+        virtual void clearAll() = 0;
 
         virtual void assign(array_size_t index, bool value) = 0;
         virtual void assign(array_size_t index, uint8_t value) = 0;
@@ -77,7 +78,7 @@ namespace BitArray {
         [[nodiscard]] virtual array_size_t count() const = 0;
 
     protected:
-        const array_size_t m_Size;
+        array_size_t m_Size;
 
     private:
         friend class BitArray;
@@ -87,151 +88,6 @@ namespace BitArray {
         friend class BitMatrix::BitMatrix3D;
     };
 
-    #ifndef _WIN32
-    class BitArray final : public BitArrayInterface {
-    public:
-        explicit BitArray(const array_size_t size) : BitArrayInterface(size) { m_Array = bit_array_create(m_Size); }
-
-        explicit BitArray(const array_size_t size, const bool allSet) : BitArrayInterface(size) {
-            m_Array = bit_array_create(m_Size);
-            if (allSet) bit_array_set_all(m_Array);
-            // else bit_array_clear_all(m_Array);
-        }
-
-        BitArray(const BitArray& other) : BitArrayInterface(other.m_Size) {
-            m_Array = bit_array_create(m_Size);
-            bit_array_copy_all(m_Array, other.m_Array);
-        }
-
-        ~BitArray() override { bit_array_free(m_Array); }
-
-        [[nodiscard]] constexpr BIT_ARRAY *getUnderlyingImplementation() const { return m_Array; }
-
-        // Does not work as expected:
-        // std::string getStringRepresentation() const override { // NOLINT(*-use-nodiscard)
-        //     // std::string str(m_Size, '\0');
-        //     // bit_array_word2str(m_Array, m_Size, str.data());
-        //     // return str;
-        // }
-
-        void setAll() override { bit_array_set_all(m_Array); }
-
-        void assign(const array_size_t index, const bool value) override {
-            bit_array_assign(m_Array, index, static_cast<uint8_t>(value));
-        }
-
-        void assign(const array_size_t index, const uint8_t value) override {
-            bit_array_assign(m_Array, index, value & 0b1);
-        }
-
-        void assign(const array_size_t index, const int8_t value) override {
-            bit_array_assign(m_Array, index, value & 0b1);
-        }
-
-        void assign(const array_size_t index, const uint16_t value) override {
-            bit_array_assign(m_Array, index, value & 0b1);
-        }
-
-        void assign(const array_size_t index, const int16_t value) override {
-            bit_array_assign(m_Array, index, value & 0b1);
-        }
-
-        void assign(const array_size_t index, const uint32_t value) override {
-            bit_array_assign(m_Array, index, value & 0b1);
-        }
-
-        void assign(const array_size_t index, const int32_t value) override {
-            bit_array_assign(m_Array, index, value & 0b1);
-        }
-
-        void assign(const array_size_t index, const uint64_t value) override {
-            bit_array_assign(m_Array, index, value & 0b1);
-        }
-
-        void assign(const array_size_t index, const int64_t value) override {
-            bit_array_assign(m_Array, index, value & 0b1);
-        }
-
-        void set(const array_size_t index) override { bit_array_set(m_Array, index); }
-        void clear(const array_size_t index) override { bit_array_clear(m_Array, index); }
-
-        void assignWord(const array_size_t index, const uint64_t word) override {
-            bit_array_set_word64(m_Array, index, word);
-        }
-
-        [[nodiscard]] uint8_t get(const array_size_t index) const override {
-            return static_cast<uint8_t>(bit_array_get_bit(m_Array, index));
-        }
-
-        uint8_t operator[](const array_size_t index) const override {
-            return static_cast<uint8_t>(bit_array_get_bit(m_Array, index));
-        }
-
-        [[nodiscard]] uint64_t word(const array_size_t index) const override {
-            return bit_array_get_word64(m_Array, index);
-        }
-
-        [[nodiscard]] uint64_t wordn(const array_size_t index, const uint8_t n) const override {
-            assert(n <= 64 && "Max word length is 64 bits");
-            return bit_array_get_wordn(m_Array, index, n);
-        }
-
-        void copyTo(BitArrayInterface& other, const array_size_t srcOffset, const array_size_t srcStride,
-                    const array_size_t dstOffset) const override {
-            assert(srcStride > 0 && "Stride must be larger than 0");
-            auto& array = static_cast<BitArray&>(other); // NOLINT(*-pro-type-static-cast-downcast)
-
-            if (srcStride == 1) {
-                bit_array_copy(array.m_Array, dstOffset, m_Array, srcOffset, other.m_Size - dstOffset);
-            } else {
-                array_size_t dstIdx = dstOffset;
-                for (array_size_t srcIdx = srcOffset; srcIdx < m_Size && dstIdx < other.m_Size; srcIdx += srcStride) {
-                    bit_array_copy(array.m_Array, dstIdx++, m_Array, srcIdx, 1);
-                }
-            }
-        }
-
-        void random(const float probability) override { bit_array_random(m_Array, probability); }
-        void random() override { bit_array_random(m_Array, 0.5f); }
-
-        [[nodiscard]] bool test(const array_size_t index, const array_size_t length) const override {
-            assert(index + length <= m_Size && "Parameter (index and length) sum should not exceed array length.");
-            const size_t iterationCount = length >> 6; // 64 == 2^6
-            for (size_t i = 0; i < iterationCount; ++i) {
-                if (bit_array_get_word64(m_Array, index + (i << 6))) return true;
-            }
-            const auto remainingBits = static_cast<int8_t>(length & 63);
-            return remainingBits > 0 && bit_array_get_wordn(m_Array, index + (iterationCount << 6), remainingBits);
-        }
-
-        [[nodiscard]] array_size_t count() const override { return bit_array_num_bits_set(m_Array); }
-
-        void collectTestIndices(const BitArray& dst, const array_size_t offset,
-                                std::vector<array_size_t>& result) const {
-            const size_t iterationCount = dst.m_Size >> 6; // 64 == 2^6
-            if (result.capacity() == 0) [[unlikely]] result.reserve((dst.m_Size >> 2) + 1);
-            for (size_t i = 0; i < iterationCount; ++i) {
-                uint64_t word = bit_array_get_word64(m_Array, offset + (i << 6));
-                for (uint8_t j = 0; j < 64; ++j) {
-                    if (word & 1 << j == 0) continue;
-                    const array_size_t index = i << 6 | j;
-                    result.push_back(index);
-                }
-            }
-            if (const auto remainingBits = static_cast<int8_t>(dst.m_Size & 63); remainingBits > 0) {
-                uint64_t word = bit_array_get_wordn(m_Array, iterationCount << 6, remainingBits);
-                for (uint8_t j = 0; j < remainingBits; ++j) {
-                    if (word & 1 << j == 0) continue;
-                    const array_size_t index = iterationCount << 6 | j;
-                    result.push_back(index);
-                }
-            }
-        }
-
-    protected:
-        BIT_ARRAY *m_Array;
-    };
-    #else
     struct Word {
         typedef uint32_t word_t;
 
@@ -260,18 +116,38 @@ namespace BitArray {
 
     class BitArray final : public BitArrayInterface {
     public:
-        explicit BitArray(const array_size_t size) : BitArrayInterface(size), m_WordCount((size + Word::length - 1) / Word::length) {
-            m_Words = new Word[m_WordCount];
+        explicit BitArray(const array_size_t size) : BitArrayInterface(size), m_WordCount((size + Word::length - 1) / Word::length), m_Words(nullptr) {
+            if (m_WordCount > 0) [[likely]] {
+                m_Words = new Word[m_WordCount]();
+            }
         }
 
-        BitArray(const BitArray& other) : BitArrayInterface(other.m_Size), m_WordCount((other.m_Size + Word::length - 1) / Word::length) {
-            m_Words = new Word[m_WordCount];
-            for (array_size_t i = 0; i < m_WordCount; ++i)
-                m_Words[i] = other.m_Words[i];
+        BitArray(const BitArray& other) : BitArrayInterface(other.m_Size), m_WordCount(other.m_WordCount), m_Words(nullptr) {
+            if (other.m_WordCount > 0) [[likely]] {
+                m_Words = new Word[m_WordCount];
+                for (array_size_t i = 0; i < m_WordCount; ++i) {
+                    // ReSharper disable once CppDFANullDereference
+                    m_Words[i] = other.m_Words[i];
+                }
+            }
+        }
+
+        BitArray &operator=(const BitArray& rhs) {
+            m_Size = rhs.m_Size;
+            m_WordCount = rhs.m_WordCount;
+            if (m_WordCount > 0) [[likely]] {
+                m_Words = new Word[m_WordCount];
+                for (array_size_t i = 0; i < m_WordCount; ++i) {
+                    // ReSharper disable once CppDFANullDereference
+                    m_Words[i] = rhs.m_Words[i];
+                }
+            }
+            return *this;
         }
 
         ~BitArray() override {
             delete[] m_Words;
+            m_Words = nullptr;
         }
 
         [[nodiscard]] constexpr Word *getUnderlyingImplementation() const { return m_Words; }
@@ -279,6 +155,11 @@ namespace BitArray {
         void setAll() override {
             for (array_size_t i = 0; i < m_Size; ++i)
                 m_Words[i].bits = Word::ALL_BITS_SET;
+        }
+
+        void clearAll() override {
+            for (array_size_t i = 0; i < m_Size; ++i)
+                m_Words[i].bits = 0;
         }
 
         void assign(const array_size_t index, const bool value) override {
@@ -423,13 +304,23 @@ namespace BitArray {
         [[nodiscard]] array_size_t count() const override {
             array_size_t count = 0;
             for (array_size_t i = 0; i < m_WordCount; ++i) {
-                Word::word_t word = m_Words[i].bits;
-                while (word > 0) {
-                    ++count;
-                    word >>= 1;
-                }
-            }
-            return count;
+                const Word::word_t word = m_Words[i].bits;
+                #ifdef _WIN32
+                count += __popcnt64(word);
+                #else
+                count += __builtin_popcountll(word);
+                #endif
+                // C++ 20 variant:
+                // count += std::popcount(word);
+                // Manual bit-twiddling variant:
+                // Word::word_t word = m_Words[i].bits;
+                // while (word) {
+                //     word &= (word - 1); // Clears the lowest set bit
+                //     count++;
+                // }
+        }
+
+        return count;
         }
 
         void collectTestIndices(const BitArray& dst, const array_size_t offset,
@@ -465,7 +356,6 @@ namespace BitArray {
             return index % Word::length;
         }
     };
-    #endif
 
     inline std::ostream& operator<<(std::ostream& out, const BitArrayInterface& array) {
         out << array.getStringRepresentation();

@@ -15,8 +15,8 @@ namespace Constraints {
             Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill> {
     public:
         explicit RequiredSkillConstraint(const Axes::Axis<Domain::Shift>& xAxis,
-                                         const Axes::Axis<Domain::Employee> yAxis,
-                                         const Axes::Axis<Domain::Skill> wAxis) : Constraint("REQUIRED_SKILL"),
+                                         const Axes::Axis<Domain::Employee>& yAxis,
+                                         const Axes::Axis<Domain::Skill>& wAxis) : Constraint("REQUIRED_SKILL"),
             m_AssignableShiftEmployeeSkillMatrix(xAxis.size(), yAxis.size(), wAxis.size()) {
             for (axis_size_t x = 0; x < xAxis.size(); ++x) {
                 const auto& shift = xAxis[x];
@@ -42,8 +42,8 @@ namespace Constraints {
                 for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                     for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
                         state.getLineXYZ(cache, x, y, z);
-                        m_AssignableShiftEmployeeSkillMatrix.validateZ(
-                            cache, m_AssignableShiftEmployeeSkillMatrix.offsetZ(x, y));
+                        const auto offsetZ = m_AssignableShiftEmployeeSkillMatrix.offsetZ(x, y);
+                        m_AssignableShiftEmployeeSkillMatrix.validateZ(cache, offsetZ);
                         totalScore -= static_cast<score_t>(cache.count());
                     }
                 }

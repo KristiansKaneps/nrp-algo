@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <utility>
 
 namespace Time {
     class RangeCollection {
