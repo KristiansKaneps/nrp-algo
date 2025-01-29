@@ -64,6 +64,8 @@ namespace State {
         [[nodiscard]] const Axes::Axis<Z>& z() const { return *m_Z; }
         [[nodiscard]] const Axes::Axis<W>& w() const { return *m_W; }
 
+        [[nodiscard]] const BitArray::BitArray &getBitArray() const { return m_Matrix; }
+
         [[nodiscard]] const Axes::AxisEntity& x(const axis_size_t xIndex) const { return (*m_X)[xIndex]; }
         [[nodiscard]] const Axes::AxisEntity& y(const axis_size_t yIndex) const { return (*m_Y)[yIndex]; }
         [[nodiscard]] const Axes::AxisEntity& z(const axis_size_t zIndex) const { return (*m_Z)[zIndex]; }

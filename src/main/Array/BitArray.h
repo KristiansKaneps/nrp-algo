@@ -23,6 +23,16 @@ namespace BitArray {
 
     static inline constexpr char BIT_CHAR_REPRESENTATIONS[] = {'0', '1'};
 
+    struct ArrayIndexRange {
+        array_size_t start;
+        array_size_t end;
+    };
+
+    inline std::ostream& operator<<(std::ostream& out, const ArrayIndexRange& intRange) {
+        out << '[' << intRange.start << "; " << intRange.end << ']';
+        return out;
+    }
+
     class BitArrayInterface {
     public:
         explicit BitArrayInterface(const array_size_t size) : m_Size(size) { }
@@ -69,6 +79,8 @@ namespace BitArray {
 
         virtual void copyTo(BitArrayInterface& dst, array_size_t srcOffset, array_size_t srcStride,
                             array_size_t dstOffset) const = 0;
+
+        [[nodiscard]] virtual ArrayIndexRange getDifferenceBounds(const BitArrayInterface &other) const = 0;
 
         virtual void random(float probability) = 0;
         virtual void random() { random(0.5f); }
@@ -133,6 +145,8 @@ namespace BitArray {
         }
 
         BitArray &operator=(const BitArray& rhs) {
+            if (this == &rhs) [[unlikely]] return *this;
+            delete[] m_Words;
             m_Size = rhs.m_Size;
             m_WordCount = rhs.m_WordCount;
             if (m_WordCount > 0) [[likely]] {
@@ -270,6 +284,20 @@ namespace BitArray {
             for (array_size_t srcIdx = srcOffset; srcIdx < m_Size && dstIdx < array.m_Size; srcIdx += srcStride) {
                 array.assign(dstIdx++, get(srcIdx));
             }
+        }
+
+        [[nodiscard]] ArrayIndexRange getDifferenceBounds(const BitArrayInterface &other) const override {
+            assert(m_Size == other.m_Size && "Can't get difference bounds (comparison) for different size bit arrays.");
+            ArrayIndexRange result{};
+            for (array_size_t i = m_Size; i > 0; --i) {
+                if (get(i - 1) != other.get(i - 1))
+                    result.start = i - 1;
+            }
+            for (array_size_t i = 0; i < m_Size; i++) {
+                if (get(i) != other.get(i))
+                    result.end = i - 1;
+            }
+            return result;
         }
 
         void random(const float probability) override {

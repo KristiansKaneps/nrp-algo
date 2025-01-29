@@ -11,11 +11,7 @@ namespace Score {
         score_t hard;
         score_t soft;
 
-        Score& operator=(const Score& rhs) {
-            hard = rhs.hard;
-            soft = rhs.soft;
-            return *this;
-        }
+        Score& operator=(const Score& rhs) = default;
 
         Score operator+(const Score& rhs) const { return {hard + rhs.hard, soft + rhs.soft}; }
         Score operator-(const Score& rhs) const { return {hard - rhs.hard, soft - rhs.soft}; }
