@@ -105,20 +105,56 @@ namespace BitArray {
 
         word_t bits;
 
-        constexpr word_t operator|(const word_t bits) const {
-            return this->bits | bits;
+        constexpr word_t operator~() const {
+            return ~(this->bits);
         }
 
-        constexpr word_t operator&(const word_t bits) const {
-            return this->bits & bits;
+        constexpr word_t operator|(const word_t rhs) const {
+            return this->bits | rhs;
         }
 
-        constexpr void operator|=(const word_t bits) {
-            this->bits |= bits;
+        constexpr word_t operator|(const Word& rhs) const {
+            return this->bits | rhs.bits;
         }
 
-        constexpr void operator&=(const word_t bits) {
-            this->bits &= bits;
+        constexpr word_t operator&(const word_t rhs) const {
+            return this->bits & rhs;
+        }
+
+        constexpr word_t operator&(const Word& rhs) const {
+            return this->bits & rhs.bits;
+        }
+
+        constexpr word_t operator^(const word_t rhs) const {
+            return this->bits ^ rhs;
+        }
+
+        constexpr word_t operator^(const Word& rhs) const {
+            return this->bits ^ rhs.bits;
+        }
+
+        constexpr void operator|=(const word_t rhs) {
+            this->bits |= rhs;
+        }
+
+        constexpr void operator|=(const Word& rhs) {
+            this->bits |= rhs.bits;
+        }
+
+        constexpr void operator&=(const word_t rhs) {
+            this->bits &= rhs;
+        }
+
+        constexpr void operator&=(const Word& rhs) {
+            this->bits &= rhs.bits;
+        }
+
+        constexpr void operator^=(const word_t rhs) {
+            this->bits ^= rhs;
+        }
+
+        constexpr void operator^=(const Word& rhs) {
+            this->bits ^= rhs.bits;
         }
 
         static constexpr array_size_t length = sizeof(word_t) * 8;
@@ -167,49 +203,58 @@ namespace BitArray {
         [[nodiscard]] constexpr Word *getUnderlyingImplementation() const { return m_Words; }
 
         void setAll() override {
-            for (array_size_t i = 0; i < m_Size; ++i)
+            for (array_size_t i = 0; i < m_WordCount; ++i)
                 m_Words[i].bits = Word::ALL_BITS_SET;
         }
 
         void clearAll() override {
-            for (array_size_t i = 0; i < m_Size; ++i)
+            for (array_size_t i = 0; i < m_WordCount; ++i)
                 m_Words[i].bits = 0;
         }
 
         void assign(const array_size_t index, const bool value) override {
-            m_Words[wordIndex(index)] |= (static_cast<Word::word_t>(value) & 0b1) << bitIndex(index);
+            const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
+            m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
         void assign(const array_size_t index, const uint8_t value) override {
-            m_Words[wordIndex(index)] |= (static_cast<Word::word_t>(value) & 0b1) << bitIndex(index);
+            const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
+            m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
         void assign(const array_size_t index, const int8_t value) override {
-            m_Words[wordIndex(index)] |= (static_cast<Word::word_t>(value) & 0b1) << bitIndex(index);
+            const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
+            m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
         void assign(const array_size_t index, const uint16_t value) override {
-            m_Words[wordIndex(index)] |= (static_cast<Word::word_t>(value) & 0b1) << bitIndex(index);
+            const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
+            m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
         void assign(const array_size_t index, const int16_t value) override {
-            m_Words[wordIndex(index)] |= (static_cast<Word::word_t>(value) & 0b1) << bitIndex(index);
+            const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
+            m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
         void assign(const array_size_t index, const uint32_t value) override {
-            m_Words[wordIndex(index)] |= (static_cast<Word::word_t>(value) & 0b1) << bitIndex(index);
+            const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
+            m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
         void assign(const array_size_t index, const int32_t value) override {
-            m_Words[wordIndex(index)] |= (static_cast<Word::word_t>(value) & 0b1) << bitIndex(index);
+            const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
+            m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
         void assign(const array_size_t index, const uint64_t value) override {
-            m_Words[wordIndex(index)] |= (static_cast<Word::word_t>(value) & 0b1) << bitIndex(index);
+            const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
+            m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
         void assign(const array_size_t index, const int64_t value) override {
-            m_Words[wordIndex(index)] |= (static_cast<Word::word_t>(value) & 0b1) << bitIndex(index);
+            const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
+            m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
         void set(const array_size_t index) override {

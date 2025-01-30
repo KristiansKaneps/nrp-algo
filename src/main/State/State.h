@@ -105,7 +105,15 @@ namespace State {
         }
 
         void clear(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w) {
-            m_Matrix.set(index(x, y, z, w));
+            m_Matrix.clear(index(x, y, z, w));
+        }
+
+        void setAll() {
+            m_Matrix.setAll();
+        }
+
+        void clearAll() {
+            m_Matrix.clearAll();
         }
 
         [[nodiscard]] uint8_t get(const axis_size_t x, const axis_size_t y, const axis_size_t z,
