@@ -117,7 +117,7 @@ namespace State {
         }
 
         [[nodiscard]] uint8_t get(const axis_size_t x, const axis_size_t y, const axis_size_t z,
-                                  const axis_size_t w) const { return m_Matrix.get(offset(x, y, z, w)); }
+                                  const axis_size_t w) const { return m_Matrix.get(index(x, y, z, w)); }
 
         [[nodiscard]] uint8_t get(const axis_size_t x, const axis_size_t y, const axis_size_t z) const {
             return m_Matrix.test(offset(x, y, z), m_Size.concepts);
@@ -156,32 +156,63 @@ namespace State {
         }
 
         void getPlaneXY(BitArray::BitArray& array, const axis_size_t z, const axis_size_t w) const {
-            m_Matrix.copyTo(array, z * m_Size.concepts + w, m_Size.depth * m_Size.concepts, 0);
+            for (axis_size_t x = 0; x < m_Size.width; ++x) {
+                for (axis_size_t y = 0; y < m_Size.height; ++y) {
+                    const BitArray::array_size_t srcIndex = index(x, y, z, w);
+                    const BitArray::array_size_t dstIndex = x * m_Size.height + y;
+                    array.assign(dstIndex, m_Matrix.get(srcIndex));
+                }
+            }
         }
 
         void getPlaneXZ(BitArray::BitArray& array, const axis_size_t y, const axis_size_t w) const {
-            m_Matrix.copyTo(array, y * m_Size.depth * m_Size.concepts + w, m_Size.height * m_Size.concepts, 0);
+            for (axis_size_t x = 0; x < m_Size.width; ++x) {
+                for (axis_size_t z = 0; z < m_Size.depth; ++z) {
+                    const BitArray::array_size_t srcIndex = index(x, y, z, w);
+                    const BitArray::array_size_t dstIndex = x * m_Size.depth + z;
+                    array.assign(dstIndex, m_Matrix.get(srcIndex));
+                }
+            }
         }
 
         void getPlaneYZ(BitArray::BitArray& array, const axis_size_t x, const axis_size_t w) const {
-            m_Matrix.copyTo(array, x * m_Size.height * m_Size.depth * m_Size.concepts + w,
-                            m_Size.width * m_Size.concepts, 0);
+            for (axis_size_t y = 0; y < m_Size.height; ++y) {
+                for (axis_size_t z = 0; z < m_Size.depth; ++z) {
+                    const BitArray::array_size_t srcIndex = index(x, y, z, w);
+                    const BitArray::array_size_t dstIndex = y * m_Size.depth + z;
+                    array.assign(dstIndex, m_Matrix.get(srcIndex));
+                }
+            }
         }
 
         void getPlaneXW(BitArray::BitArray& array, const axis_size_t y, const axis_size_t z) const {
-            m_Matrix.copyTo(array, y * m_Size.depth * m_Size.concepts + z * m_Size.concepts,
-                            m_Size.height * m_Size.depth, 0);
+            for (axis_size_t x = 0; x < m_Size.width; ++x) {
+                for (axis_size_t w = 0; w < m_Size.concepts; ++w) {
+                    const BitArray::array_size_t srcIndex = index(x, y, z, w);
+                    const BitArray::array_size_t dstIndex = x * m_Size.concepts + w;
+                    array.assign(dstIndex, m_Matrix.get(srcIndex));
+                }
+            }
         }
 
         void getPlaneYW(BitArray::BitArray& array, const axis_size_t x, const axis_size_t z) const {
-            m_Matrix.copyTo(array, x * m_Size.height * m_Size.depth * m_Size.concepts + z * m_Size.concepts,
-                            m_Size.width * m_Size.depth, 0);
+            for (axis_size_t y = 0; y < m_Size.height; ++y) {
+                for (axis_size_t w = 0; w < m_Size.concepts; ++w) {
+                    const BitArray::array_size_t srcIndex = index(x, y, z, w);
+                    const BitArray::array_size_t dstIndex = y * m_Size.concepts + w;
+                    array.assign(dstIndex, m_Matrix.get(srcIndex));
+                }
+            }
         }
 
         void getPlaneZW(BitArray::BitArray& array, const axis_size_t x, const axis_size_t y) const {
-            m_Matrix.copyTo(
-                array, x * m_Size.height * m_Size.depth * m_Size.concepts + y * m_Size.depth * m_Size.concepts,
-                m_Size.width * m_Size.height, 0);
+            for (axis_size_t z = 0; z < m_Size.depth; ++z) {
+                for (axis_size_t w = 0; w < m_Size.concepts; ++w) {
+                    const BitArray::array_size_t srcIndex = index(x, y, z, w);
+                    const BitArray::array_size_t dstIndex = z * m_Size.concepts + w;
+                    array.assign(dstIndex, m_Matrix.get(srcIndex));
+                }
+            }
         }
 
         void collectTestIndicesW(const BitArray::BitArray& other, const axis_size_t x, const axis_size_t y,

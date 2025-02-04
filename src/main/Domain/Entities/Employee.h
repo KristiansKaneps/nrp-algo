@@ -15,11 +15,11 @@ namespace Domain {
         ~Employee() override = default;
 
         [[nodiscard]] axis_size_t index() const { return m_Index; }
-        const std::unordered_map<axis_size_t, float>& skills() const { return m_Skills; }
+        [[nodiscard]] const std::unordered_map<axis_size_t, float>& skills() const { return m_Skills; }
 
-        bool hasSkill(const axis_size_t skillIndex) const { return m_Skills.contains(skillIndex); }
+        [[nodiscard]] bool hasSkill(const axis_size_t skillIndex) const { return m_Skills.contains(skillIndex); }
 
-        float getSkillWeight(const axis_size_t skillIndex) const {
+        [[nodiscard]] float getSkillWeight(const axis_size_t skillIndex) const {
             const auto weight = m_Skills.find(skillIndex);
             if (weight == m_Skills.end()) return 0.0f;
             return weight->second;
