@@ -28,10 +28,13 @@ public:
 
     ~Application() { close(); }
 
+    static AppState &appState() { return *gp_AppState; }
+
     void start() {
         m_WindowIsAlreadyClosed = false;
         InitWindow(m_ScreenWidth, m_ScreenHeight, m_Title.c_str());
         SetTargetFPS(60);
+        onStart();
 
         while (!WindowShouldClose()) { mainLoop(); }
 
@@ -57,8 +60,7 @@ private:
 
     void mainLoop();
 
-    static AppState &appState() { return *gp_AppState; }
-
+    void onStart();
     void onClose();
 };
 

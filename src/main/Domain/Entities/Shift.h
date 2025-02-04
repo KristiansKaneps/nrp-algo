@@ -14,16 +14,24 @@ namespace Domain {
 
     class Shift : public Axes::AxisEntity {
     public:
-        Shift(const axis_size_t index, const Time::DailyInterval& interval, std::string name) : m_Index(index),
+        Shift(const axis_size_t index, const Time::DailyInterval& interval, std::string name, const uint8_t slotCount, const uint8_t requiredSlotCount) : m_Index(index),
             m_Interval(interval),
-            m_Name(std::move(name)) { }
+            m_Name(std::move(name)),
+            m_SlotCount(slotCount),
+            m_RequiredSlotCount(requiredSlotCount) { }
+
+        Shift(const axis_size_t index, const Time::DailyInterval& interval, std::string name, const uint8_t slotCount) : Shift(index, interval, std::move(name), slotCount, slotCount) { }
+
+        Shift(const axis_size_t index, const Time::DailyInterval& interval, std::string name) : Shift(index, interval, std::move(name), 1) { }
 
         [[nodiscard]] axis_size_t index() const { return m_Index; }
         [[nodiscard]] const Time::DailyInterval& interval() const { return m_Interval; }
         [[nodiscard]] const std::string& name() const { return m_Name; }
+        [[nodiscard]] uint8_t slotCount() const { return m_SlotCount; }
+        [[nodiscard]] uint8_t requiredSlotCount() const { return m_RequiredSlotCount; }
 
-        const std::unordered_map<axis_size_t, float>& requiredAllSkills() const { return m_RequiredAllSkills; }
-        const std::unordered_map<axis_size_t, float>& requiredOneSkills() const { return m_RequiredOneSkills; }
+        [[nodiscard]] const std::unordered_map<axis_size_t, float>& requiredAllSkills() const { return m_RequiredAllSkills; }
+        [[nodiscard]] const std::unordered_map<axis_size_t, float>& requiredOneSkills() const { return m_RequiredOneSkills; }
 
         [[nodiscard]] bool requiresSkill() const {
             return !m_RequiredAllSkills.empty() || !m_RequiredOneSkills.empty();
@@ -57,6 +65,8 @@ namespace Domain {
         const axis_size_t m_Index;
         const Time::DailyInterval m_Interval;
         const std::string m_Name;
+        const uint8_t m_SlotCount;
+        const uint8_t m_RequiredSlotCount;
 
         std::unordered_map<axis_size_t, float> m_RequiredAllSkills {};
         std::unordered_map<axis_size_t, float> m_RequiredOneSkills {};

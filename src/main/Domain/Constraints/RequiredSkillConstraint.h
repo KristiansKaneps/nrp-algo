@@ -49,7 +49,7 @@ namespace Constraints {
                 }
             }
 
-            return {.hard = totalScore, .soft = 0};
+            return {.strict = totalScore, .hard = 0, .soft = 0};
         }
 
     protected:

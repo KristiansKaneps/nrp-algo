@@ -11,6 +11,7 @@
 
 #include "Domain/Constraints/NoOverlapConstraint.h"
 #include "Domain/Constraints/RequiredSkillConstraint.h"
+#include "Domain/Constraints/ShiftMinAndMaxEmploymentConstraint.h"
 
 #include "Search/LocalSearch.h"
 #include "State/State.h"
@@ -77,7 +78,7 @@ int main(int argc, char **argv) {
         const Time::Range range(start, end);
 
         const uint32_t shiftCount = 4;
-        const uint32_t employeeCount = 50;
+        const uint32_t employeeCount = 8;
         const uint32_t dayCount = 31;
         const uint32_t skillCount = 4;
 
@@ -96,10 +97,10 @@ int main(int argc, char **argv) {
         const Time::DailyInterval interval3(480, 1440);
         const Time::DailyInterval interval4(1200, 1440);
 
-        new(shifts + 0) Shift(0, interval1, "E");
-        new(shifts + 1) Shift(1, interval2, "L");
-        new(shifts + 2) Shift(2, interval3, "DN");
-        new(shifts + 3) Shift(3, interval4, "ND");
+        new(shifts + 0) Shift(0, interval1, "E", 2);
+        new(shifts + 1) Shift(1, interval2, "L", 2);
+        new(shifts + 2) Shift(2, interval3, "DN", 2);
+        new(shifts + 3) Shift(3, interval4, "ND", 2);
 
         for (uint32_t i = 0; i < employeeCount; ++i) { new(employees + i) Employee(i); }
 
@@ -141,20 +142,25 @@ int main(int argc, char **argv) {
             axisW
         );
 
-        for (int i = 0; i < shiftCount; i++) { state.set(i, 0, 0, 0); }
+        // for (int i = 0; i < shiftCount; i++) { state.set(i, 0, 0, 0); }
         // for (int i = 0; i < dayCount; i++) { state.set(3, 2, i, 1); }
         // for (int i = 0; i < dayCount; i++) { state.set(2, 2, i, 1); }
 
         // state.random(0.2);
 
+        // state.set(0, 0, 0, 0);
+        // state.set(1, 1, 1, 3);
+
         state.printSize();
 
         auto *noOverlapConstraint = new Constraints::NoOverlapConstraint(state.x());
         auto *requiredSkillConstraint = new Constraints::RequiredSkillConstraint(state.x(), state.y(), state.w());
+        auto *shiftMinEmploymentConstraint = new Constraints::ShiftMinAndMaxEmploymentConstraint(state.x());
 
         const auto constraints = std::vector<Constraints::Constraint<Shift, Employee, Day, Skill> *> {
             noOverlapConstraint,
-            requiredSkillConstraint,
+            // requiredSkillConstraint,
+            shiftMinEmploymentConstraint,
         };
 
         std::cout << "State 1 score: " << Evaluation::evaluateState(state, constraints) << std::endl;
