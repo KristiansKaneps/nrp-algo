@@ -1,7 +1,7 @@
 #ifndef LOCALSEARCH_H
 #define LOCALSEARCH_H
 
-#include "Search/LocalSearchStep.h"
+#include "Search/LocalSearchTask.h"
 
 #include "State/State.h"
 #include "Constraints/Constraint.h"
@@ -12,33 +12,61 @@ namespace Search {
     class LocalSearch {
     public:
         explicit LocalSearch(const State::State<X, Y, Z, W> *initialState,
-                             const std::vector<Constraints::Constraint<X, Y, Z, W> *>& constraints) :
-            m_InitialState(initialState),
-            m_CurrentState(*initialState),
-            m_Constraints(constraints) { }
+                             const std::vector<Constraints::Constraint<X, Y, Z, W> *> &constraints) :
+            mp_InitialState(initialState),
+            m_Constraints(constraints),
+            m_Task(*initialState, m_Constraints) { }
 
         LocalSearch(const LocalSearch& other) = default;
 
         ~LocalSearch() = default;
 
-        [[nodiscard]] size_t stepSize() const { return m_Steps.size(); }
+        /**
+         * @return `true` if new best state is found, `false` otherwise
+         */
+        bool step() {
+            if (shouldStep()) [[likely]] {
+                m_Task.step();
+                return m_Task.m_NewBestFound;
+                // ReSharper disable once CppRedundantElseKeywordInsideCompoundStatement
+            } else {
+                m_Done = true;
+                // printBestScore();
+                return false;
+            }
+        }
 
-        const std::vector<Step::LocalSearchStep<X, Y, Z, W>>& getSteps() const { return m_Steps; }
+        [[nodiscard]] bool isDone() const { return m_Done; }
 
-        void addStep(Step::LocalSearchStep<X, Y, Z, W> *step) { m_Steps.push_back(step); }
+        State::State<X, Y, Z, W> getBestState() const { return m_Task.getOutputState(); }
+        [[nodiscard]] Score::Score getBestScore() const { return m_Task.getOutputScore(); }
 
-        [[nodiscard]] Score::Score evaluateCurrentState() const {
+        [[nodiscard]] Score::Score evaluateCurrentBestState() const {
             Score::Score score {};
             for (Constraints::Constraint<X, Y, Z, W> *constraint : m_Constraints)
-                score += constraint->evaluate(m_CurrentState);
+                score += constraint->evaluate(m_Task.getOutputState());
             return score;
         }
 
+        void printBestScore() const {
+            std::cout << "Best score: " << m_Task.getOutputScore() << "; iterations=" << m_Task.m_Iterations << " (idle=" << m_Task.m_IdleIterations <<
+                "); delta=" << (m_Task.getOutputScore() - m_Task.m_InitScore) << std::endl;
+        }
+
+    protected:
+        /**
+         * Defines termination criteria.
+         * @return `true` if should keep searching for local optima, `false` otherwise
+         */
+        [[nodiscard]] bool shouldStep() const {
+            return m_Task.m_Iterations <= 20000 && (m_Task.m_Iterations <= 2000 || m_Task.m_IdleIterations <= m_Task.m_Iterations * 0.02);
+        }
+
     private:
-        const State::State<X, Y, Z, W> *m_InitialState;
-        State::State<X, Y, Z, W> m_CurrentState;
+        bool m_Done = false;
+        const State::State<X, Y, Z, W> *mp_InitialState;
         const std::vector<Constraints::Constraint<X, Y, Z, W> *> m_Constraints;
-        std::vector<Step::LocalSearchStep<X, Y, Z, W> *> m_Steps;
+        Task::LocalSearchTask<X, Y, Z, W> m_Task;
     };
 }
 
