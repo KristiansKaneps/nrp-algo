@@ -1,7 +1,6 @@
 #ifndef STATE_H
 #define STATE_H
 
-#include <cassert>
 #include <cstdint>
 #include <iostream>
 
@@ -15,17 +14,22 @@ namespace State {
     template<typename X, typename Y, typename Z, typename W>
     class State {
     public:
+        State(const Time::Range& range, const std::chrono::time_zone *timeZone, const Axes::Axis<X>* x, const Axes::Axis<Y>* y,
+                      const Axes::Axis<Z>* z, const Axes::Axis<W>* w) : m_Size(x->size(), y->size(), z->size(), w->size()),
+                                                                        m_Range(range),
+                                                                        mp_TimeZone(timeZone),
+                                                                        m_Matrix(m_Size.volume()),
+                                                                        m_X(x),
+                                                                        m_Y(y),
+                                                                        m_Z(z),
+                                                                        m_W(w) { }
+
         State(const Time::Range& range, const Axes::Axis<X>* x, const Axes::Axis<Y>* y,
-              const Axes::Axis<Z>* z, const Axes::Axis<W>* w) : m_Size(x->size(), y->size(), z->size(), w->size()),
-                                                                m_Range(range),
-                                                                m_Matrix(m_Size.volume()),
-                                                                m_X(x),
-                                                                m_Y(y),
-                                                                m_Z(z),
-                                                                m_W(w) { }
+              const Axes::Axis<Z>* z, const Axes::Axis<W>* w) : State(range, nullptr, x, y, z, w) {}
 
         State(const State &other) : m_Size(other.m_Size),
                                     m_Range(other.m_Range),
+                                    mp_TimeZone(other.mp_TimeZone),
                                     m_Matrix(other.m_Matrix),
                                     m_X(other.m_X),
                                     m_Y(other.m_Y),
@@ -44,6 +48,7 @@ namespace State {
         void printFlatSize() const { std::cout << flatSize() << std::endl; }
 
         [[nodiscard]] const Time::Range& range() const { return m_Range; }
+        [[nodiscard]] const std::chrono::time_zone *timeZone() const { return mp_TimeZone; }
 
         [[nodiscard]] const Size& size() const { return m_Size; }
 
@@ -228,24 +233,21 @@ namespace State {
     protected:
         Size m_Size;
         Time::Range m_Range;
+        const std::chrono::time_zone *mp_TimeZone;
         BitArray::BitArray m_Matrix;
 
         [[nodiscard]] constexpr state_size_t offset(const axis_size_t x, const axis_size_t y) const {
-            assert(x < m_Size.width && "X must be less than the width.");
-            assert(y < m_Size.height && "Y must be less than the height.");
-            return x * m_Size.height * m_Size.depth * m_Size.concepts + y * m_Size.depth * m_Size.concepts;
+            return m_Size.offset(x, y);
         }
 
         [[nodiscard]] constexpr state_size_t
         offset(const axis_size_t x, const axis_size_t y, const axis_size_t z) const {
-            assert(z < m_Size.depth && "Z must be less than the depth.");
-            return offset(x, y) + z * m_Size.concepts;
+            return m_Size.offset(x, y, z);
         }
 
         [[nodiscard]] constexpr state_size_t index(const axis_size_t x, const axis_size_t y, const axis_size_t z,
                                                    const axis_size_t w) const {
-            assert(w < m_Size.concepts && "W must be less than the total concept count.");
-            return offset(x, y, z) + w;
+            return m_Size.index(x, y, z, w);
         }
 
     private:

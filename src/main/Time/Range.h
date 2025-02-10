@@ -56,6 +56,15 @@ namespace Time {
         }
 
         template<typename TimeZone = const std::chrono::time_zone *>
+        std::chrono::zoned_time<std::chrono::system_clock::duration, TimeZone> getDayAt(const size_t dayIndex, TimeZone zone) const {
+            using namespace std::chrono_literals;
+            const auto zonedStart = std::chrono::zoned_time(zone, m_Start);
+            const auto localDay = floor<std::chrono::days>(zonedStart.get_local_time()) + std::chrono::days(dayIndex);
+            const std::chrono::zoned_time<std::chrono::system_clock::duration, TimeZone> zonedDay = std::chrono::zoned_time(zone, zone->to_sys(localDay));
+            return zonedDay;
+        }
+
+        template<typename TimeZone = const std::chrono::time_zone *>
         Range getDayRangeAt(const size_t dayIndex, TimeZone zone) const {
             using namespace std::chrono_literals;
             const auto zonedStart = std::chrono::zoned_time(zone, m_Start);
@@ -70,6 +79,14 @@ namespace Time {
         Duration duration() const {
             if (m_End == MIN_INSTANT && m_Start == MAX_INSTANT) [[unlikely]] return Duration::zero();
             return std::chrono::round<Duration>(m_End - m_Start);
+        }
+
+        template<typename Duration = std::chrono::minutes, typename TimeZone = const std::chrono::time_zone *>
+        Duration duration(TimeZone zone) const {
+            if (m_End == MIN_INSTANT && m_Start == MAX_INSTANT) [[unlikely]] return Duration::zero();
+            const auto start = std::chrono::zoned_time(zone, m_Start);
+            const auto end = std::chrono::zoned_time(zone, m_End);
+            return std::chrono::round<Duration>(std::chrono::floor<Duration>(end.get_local_time()) - std::chrono::floor<Duration>(start.get_local_time()));
         }
 
         [[nodiscard]] bool isStartAdjacentTo(const Ray& other) const override {
