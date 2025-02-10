@@ -31,6 +31,22 @@ namespace State {
             assert(w < concepts && "W must be less than the total concept count.");
             return offset(x, y, z) + w;
         }
+
+        [[nodiscard]] constexpr state_size_t offsetX(const axis_size_t y, const axis_size_t z, const axis_size_t w) const {
+            return y * depth * concepts + z * concepts + w;
+        }
+
+        [[nodiscard]] constexpr state_size_t offsetY(const axis_size_t x, const axis_size_t z, const axis_size_t w) const {
+            return x * height * depth * concepts + z * concepts + w;
+        }
+
+        [[nodiscard]] constexpr state_size_t offsetZ(const axis_size_t x, const axis_size_t y, const axis_size_t w) const {
+            return x * height * depth * concepts + y * depth * concepts + w;
+        }
+
+        [[nodiscard]] constexpr state_size_t offsetW(const axis_size_t x, const axis_size_t y, const axis_size_t z) const {
+            return x * height * depth * concepts + y * depth * concepts + z * concepts;
+        }
     };
 
     struct Location {

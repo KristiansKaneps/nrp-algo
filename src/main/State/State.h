@@ -57,11 +57,6 @@ namespace State {
         [[nodiscard]] axis_size_t sizeZ() const { return m_Size.depth; }
         [[nodiscard]] axis_size_t sizeW() const { return m_Size.concepts; }
 
-        [[nodiscard]] axis_size_t sizeWidth() const { return m_Size.width; }
-        [[nodiscard]] axis_size_t sizeHeight() const { return m_Size.height; }
-        [[nodiscard]] axis_size_t sizeDepth() const { return m_Size.depth; }
-        [[nodiscard]] axis_size_t sizeConcepts() const { return m_Size.concepts; }
-
         [[nodiscard]] state_size_t flatSize() const { return m_Matrix.size(); }
 
         [[nodiscard]] const Axes::Axis<X>& x() const { return *m_X; }
@@ -75,23 +70,6 @@ namespace State {
         [[nodiscard]] const Axes::AxisEntity& y(const axis_size_t yIndex) const { return (*m_Y)[yIndex]; }
         [[nodiscard]] const Axes::AxisEntity& z(const axis_size_t zIndex) const { return (*m_Z)[zIndex]; }
         [[nodiscard]] const Axes::AxisEntity& w(const axis_size_t wIndex) const { return (*m_W)[wIndex]; }
-
-        [[nodiscard]] state_size_t offsetX(const axis_size_t y, const axis_size_t z, const axis_size_t w) const {
-            return y * m_Size.depth * m_Size.concepts + z * m_Size.concepts + w;
-        }
-
-        [[nodiscard]] state_size_t offsetY(const axis_size_t x, const axis_size_t z, const axis_size_t w) const {
-            return x * m_Size.height * m_Size.depth * m_Size.concepts + z * m_Size.concepts + w;
-        }
-
-        [[nodiscard]] state_size_t offsetZ(const axis_size_t x, const axis_size_t y, const axis_size_t w) const {
-            return x * m_Size.height * m_Size.depth * m_Size.concepts + y * m_Size.depth * m_Size.concepts + w;
-        }
-
-        [[nodiscard]] state_size_t offsetW(const axis_size_t x, const axis_size_t y, const axis_size_t z) const {
-            return x * m_Size.height * m_Size.depth * m_Size.concepts + y * m_Size.depth * m_Size.concepts + z * m_Size.
-                concepts;
-        }
 
         void assign(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w,
                     const bool value) { m_Matrix.assign(index(x, y, z, w), static_cast<uint8_t>(value)); }
