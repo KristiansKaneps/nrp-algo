@@ -8,20 +8,22 @@ void Application::onClose() {
     g_LocalSearchShouldStop = true;
 }
 
-void Application::mainLoop() {
+void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
     // Update
     //----------------------------------------------------------------------------------
     // TODO: Update your variables here
     //----------------------------------------------------------------------------------
 
-    if (g_UpdateFlag == LocalSearchUpdateFlag::NEW_BEST_AVAILABLE) {
-        if (g_ConcurrentDataMutex.try_lock()) {
-            g_UpdateFlag = LocalSearchUpdateFlag::NONE;
-            // ReSharper disable CppDFANullDereference
-            gp_AppState->state = gp_Update->state;
-            gp_AppState->score = gp_Update->score;
-            // ReSharper restore CppDFANullDereference
-            g_ConcurrentDataMutex.unlock();
+    if (elapsedTicks % 30 == 0) {
+        if (g_UpdateFlag == LocalSearchUpdateFlag::NEW_BEST_AVAILABLE) {
+            if (g_ConcurrentDataMutex.try_lock()) {
+                g_UpdateFlag = LocalSearchUpdateFlag::NONE;
+                // ReSharper disable CppDFANullDereference
+                gp_AppState->state = gp_Update->state;
+                gp_AppState->score = gp_Update->score;
+                // ReSharper restore CppDFANullDereference
+                g_ConcurrentDataMutex.unlock();
+            }
         }
     }
 

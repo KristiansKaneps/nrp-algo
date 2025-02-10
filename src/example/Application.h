@@ -3,6 +3,7 @@
 
 #include <string>
 #include <utility>
+#include <chrono>
 
 #include "raylib.h"
 
@@ -36,7 +37,17 @@ public:
         SetTargetFPS(60);
         onStart();
 
-        while (!WindowShouldClose()) { mainLoop(); }
+        uint64_t elapsedTicks = 0;
+        using clock = std::chrono::system_clock;
+        auto before = clock::now();
+
+        while (!WindowShouldClose()) {
+            const auto now = clock::now();
+            const std::chrono::duration<double> elapsedTime = now - before;
+            before = now;
+            const double dt = elapsedTime.count();
+            mainLoop(dt, elapsedTicks++);
+        }
 
         m_WindowIsAlreadyClosed = true;
         CloseWindow();
@@ -58,7 +69,7 @@ private:
 
     bool m_WindowIsAlreadyClosed = true;
 
-    void mainLoop();
+    void mainLoop(double dt, uint64_t elapsedTicks);
 
     void onStart();
     void onClose();
