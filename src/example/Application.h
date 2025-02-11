@@ -15,6 +15,20 @@ struct AppState {
     Score::Score score;
     State::State<Shift, Employee, Day, Skill> state;
     std::vector<Constraints::Constraint<Shift, Employee, Day, Skill> *> constraints;
+
+    struct RenderCache {
+        uint64_t *employeeTotalWorkDuration{};
+        bool *dayCoverageValid{};
+        BitArray::BitArray *xw;
+
+        ~RenderCache() {
+            delete[] employeeTotalWorkDuration;
+            delete[] dayCoverageValid;
+            delete xw;
+        }
+    };
+
+    RenderCache renderCache;
 };
 
 inline AppState *gp_AppState = nullptr;
