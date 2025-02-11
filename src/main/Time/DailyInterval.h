@@ -8,32 +8,31 @@
 #include "Time/Range.h"
 
 namespace Time {
-    typedef uint16_t day_minutes_t;
+    typedef int16_t day_minutes_t;
 
     class DailyInterval {
     public:
         static constexpr day_minutes_t MINUTES_IN_A_DAY = 24 * 60;
+        static constexpr day_minutes_t MINUTES_IN_TWO_DAYS = 2 * MINUTES_IN_A_DAY;
+        static constexpr day_minutes_t DURATION_MINUTES_UPPER_BOUND = MINUTES_IN_TWO_DAYS + 2 * 60;
 
         DailyInterval(const day_minutes_t startInMinutes, const day_minutes_t durationInMinutes) :
             m_StartInMinutes(startInMinutes),
             m_DurationInMinutes(durationInMinutes) {
             assert(
-                startInMinutes < MINUTES_IN_A_DAY &&
-                "Start [minutes] should be in range 0 <= startInMinutes < MINUTES_IN_A_DAY.");
+                startInMinutes >= -MINUTES_IN_A_DAY && startInMinutes < MINUTES_IN_TWO_DAYS &&
+                "Start [minutes] should be in range (-MINUTES_IN_A_DAY) <= (startInMinutes) < (MINUTES_IN_TWO_DAYS).");
             assert(
-                durationInMinutes > 0 && durationInMinutes <= MINUTES_IN_A_DAY &&
-                "Duration [minutes] should be in range 0 < durationInMinutes <= MINUTES_IN_A_DAY.");
+                durationInMinutes > 0 && durationInMinutes <= DURATION_MINUTES_UPPER_BOUND &&
+                "Duration [minutes] should be in range (0) < (durationInMinutes) <= (DURATION_MINUTES_UPPER_BOUND).");
         }
 
         DailyInterval(const char *startAsString, const day_minutes_t durationInMinutes) : DailyInterval(
             parseString(startAsString), durationInMinutes) { }
 
-        /**
-         * Unsafe, because `day_minutes_t` is unsigned and duration could be negative, in which case duration will
-         * overflow.
-         */
         DailyInterval(const char *startAsString, const char *endAsString) : DailyInterval(
-            parseString(startAsString), parseString(endAsString) - parseString(startAsString)) { }
+            parseString(startAsString),
+            static_cast<day_minutes_t>(parseString(endAsString) - parseString(startAsString))) { }
 
         DailyInterval(const DailyInterval& other) : DailyInterval(other.m_StartInMinutes, other.m_DurationInMinutes) { }
 
@@ -41,7 +40,10 @@ namespace Time {
 
         [[nodiscard]] day_minutes_t startInMinutes() const { return m_StartInMinutes; }
         [[nodiscard]] day_minutes_t durationInMinutes() const { return m_DurationInMinutes; }
-        [[nodiscard]] day_minutes_t endInMinutes() const { return m_StartInMinutes + m_DurationInMinutes; }
+
+        [[nodiscard]] day_minutes_t endInMinutes() const {
+            return static_cast<day_minutes_t>(m_StartInMinutes + m_DurationInMinutes);
+        }
 
         [[nodiscard]] std::chrono::duration<uint16_t, std::ratio<60>> start() const {
             return std::chrono::duration<uint16_t, std::ratio<60>>(m_StartInMinutes);
@@ -123,6 +125,32 @@ namespace Time {
             return m_StartInMinutes + m_DurationInMinutes > other.m_StartInMinutes + MINUTES_IN_A_DAY;
         }
 
+        [[nodiscard]] DailyInterval inPreviousDay() const {
+            return {
+                static_cast<day_minutes_t>(m_StartInMinutes - MINUTES_IN_A_DAY),
+                m_DurationInMinutes,
+            };
+        }
+
+        [[nodiscard]] DailyInterval inNextDay() const {
+            return {
+                static_cast<day_minutes_t>(m_StartInMinutes + MINUTES_IN_A_DAY),
+                m_DurationInMinutes,
+            };
+        }
+
+        /**
+         * Applies padding to this daily interval.
+         * @param padding Padding to apply to each side (start and end).
+         * @return New daily interval with applied padding.
+         */
+        [[nodiscard]] DailyInterval withPadding(const day_minutes_t padding) const {
+            return {
+                static_cast<day_minutes_t>(m_StartInMinutes - padding),
+                static_cast<day_minutes_t>(m_DurationInMinutes + 2 * padding),
+            };
+        }
+
     protected:
         const day_minutes_t m_StartInMinutes, m_DurationInMinutes;
 
@@ -131,8 +159,13 @@ namespace Time {
          * @return Parsed daily interval minutes.
          */
         static day_minutes_t parseString(const char *str) {
-            return (static_cast<day_minutes_t>(str[0] - '0') * 10 + static_cast<day_minutes_t>(str[1] - '0')) * 60 + (
-                static_cast<day_minutes_t>(str[3] - '0') * 10 + static_cast<day_minutes_t>(str[4] - '0'));
+            return static_cast<day_minutes_t>((
+                    static_cast<day_minutes_t>(str[0] - '0') * 10 +
+                    static_cast<day_minutes_t>(str[1] - '0')) * 60 +
+                (
+                    static_cast<day_minutes_t>(str[3] - '0') * 10 +
+                    static_cast<day_minutes_t>(str[4] - '0')
+                ));
         }
     };
 
