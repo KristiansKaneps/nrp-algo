@@ -59,7 +59,9 @@ namespace Search {
          * @return `true` if should keep searching for local optima, `false` otherwise
          */
         [[nodiscard]] bool shouldStep() const {
-            return m_Task.m_Iterations <= 20000 && (m_Task.m_Iterations <= 2000 || m_Task.m_IdleIterations <= m_Task.m_Iterations * 0.02);
+            // return m_Task.m_Iterations <= 20000 && (m_Task.m_Iterations <= 2000 || m_Task.m_IdleIterations <= m_Task.m_Iterations * 0.02);
+            // return m_Task.m_Iterations <= 2000 || m_Task.m_IdleIterations <= m_Task.m_Iterations * 0.02;
+            return !m_Task.getOutputScore().isZero();
         }
 
     private:

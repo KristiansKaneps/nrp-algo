@@ -35,7 +35,7 @@ namespace Search::Task {
         State::State<X, Y, Z, W> m_CurrentState;
         Score::Score m_CurrentScore;
 
-        static constexpr size_t Lh = 20;
+        static constexpr size_t Lh = 100;
         std::array<Score::Score, Lh> m_History {};
 
         uint32_t m_Iterations = 0;

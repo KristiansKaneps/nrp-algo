@@ -1,5 +1,5 @@
-#ifndef NOOVERLAPCONSTRAINT_H
-#define NOOVERLAPCONSTRAINT_H
+#ifndef RESTBETWEENSHIFTSCONSTRAINT_H
+#define RESTBETWEENSHIFTSCONSTRAINT_H
 
 #include "Constraints/Constraint.h"
 
@@ -12,31 +12,37 @@
 #include "Domain/Entities/Skill.h"
 
 namespace Constraints {
-    class NoOverlapConstraint final : public Constraint<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill> {
+    class RestBetweenShiftsConstraint final : public Constraint<
+            Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill> {
     public:
-        explicit NoOverlapConstraint(const Axes::Axis<Domain::Shift>& xAxis) : Constraint("NO_OVERLAP"),
-                                                                               m_IntersectingShiftsInSameDayMatrix(
-                                                                                   BitMatrix::createIdentitySymmetricalMatrix(
-                                                                                       xAxis.size())),
-                                                                               m_IntersectingShiftsInAdjacentDaysMatrix(
-                                                                                   BitMatrix::createSquareMatrix(
-                                                                                       xAxis.size())) {
-            for (axis_size_t x1 = 0; x1 < xAxis.size() - 1; ++x1) {
-                const auto interval1 = xAxis[x1].interval();
-                for (axis_size_t x2 = x1 + 1; x2 < xAxis.size(); ++x2) {
-                    const auto interval2 = xAxis[x2].interval();
+        explicit RestBetweenShiftsConstraint(const Axes::Axis<Domain::Shift>& xAxis) :
+            Constraint("REST_BETWEEN_SHIFTS"),
+            m_IntersectingShiftsInSameDayMatrix(BitMatrix::createIdentitySymmetricalMatrix(xAxis.size())),
+            m_IntersectingShiftsInAdjacentDaysMatrix(BitMatrix::createSquareMatrix(xAxis.size())) {
+            for (axis_size_t x1 = 0; x1 < xAxis.size(); ++x1) {
+                const auto interval1 = xAxis[x1].interval().withPadding(12 * 60);
+                for (axis_size_t x2 = x1; x2 < xAxis.size(); ++x2) {
+                    const auto interval2 = xAxis[x2].interval().withPadding(12 * 60);
 
-                    if (interval1.intersectsInSameDay(interval2))
-                        m_IntersectingShiftsInSameDayMatrix.set(x1, x2);
-                    if (interval1.intersectsOtherFromNextDay(interval2))
-                        m_IntersectingShiftsInAdjacentDaysMatrix.set(x1, x2);
-                    if (interval1.intersectsOtherFromPrevDay(interval2))
-                        m_IntersectingShiftsInAdjacentDaysMatrix.set(x2, x1);
+                    if (x1 == x2) [[unlikely]] {
+                        if (
+                            interval1.intersectsOtherFromNextDay(interval2)
+                            || interval1.intersectsOtherFromPrevDay(interval2)
+                        )
+                            m_IntersectingShiftsInSameDayMatrix.set(x1, x2);
+                    } else {
+                        if (interval1.intersectsInSameDay(interval2))
+                            m_IntersectingShiftsInSameDayMatrix.set(x1, x2);
+                        if (interval1.intersectsOtherFromNextDay(interval2))
+                            m_IntersectingShiftsInAdjacentDaysMatrix.set(x1, x2);
+                        if (interval1.intersectsOtherFromPrevDay(interval2))
+                            m_IntersectingShiftsInAdjacentDaysMatrix.set(x2, x1);
+                    }
                 }
             }
         }
 
-        ~NoOverlapConstraint() override = default;
+        ~RestBetweenShiftsConstraint() override = default;
 
         [[nodiscard]] Score::Score evaluate(
             const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
@@ -81,11 +87,11 @@ namespace Constraints {
         /**
          * If x > y, then the bit is set if x (in the previous day) intersects y (in the next day).<br>
          * If y > x, then the bit is set if y (in the previous day) intersects x (in the next day).<br>
-         * If x == y, then the bit is not set, because it is impossible for identical shifts to overlap in adjacent days
-         * (single shift's maximum duration limit is 24H).
+         * If x == y, then the bit is set if x (in the previous day) intersects y (in the next day) or the other way
+         * around.
          */
         BitMatrix::BitSquareMatrix m_IntersectingShiftsInAdjacentDaysMatrix;
     };
 }
 
-#endif //NOOVERLAPCONSTRAINT_H
+#endif //RESTBETWEENSHIFTSCONSTRAINT_H
