@@ -125,6 +125,16 @@ namespace Time {
 
         friend class RangeCollection;
     };
+
+    inline std::ostream& operator<<(std::ostream& out, const Instant& instant) {
+        out << InstantToString(instant);
+        return out;
+    }
+
+    inline std::ostream& operator<<(std::ostream& out, const Range& range) {
+        out << '[' << range.start() << "; " << range.end() << ']';
+        return out;
+    }
 }
 
 #endif //TIMERANGE_H
