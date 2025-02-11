@@ -14,7 +14,8 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
     // TODO: Update your variables here
     //----------------------------------------------------------------------------------
 
-    std::cout << "Dt: " << dt << std::endl;
+    if (dt > 0.02)
+        std::cout << "Delta time: " << dt << std::endl;
 
     bool stateUpdated = false;
 
@@ -33,20 +34,22 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
         }
     }
 
-    const AppState& appState = Application::appState();
+    AppState& appState = Application::appState();
 
     const axis_size_t shiftCount = appState.state.sizeX();
     const axis_size_t employeeCount = appState.state.sizeY();
     const axis_size_t dayCount = appState.state.sizeZ();
     const axis_size_t skillCount = appState.state.sizeW();
 
-    uint64_t maxTotalWorkDuration = 0;
-    uint64_t minTotalWorkDuration = std::numeric_limits<uint64_t>::max();
+    uint64_t &maxTotalWorkDuration = appState.renderCache.maxTotalWorkDuration;
+    uint64_t &minTotalWorkDuration = appState.renderCache.minTotalWorkDuration;
     auto *employeeTotalWorkDuration = appState.renderCache.employeeTotalWorkDuration;
 
     auto *dayCoverageValid = appState.renderCache.dayCoverageValid;
 
     if (stateUpdated) {
+        maxTotalWorkDuration = 0;
+        minTotalWorkDuration = std::numeric_limits<uint64_t>::max();
         for (axis_size_t i = 0; i < employeeCount; ++i) {
             employeeTotalWorkDuration[i] = 0;
             for (axis_size_t j = 0; j < shiftCount; ++j) {
@@ -63,7 +66,6 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
             if (employeeTotalWorkDuration[i] > maxTotalWorkDuration) maxTotalWorkDuration = employeeTotalWorkDuration[i];
             if (employeeTotalWorkDuration[i] < minTotalWorkDuration) minTotalWorkDuration = employeeTotalWorkDuration[i];
         }
-
 
         for (axis_size_t i = 0; i < dayCount; ++i) {
             dayCoverageValid[i] = true;

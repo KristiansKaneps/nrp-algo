@@ -17,8 +17,12 @@ struct AppState {
     std::vector<Constraints::Constraint<Shift, Employee, Day, Skill> *> constraints;
 
     struct RenderCache {
+        uint64_t maxTotalWorkDuration = 0;
+        uint64_t minTotalWorkDuration = std::numeric_limits<uint64_t>::max();
         uint64_t *employeeTotalWorkDuration{};
+
         bool *dayCoverageValid{};
+
         BitArray::BitArray *xw;
 
         ~RenderCache() {
