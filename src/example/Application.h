@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 #include <chrono>
+#include <limits>
 
 #include "raylib.h"
 

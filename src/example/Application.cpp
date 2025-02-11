@@ -46,14 +46,67 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
     int rowHeight = static_cast<int>(static_cast<axis_size_t>(m_ScreenHeight - colIdHeight) / employeeCount);
     int colWidth = static_cast<int>(static_cast<axis_size_t>(m_ScreenWidth - rowIdWidth) / dayCount);
 
+    uint64_t maxTotalWorkDuration = 0;
+    uint64_t minTotalWorkDuration = std::numeric_limits<uint64_t>::max();
+    auto *employeeTotalWorkDuration = new uint64_t[employeeCount];
     for (axis_size_t i = 0; i < employeeCount; ++i) {
-        const Employee &e = appState.state.y().entities()[i];
+        employeeTotalWorkDuration[i] = 0;
+        for (axis_size_t j = 0; j < shiftCount; ++j) {
+            for (axis_size_t k = 0; k < dayCount; ++k) {
+                if (!appState.state.get(j, i, k)) continue;
+                const auto duration = appState.state.x()[j].interval().toRange(appState.state.range().getDayAt(k, appState.state.timeZone())).duration<std::chrono::minutes>();
+                employeeTotalWorkDuration[i] += duration.count();
+            }
+        }
+        if (employeeTotalWorkDuration[i] > maxTotalWorkDuration) maxTotalWorkDuration = employeeTotalWorkDuration[i];
+        if (employeeTotalWorkDuration[i] < minTotalWorkDuration) minTotalWorkDuration = employeeTotalWorkDuration[i];
+    }
+
+    auto *dayCoverageValid = new bool[dayCount];
+    for (axis_size_t i = 0; i < dayCount; ++i) {
+        dayCoverageValid[i] = true;
+        for (axis_size_t j = 0; j < shiftCount; ++j) {
+            const Shift &s = appState.state.x()[j];
+            const auto reqSlots = s.requiredSlotCount();
+            const auto maxSlots = s.slotCount();
+            uint8_t assignedSlots = 0;
+            for (axis_size_t k = 0; k < employeeCount; ++k) {
+                if (!appState.state.get(j, k, i)) continue;
+                assignedSlots++;
+            }
+
+            if (assignedSlots < reqSlots || assignedSlots > maxSlots) {
+                dayCoverageValid[i] = false;
+                break;
+            }
+        }
+    }
+
+    for (axis_size_t i = 0; i < employeeCount; ++i) {
+        const Employee &e = appState.state.y()[i];
 
         const int x = 0;
         const int y = static_cast<int>(static_cast<axis_size_t>(colIdHeight) + i * static_cast<axis_size_t>(rowHeight));
+        DrawLine(0, y, m_ScreenWidth, y, GRAY);
 
         DrawText(std::to_string(e.index()).c_str(), x + 5, y + 2, 10, BLACK);
-        DrawLine(0, y, m_ScreenWidth, y, GRAY);
+
+        const uint64_t totalMinutes = employeeTotalWorkDuration[i];
+        std::stringstream stream;
+        stream << std::fixed << std::setprecision(2) << static_cast<double>(totalMinutes) / 60.0 << 'h';
+        std::string durationStr = stream.str();
+
+        constexpr uint8_t baseChannel = 130;
+        constexpr uint8_t channelSpace = std::numeric_limits<uint8_t>::max() - baseChannel;
+        const double interp = static_cast<double>(totalMinutes - minTotalWorkDuration) / static_cast<double>(maxTotalWorkDuration - minTotalWorkDuration);
+        auto durationColor = Color {
+            .r = static_cast<uint8_t>(baseChannel + channelSpace * interp),
+            .g = baseChannel,
+            .b = baseChannel,
+            .a = 255
+        };
+
+        DrawText(durationStr.c_str(), x + 30, y + 2, 10, durationColor);
     }
 
     for (axis_size_t i = 0; i < dayCount; ++i) {
@@ -61,9 +114,9 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
 
         const int x = static_cast<int>(static_cast<axis_size_t>(rowIdWidth) + i * static_cast<axis_size_t>(colWidth));
         const int y = 0;
-
-        DrawText(std::to_string(d.index()).c_str(), x + 3, y + 5, 10, BLACK);
         DrawLine(x, 0, x, m_ScreenHeight, GRAY);
+
+        DrawText(std::to_string(d.index()).c_str(), x + 3, y + 5, 10, dayCoverageValid[i] ? GREEN : RED);
     }
 
     auto xw = BitArray::BitArray(appState.state.sizeX() * appState.state.sizeW());
@@ -89,6 +142,9 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
             }
         }
     }
+
+    delete[] employeeTotalWorkDuration;
+    delete[] dayCoverageValid;
 
     EndDrawing();
     //----------------------------------------------------------------------------------
