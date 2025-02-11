@@ -27,7 +27,7 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
         }
     }
 
-    const AppState appState = Application::appState();
+    const AppState &appState = Application::appState();
 
     // Draw
     //----------------------------------------------------------------------------------
@@ -89,7 +89,7 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
         const int y = static_cast<int>(static_cast<axis_size_t>(colIdHeight) + i * static_cast<axis_size_t>(rowHeight));
         DrawLine(0, y, m_ScreenWidth, y, GRAY);
 
-        DrawText(std::to_string(e.index()).c_str(), x + 5, y + 2, 10, BLACK);
+        DrawText(std::to_string(e.index() + 1).c_str(), x + 5, y + 2, 10, BLACK);
 
         const uint64_t totalMinutes = employeeTotalWorkDuration[i];
         std::stringstream stream;
@@ -116,7 +116,7 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
         const int y = 0;
         DrawLine(x, 0, x, m_ScreenHeight, GRAY);
 
-        DrawText(std::to_string(d.index()).c_str(), x + 3, y + 5, 10, dayCoverageValid[i] ? GREEN : RED);
+        DrawText(std::to_string(d.index() + 1).c_str(), x + 3, y + 5, 10, dayCoverageValid[i] ? GREEN : RED);
     }
 
     auto xw = BitArray::BitArray(appState.state.sizeX() * appState.state.sizeW());
