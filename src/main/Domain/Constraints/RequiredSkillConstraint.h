@@ -17,7 +17,8 @@ namespace Constraints {
         explicit RequiredSkillConstraint(const Axes::Axis<Domain::Shift>& xAxis,
                                          const Axes::Axis<Domain::Employee>& yAxis,
                                          const Axes::Axis<Domain::Skill>& wAxis) : Constraint("REQUIRED_SKILL"),
-            m_AssignableShiftEmployeeSkillMatrix(xAxis.size(), yAxis.size(), wAxis.size()) {
+            m_AssignableShiftEmployeeSkillMatrix(xAxis.size(), yAxis.size(), wAxis.size()),
+            m_EvaluateCache(wAxis.size()) {
             for (axis_size_t x = 0; x < xAxis.size(); ++x) {
                 const auto& shift = xAxis[x];
                 for (axis_size_t y = 0; y < yAxis.size(); ++y) {
@@ -32,19 +33,17 @@ namespace Constraints {
 
         ~RequiredSkillConstraint() override = default;
 
-        Score::Score
-        evaluate(const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
+        [[nodiscard]] Score::Score evaluate(
+            const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
             score_t totalScore = 0;
-
-            BitArray::BitArray cache(state.sizeW());
 
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
                 for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                     for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
-                        state.getLineXYZ(cache, x, y, z);
+                        state.getLineXYZ(m_EvaluateCache, x, y, z);
                         const auto offsetZ = m_AssignableShiftEmployeeSkillMatrix.offsetZ(x, y);
-                        m_AssignableShiftEmployeeSkillMatrix.validateZ(cache, offsetZ);
-                        totalScore -= static_cast<score_t>(cache.count());
+                        m_AssignableShiftEmployeeSkillMatrix.validateZ(m_EvaluateCache, offsetZ);
+                        totalScore -= static_cast<score_t>(m_EvaluateCache.count());
                     }
                 }
             }
@@ -92,6 +91,8 @@ namespace Constraints {
 
     private:
         BitMatrix::BitMatrix3D m_AssignableShiftEmployeeSkillMatrix;
+
+        BitArray::BitArray m_EvaluateCache;
     };
 }
 

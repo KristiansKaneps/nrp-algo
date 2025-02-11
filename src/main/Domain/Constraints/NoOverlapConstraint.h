@@ -38,8 +38,8 @@ namespace Constraints {
 
         ~NoOverlapConstraint() override = default;
 
-        Score::Score
-        evaluate(const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
+        [[nodiscard]] Score::Score evaluate(
+            const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
             score_t totalScore = 0;
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                 score_t employeeScore = 0;

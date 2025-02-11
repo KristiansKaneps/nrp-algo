@@ -1,5 +1,5 @@
-#ifndef SHIFTMINANDMAXEMPLOYMENTCONSTRAINT_H
-#define SHIFTMINANDMAXEMPLOYMENTCONSTRAINT_H
+#ifndef SHIFTCOVERAGECONSTRAINT_H
+#define SHIFTCOVERAGECONSTRAINT_H
 
 #include "Constraints/Constraint.h"
 
@@ -9,18 +9,20 @@
 #include "Domain/Entities/Skill.h"
 
 namespace Constraints {
-    class ShiftMinAndMaxEmploymentConstraint final : public Constraint<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill> {
+    class ShiftCoverageConstraint final : public Constraint<
+            Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill> {
     public:
-        explicit ShiftMinAndMaxEmploymentConstraint(const Axes::Axis<Domain::Shift>& xAxis) : Constraint("SHIFT_MIN_AND_MAX_EMPLOYMENT") {}
+        explicit ShiftCoverageConstraint(const Axes::Axis<Domain::Shift>& xAxis) : Constraint(
+            "SHIFT_COVERAGE") { }
 
-        ~ShiftMinAndMaxEmploymentConstraint() override = default;
+        ~ShiftCoverageConstraint() override = default;
 
-        Score::Score
-        evaluate(const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
+        [[nodiscard]] Score::Score evaluate(
+            const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
             score_t totalScore = 0;
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
                 score_t shiftScore = 0;
-                const auto &s = state.x()[x];
+                const auto& s = state.x()[x];
                 const axis_size_t slotCount = s.slotCount();
                 const axis_size_t reqSlotCount = s.slotCount();
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
@@ -52,4 +54,4 @@ namespace Constraints {
     };
 }
 
-#endif //SHIFTMINANDMAXEMPLOYMENTCONSTRAINT_H
+#endif //SHIFTCOVERAGECONSTRAINT_H
