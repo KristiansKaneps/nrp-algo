@@ -37,8 +37,9 @@ namespace Time {
             const auto zonedStart = std::chrono::zoned_time(zone, m_Start);
             const auto localRef = std::chrono::floor<std::chrono::days>(zonedStart.get_local_time()) +
                 std::chrono::days(dayIndex);
-            const auto start = zone->to_sys(localRef);
-            return start < m_Start ? m_Start : start;
+            const auto start1 = std::chrono::time_point_cast<DurationType>(zone->to_sys(localRef));
+            const auto start2 = std::chrono::time_point_cast<DurationType>(m_Start);
+            return start1 < start2 ? start2 : start1;
         }
 
         [[nodiscard]] Range rangeTo(const Instant& end) const;
