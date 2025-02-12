@@ -39,8 +39,8 @@ inline AppState *gp_AppState = nullptr;
 
 class Application {
 public:
-    Application(const int width, const int height, std::string title) : m_ScreenWidth(width),
-                                                                        m_ScreenHeight(height),
+    Application(const int width, const int height, std::string title) : m_WindowWidth(width),
+                                                                        m_WindowHeight(height),
                                                                         m_Title(std::move(title)),
                                                                         m_TargetFPS(60) {
         assert(gp_AppState != nullptr && "Application state should be initialized prior.");
@@ -52,8 +52,24 @@ public:
 
     void start() {
         m_WindowIsAlreadyClosed = false;
-        InitWindow(m_ScreenWidth, m_ScreenHeight, m_Title.c_str());
-        SetTargetFPS(60);
+
+        SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+        InitWindow(m_WindowWidth, m_WindowHeight, m_Title.c_str());
+        const int targetMonitor = getCurrentlyActiveMonitorByCursorPosition();
+        // ReSharper disable once CppUseStructuredBinding
+        const Vector2 monitorPosition = GetMonitorPosition(targetMonitor);
+        // ReSharper disable CppTooWideScopeInitStatement
+        const int monitorWidth = GetMonitorWidth(targetMonitor);
+        const int monitorHeight = GetMonitorHeight(targetMonitor);
+        // ReSharper restore CppTooWideScopeInitStatement
+        if (monitorWidth != 0 && monitorHeight != 0) {
+            SetWindowPosition(
+                static_cast<int>(monitorPosition.x) + ((monitorWidth - m_WindowWidth) >> 1),
+                static_cast<int>(monitorPosition.y) + ((monitorHeight - m_WindowHeight) >> 1)
+            );
+        }
+        SetTargetFPS(getPreferableTargetFPS());
+
         onStart();
 
         uint64_t elapsedTicks = 0;
@@ -66,6 +82,12 @@ public:
             before = now;
             const double dt = elapsedTime.count();
             mainLoop(dt, elapsedTicks++);
+
+            if (IsWindowResized()) [[unlikely]] {
+                m_WindowWidth = GetScreenWidth();
+                m_WindowHeight = GetScreenHeight();
+                m_TargetFPS = getPreferableTargetFPS();
+            }
         }
 
         m_WindowIsAlreadyClosed = true;
@@ -81,10 +103,10 @@ public:
     }
 
 private:
-    const int m_ScreenWidth;
-    const int m_ScreenHeight;
+    int m_WindowWidth;
+    int m_WindowHeight;
     const std::string m_Title;
-    const int m_TargetFPS;
+    int m_TargetFPS;
 
     bool m_WindowIsAlreadyClosed = true;
 
@@ -92,6 +114,39 @@ private:
 
     void onStart();
     void onClose();
+
+    static int getPreferableTargetFPS() {
+        int refreshRate = 60;
+        if (const int monitorRefreshRate = GetMonitorRefreshRate(GetCurrentMonitor()); monitorRefreshRate > 0)
+            refreshRate = monitorRefreshRate;
+        return refreshRate;
+    }
+
+    static int getCurrentlyActiveMonitorByCursorPosition() {
+        // ReSharper disable once CppUseStructuredBinding
+        const Vector2 mousePos = GetMousePosition(); // Does not work. GLFW does not provide global mouse position.
+        const auto x = static_cast<int>(mousePos.x);
+        const auto y = static_cast<int>(mousePos.y);
+        const int monitorCount = GetMonitorCount();
+
+        for (int i = 0; i < monitorCount; ++i) {
+            // ReSharper disable once CppUseStructuredBinding
+            const Vector2 monitorPos = GetMonitorPosition(i);
+            // ReSharper disable CppTooWideScopeInitStatement
+            const int width = GetMonitorWidth(i);
+            const int height = GetMonitorHeight(i);
+            const auto x0 = static_cast<int>(monitorPos.x);
+            const auto y0 = static_cast<int>(monitorPos.y);
+            const auto x1 = x0 + width;
+            const auto y1 = y0 + height;
+            // ReSharper restore CppTooWideScopeInitStatement
+
+            if (x >= x0 && x < x1 && y >= y0 && y < y1)
+                return i;
+        }
+
+        return 0;
+    }
 };
 
 

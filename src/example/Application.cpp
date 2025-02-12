@@ -9,13 +9,8 @@ void Application::onStart() {
 void Application::onClose() { g_LocalSearchShouldStop = true; }
 
 void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
-    // Update
-    //----------------------------------------------------------------------------------
-    // TODO: Update your variables here
-    //----------------------------------------------------------------------------------
-
-    if (dt > 0.02)
-        std::cout << "Delta time: " << dt << std::endl;
+    // if (dt > 0.02)
+    //     std::cout << "Delta time: " << dt << std::endl;
 
     bool stateUpdated = false;
 
@@ -96,15 +91,15 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
     constexpr int colIdHeight = 20;
     constexpr int rowIdWidth = 100;
 
-    int rowHeight = static_cast<int>(static_cast<axis_size_t>(m_ScreenHeight - colIdHeight) / employeeCount);
-    int colWidth = static_cast<int>(static_cast<axis_size_t>(m_ScreenWidth - rowIdWidth) / dayCount);
+    int rowHeight = static_cast<int>(static_cast<axis_size_t>(m_WindowHeight - colIdHeight) / employeeCount);
+    int colWidth = static_cast<int>(static_cast<axis_size_t>(m_WindowWidth - rowIdWidth) / dayCount);
 
     for (axis_size_t i = 0; i < employeeCount; ++i) {
         const Employee& e = appState.state.y()[i];
 
         const int x = 0;
         const int y = static_cast<int>(static_cast<axis_size_t>(colIdHeight) + i * static_cast<axis_size_t>(rowHeight));
-        DrawLine(0, y, m_ScreenWidth, y, GRAY);
+        DrawLine(0, y, m_WindowWidth, y, GRAY);
 
         DrawText(std::to_string(e.index() + 1).c_str(), x + 5, y + 2, 10, BLACK);
 
@@ -132,7 +127,7 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
 
         const int x = static_cast<int>(static_cast<axis_size_t>(rowIdWidth) + i * static_cast<axis_size_t>(colWidth));
         const int y = 0;
-        DrawLine(x, 0, x, m_ScreenHeight, GRAY);
+        DrawLine(x, 0, x, m_WindowHeight, GRAY);
 
         DrawText(std::to_string(d.index() + 1).c_str(), x + 3, y + 5, 10, dayCoverageValid[i] ? GREEN : RED);
     }
