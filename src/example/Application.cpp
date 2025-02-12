@@ -101,7 +101,8 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
         const int y = static_cast<int>(static_cast<axis_size_t>(colIdHeight) + i * static_cast<axis_size_t>(rowHeight));
         DrawLine(0, y, m_WindowWidth, y, GRAY);
 
-        DrawText(std::to_string(e.index() + 1).c_str(), x + 5, y + 2, 10, BLACK);
+        const auto &name = e.name();
+        DrawText(name.c_str(), x + 5, y + 2, 10, BLACK);
 
         const uint64_t totalMinutes = employeeTotalWorkDuration[i];
         std::stringstream stream;
@@ -119,7 +120,7 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
             .a = 255
         };
 
-        DrawText(durationStr.c_str(), x + 30, y + 2, 10, durationColor);
+        DrawText(durationStr.c_str(), x + 26 + 4 * name.size(), y + 2, 10, durationColor);
     }
 
     for (axis_size_t i = 0; i < dayCount; ++i) {
