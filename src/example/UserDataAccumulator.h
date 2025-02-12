@@ -2,7 +2,9 @@
 #define USERDATAACCUMULATOR_H
 
 #include <string>
+#include <set>
 #include <unordered_map>
+#include <utility>
 
 #include "Time/RangeCollection.h"
 
@@ -53,46 +55,79 @@ namespace UserData {
                                                        false) { }
     };
 
+    class Skill {
+    public:
+        std::string m_SkillId;
+        float m_Weight;
+
+        Skill(std::string skillId, const float weight) : m_SkillId(std::move(skillId)), m_Weight(weight) { }
+    };
+
     class Accumulator {
     public:
         Accumulator() = default;
         ~Accumulator() = default;
 
-        void addUserFullName(const std::string& email, const std::string& name, const std::string& surname) {
-            m_NameMap.insert({email, name});
-            m_SurnameMap.insert({email, surname});
+        [[nodiscard]] size_t size() const {
+            return m_Ids.size();
         }
 
-        void addAvailability(const std::string& email, const Time::Range& range, const AvailabilityType type,
+        std::string operator[](const size_t index) const {
+            auto iterator = m_Ids.begin();
+            std::advance(iterator, index);
+            return *iterator;
+        }
+
+        std::string name(const size_t index) const {
+            return m_NameMap.at(operator[](index));
+        }
+
+        void addUserFullName(const std::string& id, const std::string& email, const std::string& name, const std::string& surname) {
+            m_Ids.insert(id);
+            m_NameMap.insert({id, name});
+            m_SurnameMap.insert({id, surname});
+            m_EmailMap.insert({id, email});
+        }
+
+        void addAvailability(const std::string& id, const Time::Range& range, const AvailabilityType type,
                              const UnavailabilitySubtype subtype) {
-            ensureUser(email);
+            ensureUser(id);
             switch (type) {
                 case AvailabilityType::UNAVAILABLE:
                     if (subtype > UnavailabilitySubtype::NONE) {
-                        m_AvailabilityPaidUnavailableMap[email].m_RangeCollection.add(range);
-                    } else { m_AvailabilityUnpaidUnavailableMap[email].m_RangeCollection.add(range); }
+                        m_AvailabilityPaidUnavailableMap[id].m_RangeCollection.add(range);
+                    } else { m_AvailabilityUnpaidUnavailableMap[id].m_RangeCollection.add(range); }
                     break;
                 case AvailabilityType::DESIRED:
-                    m_AvailabilityDesiredMap[email].m_RangeCollection.add(range);
+                    m_AvailabilityDesiredMap[id].m_RangeCollection.add(range);
                 default:
                     return;
             }
         }
 
+        void addSkills(const std::string &id, const std::vector<Skill>& skills) {
+            m_SkillMap.insert({id, skills});
+        }
+
     private:
+        std::set<std::string> m_Ids;
+
         std::unordered_map<std::string, std::string> m_NameMap;
         std::unordered_map<std::string, std::string> m_SurnameMap;
+        std::unordered_map<std::string, std::string> m_EmailMap;
         std::unordered_map<std::string, UnpaidUnavailableAvailability> m_AvailabilityUnpaidUnavailableMap;
         std::unordered_map<std::string, PaidUnavailableAvailability> m_AvailabilityPaidUnavailableMap;
         std::unordered_map<std::string, DesiredAvailability> m_AvailabilityDesiredMap;
 
-        void ensureUser(const std::string& email) {
-            if (!m_AvailabilityUnpaidUnavailableMap.contains(email))
-                m_AvailabilityUnpaidUnavailableMap.insert({email, UnpaidUnavailableAvailability()});
-            if (!m_AvailabilityPaidUnavailableMap.contains(email))
-                m_AvailabilityPaidUnavailableMap.insert({email, PaidUnavailableAvailability()});
-            if (!m_AvailabilityDesiredMap.contains(email))
-                m_AvailabilityDesiredMap.insert({email, DesiredAvailability()});
+        std::unordered_map<std::string, std::vector<Skill>> m_SkillMap;
+
+        void ensureUser(const std::string& id) {
+            if (!m_AvailabilityUnpaidUnavailableMap.contains(id))
+                m_AvailabilityUnpaidUnavailableMap.insert({id, UnpaidUnavailableAvailability()});
+            if (!m_AvailabilityPaidUnavailableMap.contains(id))
+                m_AvailabilityPaidUnavailableMap.insert({id, PaidUnavailableAvailability()});
+            if (!m_AvailabilityDesiredMap.contains(id))
+                m_AvailabilityDesiredMap.insert({id, DesiredAvailability()});
         }
     };
 }
