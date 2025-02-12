@@ -123,6 +123,7 @@ void Example::create() {
     state.clearAll();
     // state.random(0.025);
 
+    // ReSharper disable CppDFANullDereference
     gp_AppState = new AppState{
         .score = Evaluation::evaluateState(state, constraints),
         .state = state,
@@ -133,6 +134,7 @@ void Example::create() {
         .state = gp_AppState->state,
         .score = gp_AppState->score,
     };
+    // ReSharper restore CppDFANullDereference
 }
 
 #endif
