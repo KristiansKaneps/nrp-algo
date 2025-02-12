@@ -78,7 +78,7 @@ namespace Time {
         template<typename Duration = std::chrono::minutes>
         Duration duration() const {
             if (m_End == MIN_INSTANT && m_Start == MAX_INSTANT) [[unlikely]] return Duration::zero();
-            return std::chrono::round<Duration>(m_End - m_Start);
+            return std::chrono::floor<Duration>(m_End - m_Start);
         }
 
         template<typename Duration = std::chrono::minutes, typename TimeZone = const std::chrono::time_zone *>
