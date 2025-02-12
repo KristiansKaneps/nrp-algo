@@ -38,6 +38,19 @@ namespace Time {
 
         ~DailyInterval() = default;
 
+        bool operator==(const DailyInterval& other) const {
+            return m_StartInMinutes == other.m_StartInMinutes && m_DurationInMinutes == other.m_DurationInMinutes;
+        }
+
+        template<typename TimeZone = const std::chrono::time_zone *>
+        static DailyInterval fromRange(const Range &range, TimeZone timeZone) {
+            using std::chrono_literals::operator ""min;
+            const day_minutes_t durationMinutes = range.duration(timeZone) / 1min;
+            const auto dayStart = range.getDayStartAt(0, timeZone);
+            const day_minutes_t startMinutes = (range.start() - dayStart) / 1min;
+            return {startMinutes, durationMinutes};
+        }
+
         [[nodiscard]] day_minutes_t startInMinutes() const { return m_StartInMinutes; }
         [[nodiscard]] day_minutes_t durationInMinutes() const { return m_DurationInMinutes; }
 
@@ -174,5 +187,16 @@ namespace Time {
         return out;
     }
 }
+
+template <>
+    struct std::hash<Time::DailyInterval> {
+    std::size_t operator()(const Time::DailyInterval& k) const noexcept {
+        using std::size_t;
+        using std::hash;
+        using std::string;
+        return hash<Time::day_minutes_t>()(k.startInMinutes())
+            ^ hash<Time::day_minutes_t>()(k.durationInMinutes());
+    }
+};
 
 #endif //DAILYINTERVAL_H
