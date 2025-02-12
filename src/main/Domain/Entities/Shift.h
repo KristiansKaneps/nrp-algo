@@ -14,9 +14,9 @@ namespace Domain {
 
     class Shift : public Axes::AxisEntity {
     public:
-        Shift(const axis_size_t index, const Time::DailyInterval& interval, std::string name, const uint8_t slotCount, const uint8_t requiredSlotCount) : m_Index(index),
+        Shift(const axis_size_t index, const Time::DailyInterval& interval, const std::string& name, const uint8_t slotCount, const uint8_t requiredSlotCount) : m_Index(index),
             m_Interval(interval),
-            m_Name(std::move(name)),
+            m_Name(name),
             m_SlotCount(slotCount),
             m_RequiredSlotCount(requiredSlotCount) { }
 
