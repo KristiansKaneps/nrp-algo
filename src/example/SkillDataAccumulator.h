@@ -2,10 +2,16 @@
 #define SKILLDATAACCUMULATOR_H
 
 #include <string>
-#include <unordered_map>
 #include <set>
+#include <unordered_map>
 
 namespace SkillData {
+    struct Skill {
+        std::string id;
+        std::string name;
+        bool complementary;
+    };
+
     class Accumulator {
     public:
         Accumulator() = default;
@@ -15,18 +21,44 @@ namespace SkillData {
             return m_Ids.size();
         }
 
-        std::string operator[](const size_t index) const {
+        Skill operator[](const size_t index) const {
             auto iterator = m_Ids.begin();
             std::advance(iterator, index);
-            return *iterator;
+            const auto &id = *iterator;
+            return {
+                id,
+                m_NameMap.at(id),
+                m_ComplementaryMap.at(id),
+            };
         }
 
-        std::string name(const size_t index) const {
-            return m_NameMap.at(operator[](index));
+        [[nodiscard]] size_t getIndex(const std::string& id) const {
+            size_t i = 0;
+            for(auto it = m_Ids.begin(); it != m_Ids.end(); ++i, ++it) {
+                // ReSharper disable once CppTooWideScopeInitStatement
+                const auto &skillId = *it;
+                if (skillId == id) {
+                    return i;
+                }
+            }
+            return -1;
         }
 
-        bool complementary(const size_t index) const {
-            return m_ComplementaryMap.at(operator[](index));
+        [[nodiscard]] std::set<std::string> ids() const {
+            return m_Ids;
+        }
+
+        void retainValidSkills(const std::set<std::string> &skillIds) {
+            for(auto it = m_Ids.begin(); it != m_Ids.end();) {
+                // ReSharper disable once CppTooWideScopeInitStatement
+                const auto &skillId = *it;
+                if (!skillIds.contains(skillId)) {
+                    m_Ids.erase(it);
+                    continue;
+                }
+
+                ++it;
+            }
         }
 
         void addSkill(const std::string& id, const std::string& name, const bool complementary) {

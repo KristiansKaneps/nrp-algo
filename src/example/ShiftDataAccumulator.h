@@ -22,6 +22,7 @@ namespace ShiftData {
 
     struct ShiftTemplate {
         std::string _shiftId;
+        uint8_t slots = 1;
 
         std::string summary;
         float weight;
@@ -46,6 +47,10 @@ namespace ShiftData {
             return *iterator;
         }
 
+        [[nodiscard]] std::set<std::string> ids() const {
+            return m_Ids;
+        }
+
         std::vector<ShiftTemplate> templates() const {
             std::vector<ShiftTemplate> result;
             for (const auto& val : m_ShiftTemplateMap | std::views::values) {
@@ -65,17 +70,27 @@ namespace ShiftData {
             m_RangeMap.insert({id, range});
             m_LockedMap.insert({id, locked});
 
+            m_ShiftCountPerRangeMap.insert_or_assign(range, m_ShiftCountPerRangeMap.contains(range) ? m_ShiftCountPerRangeMap.at(range) + 1 : 1);
+            const uint32_t slots = m_ShiftCountPerRangeMap.at(range);
+
             // ReSharper disable once CppTooWideScopeInitStatement
             const Time::DailyInterval interval = Time::DailyInterval::fromRange(range, timeZone);
             if (!m_ShiftTemplateMap.contains(interval)) {
                 const ShiftTemplate shiftTemplate = {
                     ._shiftId = id,
+                    .slots = static_cast<uint8_t>(slots),
                     .summary = summary,
                     .weight = weight,
                     .color = color,
                     .interval = interval,
                 };
                 m_ShiftTemplateMap.insert({interval, shiftTemplate});
+            } else {
+                // ReSharper disable once CppTooWideScopeInitStatement
+                auto &shiftTemplate = m_ShiftTemplateMap.at(interval);
+                if (shiftTemplate.slots < slots) {
+                    shiftTemplate.slots = static_cast<uint8_t>(slots);
+                }
             }
         }
 
@@ -105,6 +120,7 @@ namespace ShiftData {
         std::unordered_map<std::string, std::vector<Skill>> m_SkillMap;
 
         std::unordered_map<Time::DailyInterval, ShiftTemplate> m_ShiftTemplateMap;
+        std::unordered_map<Time::Range, uint32_t> m_ShiftCountPerRangeMap;
     };
 }
 

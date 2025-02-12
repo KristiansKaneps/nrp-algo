@@ -55,12 +55,21 @@ namespace UserData {
                                                        false) { }
     };
 
-    class Skill {
-    public:
-        std::string m_SkillId;
-        float m_Weight;
+    struct Skill {
+        std::string skillId;
+        float weight;
+    };
 
-        Skill(std::string skillId, const float weight) : m_SkillId(std::move(skillId)), m_Weight(weight) { }
+    struct Employee {
+        std::string userId;
+        std::string name;
+        std::string surname;
+        std::string email;
+
+        std::vector<Skill> skills;
+        UnpaidUnavailableAvailability unpaidUnavailableAvailability;
+        PaidUnavailableAvailability paidUnavailableAvailability;
+        DesiredAvailability desiredAvailability;
     };
 
     class Accumulator {
@@ -72,14 +81,58 @@ namespace UserData {
             return m_Ids.size();
         }
 
-        std::string operator[](const size_t index) const {
+        Employee operator[](const size_t index) const {
             auto iterator = m_Ids.begin();
             std::advance(iterator, index);
-            return *iterator;
+            const auto &id = *iterator;
+            const auto &skills = m_SkillMap.contains(id) ? m_SkillMap.at(id) : std::vector<Skill>(0);
+            const auto &unpaidUnavailableAvailability = m_AvailabilityUnpaidUnavailableMap.contains(id) ? m_AvailabilityUnpaidUnavailableMap.at(id) : UnpaidUnavailableAvailability();
+            const auto &paidUnavailableAvailability = m_AvailabilityPaidUnavailableMap.contains(id) ? m_AvailabilityPaidUnavailableMap.at(id) : PaidUnavailableAvailability();
+            const auto &desiredAvailability = m_AvailabilityDesiredMap.contains(id) ? m_AvailabilityDesiredMap.at(id) : DesiredAvailability();
+            return {
+                id,
+                m_NameMap.at(id),
+                m_SurnameMap.at(id),
+                m_EmailMap.at(id),
+                skills,
+                unpaidUnavailableAvailability,
+                paidUnavailableAvailability,
+                desiredAvailability,
+            };
         }
 
-        std::string name(const size_t index) const {
-            return m_NameMap.at(operator[](index));
+        [[nodiscard]] std::set<std::string> ids() const {
+            return m_Ids;
+        }
+
+        void retainValidUsersBySkillIds(const std::set<std::string> &skillIds) {
+            for(auto it = m_Ids.begin(); it != m_Ids.end();) {
+                const auto &userId = *it;
+                const auto userSkillEntries = m_SkillMap.find(userId);
+                if (userSkillEntries == m_SkillMap.end()) {
+                    it = m_Ids.erase(it);
+                    continue;
+                }
+                // ReSharper disable once CppTooWideScopeInitStatement
+                const auto &userSkills = userSkillEntries->second;
+
+                bool intersects = false;
+
+                // ReSharper disable once CppUseStructuredBinding
+                for (const auto &userSkill : userSkills) {
+                    if (skillIds.contains(userSkill.skillId)) {
+                        intersects = true;
+                        break;
+                    }
+                }
+
+                if (!intersects) {
+                    it = m_Ids.erase(it);
+                    continue;
+                }
+
+                ++it;
+            }
         }
 
         void addUserFullName(const std::string& id, const std::string& email, const std::string& name, const std::string& surname) {
