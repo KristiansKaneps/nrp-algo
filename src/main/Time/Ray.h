@@ -70,4 +70,15 @@ namespace Time {
     };
 }
 
+template <>
+    struct std::hash<Time::Ray> {
+    std::size_t operator()(const Time::Ray& k) const noexcept {
+        using std::size_t;
+        using std::hash;
+        using std::string;
+        using std::chrono_literals::operator ""s;
+        return hash<uint64_t>()(k.start().time_since_epoch().count());
+    }
+};
+
 #endif //RAY_H

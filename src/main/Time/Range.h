@@ -137,4 +137,16 @@ namespace Time {
     }
 }
 
+template <>
+    struct std::hash<Time::Range> {
+    std::size_t operator()(const Time::Range& k) const noexcept {
+        using std::size_t;
+        using std::hash;
+        using std::string;
+        using std::chrono_literals::operator ""s;
+        return hash<uint64_t>()(k.start().time_since_epoch().count())
+            ^ hash<uint64_t>()(k.end().time_since_epoch().count());
+    }
+};
+
 #endif //TIMERANGE_H
