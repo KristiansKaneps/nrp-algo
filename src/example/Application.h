@@ -1,6 +1,8 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
+#define DISABLE_RAYLIB_LOGGING
+
 #include <string>
 #include <utility>
 #include <chrono>
@@ -24,6 +26,10 @@ public:
 
     void start() {
         m_WindowIsAlreadyClosed = false;
+
+        #ifdef DISABLE_RAYLIB_LOGGING
+        SetTraceLogLevel(LOG_NONE);
+        #endif
 
         SetConfigFlags(FLAG_WINDOW_RESIZABLE);
         InitWindow(m_WindowWidth, m_WindowHeight, m_Title.c_str());
