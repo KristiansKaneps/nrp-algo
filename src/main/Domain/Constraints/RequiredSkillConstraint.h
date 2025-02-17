@@ -69,7 +69,7 @@ namespace Constraints {
                 const auto employeeSkill = employeeSkills.find(skillIndex);
                 if (employeeSkill == employeeSkills.cend()) return false;
 
-                if (const auto employeeSkillWeight = employeeSkill->second; shiftSkillWeight > employeeSkillWeight)
+                if (const auto employeeSkillWeight = employeeSkill->second.weight; shiftSkillWeight > employeeSkillWeight)
                     return false;
             }
 
@@ -82,8 +82,12 @@ namespace Constraints {
                 const auto employeeSkill = employeeSkills.find(skillIndex);
                 if (employeeSkill == employeeSkills.cend()) continue;
 
-                if (shiftSkillWeight <= employeeSkill->second)
+                #if EXAMPLE != 2
+                if (shiftSkillWeight <= employeeSkill->second.weight)
                     return true;
+                #else
+                return true;
+                #endif
             }
 
             return false;
