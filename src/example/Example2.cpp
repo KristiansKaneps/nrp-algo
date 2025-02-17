@@ -7,6 +7,7 @@
 #include "Domain/Constraints/ShiftCoverageConstraint.h"
 #include "Domain/Constraints/EmploymentMaxDurationConstraint.h"
 #include "Domain/Constraints/RestBetweenShiftsConstraint.h"
+#include "Domain/Constraints/EmployeeAvailabilityConstraint.h"
 
 #include "Search/LocalSearch.h"
 
@@ -58,6 +59,24 @@ void Example::create() {
     // Ārsti department ID = '5193c3e7-1a87-40a9-9ef6-f1acb276f00f'
 
     database.execute(
+        "select s.id, s.name, s.complementary from skills s "
+        "join department_skills ds on ds.skill_id = s.id "
+        "where s.organization_id = '79cf52f8-8c59-457e-9b2a-d5ec1f983776' "
+        "and (s.deleted_at is null or s.deleted_at > '" + rangeStart + "') "
+        "and ds.department_id = '5193c3e7-1a87-40a9-9ef6-f1acb276f00f'"
+    );
+
+    SkillData::Accumulator skillAccumulator;
+
+    for (uint32_t i = 0; i < database.tupleCount(); ++i) {
+        const char *skillId = database.value(i, 0);
+        const char *skillName = database.value(i, 1);
+        const char *skillComplementaryStr = database.value(i, 2);
+        const bool skillComplementary = skillComplementaryStr[0] == 't';
+        skillAccumulator.addSkill(skillId, skillName, skillComplementary);
+    }
+
+    database.execute(
         "select u.id, u.name, u.surname, u.email, a.type, a.unavailability_subtype, a.start_date, a.end_date "
         "from users u join organizational_unit_users ouu on ouu.user_id = u.id and ouu.organizational_unit_id = 'b2ecb1e5-0cf6-41e9-95cf-07a30dd14ebd' "
         "left join availabilities a on a.user_id = u.id and a.start_date < '" + rangeEnd + "' and a.end_date > '" + rangeStart + "' "
@@ -91,12 +110,62 @@ void Example::create() {
         }
     }
 
-    for (size_t i = 0; i < userAccumulator.size(); ++i) {
-        const auto &u = userAccumulator[i];
+    std::unordered_map<std::string, std::unordered_map<std::string, Workload::ChangeEvent>> workloadChangeEvents;
+
+    for (uint32_t i = 0; i < userAccumulator.size(); ++i) {
+        const auto &userId = userAccumulator.id(i);
         database.execute(
-            "select usk.skill_id, usk.weight from user_skills usk "
+            "select max(wce.instant), wce.skill_id "
+            "from workload_change_events wce "
+            "where wce.user_id = '" + userId + "' and wce.organizational_unit_id = 'b2ecb1e5-0cf6-41e9-95cf-07a30dd14ebd' "
+            "and wce.instant <= '" + rangeStart + "' "
+            "group by wce.skill_id, wce.dynamic_load_hours, wce.static_load, wce.max_overtime_hours"
+        );
+
+        if (!database.tupleCount()) {
+            userAccumulator.removeUserById(userId);
+            continue;
+        }
+
+        auto events = std::unordered_map<std::string, Workload::ChangeEvent>();
+
+        for (uint32_t j = 0; j < database.tupleCount(); ++j) {
+            const auto instantStr = std::string(database.value(0, 0));
+            const auto skillId = std::string(database.value(0, 1));
+
+            database.execute(
+                "select wce.dynamic_load_hours, wce.static_load, wce.max_overtime_hours "
+                "from workload_change_events wce "
+                "where wce.organizational_unit_id = 'b2ecb1e5-0cf6-41e9-95cf-07a30dd14ebd' "
+                "and wce.skill_id = '" + skillId + "' and wce.user_id = '" + userId + "' "
+                "and wce.instant = '" + instantStr + "'"
+            );
+            assert(database.tupleCount() == 1 && "Workload change event tuple count must be 1");
+
+            const char *dynamicLoadHoursStr = database.value(0, 0);
+            const auto dynamicLoadHours = static_cast<float>(atof(dynamicLoadHoursStr)); // NOLINT(*-err34-c)
+            const char *staticLoadStr = database.value(0, 1);
+            const auto staticLoad = static_cast<float>(atof(staticLoadStr)); // NOLINT(*-err34-c)
+            const char *maxOvertimeHoursStr = database.value(0, 2);
+            const auto maxOvertimeHours = static_cast<float>(atof(maxOvertimeHoursStr)); // NOLINT(*-err34-c)
+
+            events.insert({skillId, {dynamicLoadHours, staticLoad, maxOvertimeHours}});
+        }
+
+        workloadChangeEvents.insert({userId, events});
+    }
+
+    for (size_t i = 0; i < userAccumulator.size(); ++i) {
+        const auto &userId = userAccumulator.id(i);
+
+        const auto eventsIt = workloadChangeEvents.find(userId);
+        if (eventsIt == workloadChangeEvents.end()) continue;
+        const auto &events = eventsIt->second;
+
+        database.execute(
+            "select usk.skill_id, usk.weight, usk.strategy from user_skills usk "
             "join skills s on s.id = usk.skill_id "
-            "where s.organization_id = '79cf52f8-8c59-457e-9b2a-d5ec1f983776' and usk.user_id = '" + u.userId + "' "
+            "where s.organization_id = '79cf52f8-8c59-457e-9b2a-d5ec1f983776' and usk.user_id = '" + userId + "' "
             "and (s.deleted_at is null or s.deleted_at > '" + rangeStart + "') "
             "and (usk.deleted_at is null or usk.deleted_at > '" + rangeStart + "') "
             "and usk.created_at < '" + rangeEnd + "' "
@@ -109,10 +178,17 @@ void Example::create() {
             const char *skillId = database.value(j, 0);
             const char *skillWeightStr = database.value(j, 1);
             const auto skillWeight = static_cast<float>(atof(skillWeightStr)); // NOLINT(*-err34-c)
-            userSkills.emplace_back(skillId, skillWeight);
+            const char *skillStrategyStr = database.value(j, 2);
+            const auto skillStrategy = static_cast<Domain::Workload::Strategy>(atoi(skillStrategyStr)); // NOLINT(*-err34-c)
+
+            if (const auto wceIt = events.find(skillId); wceIt == events.end()) {
+                userSkills.emplace_back(skillId, skillWeight, skillStrategy, Workload::ChangeEvent{});
+            } else {
+                userSkills.emplace_back(skillId, skillWeight, skillStrategy, wceIt->second);
+            }
         }
 
-        userAccumulator.addSkills(u.userId, userSkills);
+        userAccumulator.addSkills(userId, userSkills);
     }
 
     database.execute(
@@ -129,9 +205,9 @@ void Example::create() {
         const char *shiftId = database.value(i, 0);
         const char *shiftSummary = database.value(i, 1);
         const char *shiftWeightStr = database.value(i, 2);
-        const auto shiftWeight = static_cast<float>(atof(shiftWeightStr));
+        const auto shiftWeight = static_cast<float>(atof(shiftWeightStr)); // NOLINT(*-err34-c)
         const char *shiftColorStr = database.value(i, 3);
-        const auto shiftColor = static_cast<ShiftData::shift_color_t>(atoi(shiftColorStr));
+        const auto shiftColor = static_cast<ShiftData::shift_color_t>(atoi(shiftColorStr)); // NOLINT(*-err34-c)
         const char *shiftStartStr = database.value(i, 4);
         const char *shiftEndStr = database.value(i, 5);
         const auto shiftStart = Time::StringToInstant(shiftStartStr);
@@ -167,7 +243,7 @@ void Example::create() {
         std::vector<ShiftData::Skill> shiftSkills;
 
         for (uint32_t j = 0; j < rowCount; ++j) {
-            const char *skillId = database.value(j, 0);
+            const auto skillId = std::string(database.value(j, 0));
             const char *skillWeightStr = database.value(j, 1);
             const auto skillWeight = static_cast<float>(atof(skillWeightStr)); // NOLINT(*-err34-c)
             actualShiftSkillIds.insert(skillId);
@@ -175,24 +251,6 @@ void Example::create() {
         }
 
         shiftAccumulator.addSkills(shiftId, shiftSkills);
-    }
-
-    database.execute(
-        "select s.id, s.name, s.complementary from skills s "
-        "join department_skills ds on ds.skill_id = s.id "
-        "where s.organization_id = '79cf52f8-8c59-457e-9b2a-d5ec1f983776' "
-        "and (s.deleted_at is null or s.deleted_at > '" + rangeStart + "') "
-        "and ds.department_id = '5193c3e7-1a87-40a9-9ef6-f1acb276f00f'"
-    );
-
-    SkillData::Accumulator skillAccumulator;
-
-    for (uint32_t i = 0; i < database.tupleCount(); ++i) {
-        const char *skillId = database.value(i, 0);
-        const char *skillName = database.value(i, 1);
-        const char *skillComplementaryStr = database.value(i, 2);
-        const bool skillComplementary = skillComplementaryStr[0] == 't';
-        skillAccumulator.addSkill(skillId, skillName, skillComplementary);
     }
 
     skillAccumulator.retainValidSkills(actualShiftSkillIds);
@@ -243,12 +301,17 @@ void Example::create() {
     for (axis_size_t i = 0; i < employeeCount; ++i) {
         const auto &u = userAccumulator[i];
         auto &e = *(new(employees + i) Employee(i, u.name));
+
+        e.setUnpaidUnavailableAvailability(u.unpaidUnavailableAvailability);
+        e.setPaidUnavailableAvailability(u.paidUnavailableAvailability);
+        e.setDesiredAvailability(u.desiredAvailability);
+
         for (size_t j = 0; j < u.skills.size(); ++j) {
             // ReSharper disable once CppUseStructuredBinding
             const auto &userSkill = u.skills[j];
             const size_t skillIndex = skillAccumulator.getIndex(userSkill.skillId);
             if (skillIndex == -1) continue;
-            e.addSkill(skillIndex, userSkill.weight);
+            e.addSkill(skillIndex, {userSkill.weight, userSkill.strategy, userSkill.event});
         }
     }
     for (axis_size_t i = 0; i < dayCount; ++i) {
@@ -282,16 +345,18 @@ void Example::create() {
 
     auto *noOverlapConstraint = new Constraints::NoOverlapConstraint(state.x());
     auto *requiredSkillConstraint = new Constraints::RequiredSkillConstraint(state.x(), state.y(), state.w());
-    auto *shiftMinEmploymentConstraint = new Constraints::ShiftCoverageConstraint(state.x());
+    auto *shiftCoverageConstraint = new Constraints::ShiftCoverageConstraint(state.range(), state.timeZone(), state.x(), state.z());
     auto *employmentDurationConstraint = new Constraints::EmploymentMaxDurationConstraint(state.range(), state.timeZone(), state.x(), state.y(), state.z());
     auto *restBetweenShiftsConstraint = new Constraints::RestBetweenShiftsConstraint(state.x());
+    auto *employeeAvailabilityConstraint = new Constraints::EmployeeAvailabilityConstraint(state.range(), state.timeZone(), state.x(), state.y(), state.z());
 
     const auto constraints = std::vector<Constraints::Constraint<Shift, Employee, Day, Skill> *> {
         noOverlapConstraint,
         requiredSkillConstraint,
-        shiftMinEmploymentConstraint,
+        shiftCoverageConstraint,
         employmentDurationConstraint,
         restBetweenShiftsConstraint,
+        employeeAvailabilityConstraint,
     };
 
     std::cout << "State 1 score: " << Evaluation::evaluateState(state, constraints) << std::endl;

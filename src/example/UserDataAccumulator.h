@@ -8,6 +8,8 @@
 
 #include "Time/RangeCollection.h"
 
+#include "Domain/Entities/Employee.h"
+
 namespace UserData {
     enum AvailabilityType {
         AVAILABLE = 0,
@@ -26,38 +28,11 @@ namespace UserData {
         DECREE_LEAVE,
     };
 
-    class Availability {
-    public:
-        Time::RangeCollection m_RangeCollection;
-        AvailabilityType m_Type;
-        bool m_PaidUnavailability;
-
-        Availability(const Time::RangeCollection& rangeCollection, const AvailabilityType type,
-                     const bool paidUnavailability) :
-            m_RangeCollection(rangeCollection),
-            m_Type(type),
-            m_PaidUnavailability(paidUnavailability) { }
-    };
-
-    class DesiredAvailability final : public Availability {
-    public:
-        DesiredAvailability() : Availability(Time::RangeCollection(), AvailabilityType::DESIRED, false) { }
-    };
-
-    class PaidUnavailableAvailability final : public Availability {
-    public:
-        PaidUnavailableAvailability() : Availability(Time::RangeCollection(), AvailabilityType::UNAVAILABLE, true) { }
-    };
-
-    class UnpaidUnavailableAvailability final : public Availability {
-    public:
-        UnpaidUnavailableAvailability() : Availability(Time::RangeCollection(), AvailabilityType::UNAVAILABLE,
-                                                       false) { }
-    };
-
     struct Skill {
         std::string skillId;
         float weight;
+        Domain::Workload::Strategy strategy;
+        Domain::Workload::ChangeEvent event;
     };
 
     struct Employee {
@@ -67,9 +42,9 @@ namespace UserData {
         std::string email;
 
         std::vector<Skill> skills;
-        UnpaidUnavailableAvailability unpaidUnavailableAvailability;
-        PaidUnavailableAvailability paidUnavailableAvailability;
-        DesiredAvailability desiredAvailability;
+        Domain::Availability::UnpaidUnavailableAvailability unpaidUnavailableAvailability;
+        Domain::Availability::PaidUnavailableAvailability paidUnavailableAvailability;
+        Domain::Availability::DesiredAvailability desiredAvailability;
     };
 
     class Accumulator {
@@ -86,9 +61,9 @@ namespace UserData {
             std::advance(iterator, index);
             const auto &id = *iterator;
             const auto &skills = m_SkillMap.contains(id) ? m_SkillMap.at(id) : std::vector<Skill>(0);
-            const auto &unpaidUnavailableAvailability = m_AvailabilityUnpaidUnavailableMap.contains(id) ? m_AvailabilityUnpaidUnavailableMap.at(id) : UnpaidUnavailableAvailability();
-            const auto &paidUnavailableAvailability = m_AvailabilityPaidUnavailableMap.contains(id) ? m_AvailabilityPaidUnavailableMap.at(id) : PaidUnavailableAvailability();
-            const auto &desiredAvailability = m_AvailabilityDesiredMap.contains(id) ? m_AvailabilityDesiredMap.at(id) : DesiredAvailability();
+            const auto &unpaidUnavailableAvailability = m_AvailabilityUnpaidUnavailableMap.contains(id) ? m_AvailabilityUnpaidUnavailableMap.at(id) : Domain::Availability::UnpaidUnavailableAvailability();
+            const auto &paidUnavailableAvailability = m_AvailabilityPaidUnavailableMap.contains(id) ? m_AvailabilityPaidUnavailableMap.at(id) : Domain::Availability::PaidUnavailableAvailability();
+            const auto &desiredAvailability = m_AvailabilityDesiredMap.contains(id) ? m_AvailabilityDesiredMap.at(id) : Domain::Availability::DesiredAvailability();
             return {
                 id,
                 m_NameMap.at(id),
@@ -101,8 +76,24 @@ namespace UserData {
             };
         }
 
+        [[nodiscard]] std::string id(const size_t index) const {
+            auto iterator = m_Ids.begin();
+            std::advance(iterator, index);
+            return *iterator;
+        }
+
         [[nodiscard]] std::set<std::string> ids() const {
             return m_Ids;
+        }
+
+        void removeUserById(const std::string &id) {
+            for(auto it = m_Ids.begin(); it != m_Ids.end();) {
+                if (const auto &userId = *it; userId == id) {
+                    m_Ids.erase(it);
+                    break;
+                }
+                ++it;
+            }
         }
 
         void retainValidUsersBySkillIds(const std::set<std::string> &skillIds) {
@@ -121,7 +112,12 @@ namespace UserData {
                 // ReSharper disable once CppUseStructuredBinding
                 for (const auto &userSkill : userSkills) {
                     if (skillIds.contains(userSkill.skillId)) {
-                        intersects = true;
+                        if (userSkill.event.staticLoad > 0
+                            || userSkill.event.dynamicLoadHours > 0
+                            || userSkill.event.maxOvertimeHours > 0) {
+                            intersects = true;
+                            break;
+                        }
                         break;
                     }
                 }
@@ -168,19 +164,19 @@ namespace UserData {
         std::unordered_map<std::string, std::string> m_NameMap;
         std::unordered_map<std::string, std::string> m_SurnameMap;
         std::unordered_map<std::string, std::string> m_EmailMap;
-        std::unordered_map<std::string, UnpaidUnavailableAvailability> m_AvailabilityUnpaidUnavailableMap;
-        std::unordered_map<std::string, PaidUnavailableAvailability> m_AvailabilityPaidUnavailableMap;
-        std::unordered_map<std::string, DesiredAvailability> m_AvailabilityDesiredMap;
+        std::unordered_map<std::string, Domain::Availability::UnpaidUnavailableAvailability> m_AvailabilityUnpaidUnavailableMap;
+        std::unordered_map<std::string, Domain::Availability::PaidUnavailableAvailability> m_AvailabilityPaidUnavailableMap;
+        std::unordered_map<std::string, Domain::Availability::DesiredAvailability> m_AvailabilityDesiredMap;
 
         std::unordered_map<std::string, std::vector<Skill>> m_SkillMap;
 
         void ensureUser(const std::string& id) {
             if (!m_AvailabilityUnpaidUnavailableMap.contains(id))
-                m_AvailabilityUnpaidUnavailableMap.insert({id, UnpaidUnavailableAvailability()});
+                m_AvailabilityUnpaidUnavailableMap.insert({id, Domain::Availability::UnpaidUnavailableAvailability()});
             if (!m_AvailabilityPaidUnavailableMap.contains(id))
-                m_AvailabilityPaidUnavailableMap.insert({id, PaidUnavailableAvailability()});
+                m_AvailabilityPaidUnavailableMap.insert({id, Domain::Availability::PaidUnavailableAvailability()});
             if (!m_AvailabilityDesiredMap.contains(id))
-                m_AvailabilityDesiredMap.insert({id, DesiredAvailability()});
+                m_AvailabilityDesiredMap.insert({id, Domain::Availability::DesiredAvailability()});
         }
     };
 }

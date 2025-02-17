@@ -20,9 +20,9 @@ namespace Domain {
             m_SlotCount(slotCount),
             m_RequiredSlotCount(requiredSlotCount) { }
 
-        Shift(const axis_size_t index, const Time::DailyInterval& interval, std::string name, const uint8_t slotCount) : Shift(index, interval, std::move(name), slotCount, slotCount) { }
+        Shift(const axis_size_t index, const Time::DailyInterval& interval, const std::string& name, const uint8_t slotCount) : Shift(index, interval, name, slotCount, slotCount) { }
 
-        Shift(const axis_size_t index, const Time::DailyInterval& interval, std::string name) : Shift(index, interval, std::move(name), 1) { }
+        Shift(const axis_size_t index, const Time::DailyInterval& interval, const std::string& name) : Shift(index, interval, name, 1) { }
 
         [[nodiscard]] axis_size_t index() const { return m_Index; }
         [[nodiscard]] const Time::DailyInterval& interval() const { return m_Interval; }

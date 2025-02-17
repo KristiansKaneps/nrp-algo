@@ -36,36 +36,65 @@ namespace Constraints {
         ~EmploymentMaxDurationConstraint() override {
             delete[] mp_ShiftDurationInMinutes;
             mp_ShiftDurationInMinutes = nullptr;
-        };
+        }
 
         [[nodiscard]] Score::Score evaluate(
             const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
-            score_t totalScore = 0;
+            Score::Score totalScore{};
 
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
-                score_t employeeScore = 0;
+                score_t employeeStrictScore = 0;
+                score_t employeeHardScore = 0;
 
                 const auto& e = state.y()[y];
 
-                int64_t totalDurationInMinutes {};
+                for (axis_size_t w = 0; w < state.sizeW(); ++w) {
+                    const auto& skillIndex = state.w()[w].index();
+                    const auto *s = e.skill(skillIndex);
 
-                for (axis_size_t x = 0; x < state.sizeX(); ++x) {
-                    for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
-                        if (!state.get(x, y, z)) continue;
-                        // ReSharper disable once CppDFANullDereference
-                        totalDurationInMinutes += static_cast<int64_t>(mp_ShiftDurationInMinutes[x * state.sizeZ() +
-                            z]);
+                    constexpr int64_t workloadDurationInRange = 168 * 60L;
+
+                    int64_t maxWorkloadDurationInMinutes = 0;
+                    int64_t maxWorkloadOvertimeDurationInMinutes = 0;
+
+                    if (s != nullptr && s->strategy != Workload::Strategy::NONE) {
+                        maxWorkloadOvertimeDurationInMinutes = static_cast<int64_t>(s->event.maxOvertimeHours * 60L);
+                        if (s->strategy == Workload::Strategy::STATIC) {
+                            maxWorkloadDurationInMinutes = static_cast<int64_t>(workloadDurationInRange * s->event.staticLoad);
+                        } else if (s->strategy == Workload::Strategy::DYNAMIC) {
+                            maxWorkloadDurationInMinutes = static_cast<int64_t>(s->event.dynamicLoadHours * 60L);
+                        }
+                    }
+
+                    int64_t totalDurationInMinutes {};
+
+                    for (axis_size_t x = 0; x < state.sizeX(); ++x) {
+                        for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
+                            if (!state.get(x, y, z, w)) continue;
+                            // ReSharper disable once CppDFANullDereference
+                            totalDurationInMinutes += static_cast<int64_t>(mp_ShiftDurationInMinutes[x * state.sizeZ() +
+                                z]);
+                        }
+                    }
+
+                    const int64_t diff = maxWorkloadDurationInMinutes - totalDurationInMinutes;
+
+                    if (diff < 0) {
+                        const int64_t overtimeDiff = diff + maxWorkloadOvertimeDurationInMinutes;
+
+                        if (overtimeDiff < 0) {
+                            employeeStrictScore -= 1;
+                        } else {
+                            employeeHardScore += 2 * diff;
+                        }
                     }
                 }
 
-                const int64_t diff = 168 * 60L - totalDurationInMinutes;
-
-                if (diff < 0) { employeeScore += diff; }
-
-                totalScore += employeeScore;
+                totalScore.strict += employeeStrictScore;
+                totalScore.hard += employeeHardScore;
             }
 
-            return {.strict = totalScore, .hard = 0, .soft = 0};
+            return totalScore;
         }
 
     private:

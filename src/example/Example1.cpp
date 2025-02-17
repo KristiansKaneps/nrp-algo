@@ -7,6 +7,7 @@
 #include "Domain/Constraints/ShiftCoverageConstraint.h"
 #include "Domain/Constraints/EmploymentMaxDurationConstraint.h"
 #include "Domain/Constraints/RestBetweenShiftsConstraint.h"
+#include "Domain/Constraints/EmployeeAvailabilityConstraint.h"
 
 #include "Search/LocalSearch.h"
 
@@ -62,9 +63,9 @@ void Example::create() {
 
     for (uint32_t i = 0; i < skillCount; ++i) { new(skills + i) Skill(i, std::to_string(i)); }
 
-    employees[2].addSkill(0, 1.0f);
-    employees[2].addSkill(3, 1.0f);
-    employees[2].addSkill(1, 1.0f);
+    employees[2].addSkill(0, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
+    employees[2].addSkill(3, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
+    employees[2].addSkill(1, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
 
     shifts[0].addRequiredAllSkill(0, 1.0f);
     shifts[0].addRequiredOneSkill(1, 1.0f);
@@ -107,16 +108,18 @@ void Example::create() {
 
     auto *noOverlapConstraint = new Constraints::NoOverlapConstraint(state.x());
     auto *requiredSkillConstraint = new Constraints::RequiredSkillConstraint(state.x(), state.y(), state.w());
-    auto *shiftMinEmploymentConstraint = new Constraints::ShiftCoverageConstraint(state.x());
+    auto *shiftCoverageConstraint = new Constraints::ShiftCoverageConstraint(state.range(), state.timeZone(), state.x(), state.z());
     auto *employmentDurationConstraint = new Constraints::EmploymentMaxDurationConstraint(state.range(), state.timeZone(), state.x(), state.y(), state.z());
     auto *restBetweenShiftsConstraint = new Constraints::RestBetweenShiftsConstraint(state.x());
+    auto *employeeAvailabilityConstraint = new Constraints::EmployeeAvailabilityConstraint(state.range(), state.timeZone(), state.x(), state.y(), state.z());
 
     const auto constraints = std::vector<Constraints::Constraint<Shift, Employee, Day, Skill> *> {
         noOverlapConstraint,
         requiredSkillConstraint,
-        shiftMinEmploymentConstraint,
+        shiftCoverageConstraint,
         employmentDurationConstraint,
         restBetweenShiftsConstraint,
+        employeeAvailabilityConstraint,
     };
 
     std::cout << "State 1 score: " << Evaluation::evaluateState(state, constraints) << std::endl;
