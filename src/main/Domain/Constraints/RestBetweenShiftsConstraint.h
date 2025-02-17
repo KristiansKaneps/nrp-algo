@@ -20,24 +20,25 @@ namespace Constraints {
             m_IntersectingShiftsInSameDayMatrix(BitMatrix::createIdentitySymmetricalMatrix(xAxis.size())),
             m_IntersectingShiftsInAdjacentDaysMatrix(BitMatrix::createSquareMatrix(xAxis.size())) {
             for (axis_size_t x1 = 0; x1 < xAxis.size(); ++x1) {
-                const auto interval1 = xAxis[x1].interval().withPadding(12 * 60);
-                for (axis_size_t x2 = x1; x2 < xAxis.size(); ++x2) {
-                    const auto interval2 = xAxis[x2].interval().withPadding(12 * 60);
+                const auto interval1 = xAxis[x1].interval();
+                const auto paddedInterval1 = xAxis[x1].interval().withPadding(12 * 60);
 
-                    if (x1 == x2) [[unlikely]] {
-                        if (
-                            interval1.intersectsOtherFromNextDay(interval2)
-                            || interval1.intersectsOtherFromPrevDay(interval2)
-                        )
-                            m_IntersectingShiftsInSameDayMatrix.set(x1, x2);
-                    } else {
-                        if (interval1.intersectsInSameDay(interval2))
-                            m_IntersectingShiftsInSameDayMatrix.set(x1, x2);
-                        if (interval1.intersectsOtherFromNextDay(interval2))
-                            m_IntersectingShiftsInAdjacentDaysMatrix.set(x1, x2);
-                        if (interval1.intersectsOtherFromPrevDay(interval2))
-                            m_IntersectingShiftsInAdjacentDaysMatrix.set(x2, x1);
-                    }
+                if (
+                    paddedInterval1.intersectsOtherFromNextDay(interval1)
+                    || paddedInterval1.intersectsOtherFromPrevDay(interval1)
+                )
+                    m_IntersectingShiftsInSameDayMatrix.set(x1, x1);
+
+                for (axis_size_t x2 = x1 + 1; x2 < xAxis.size(); ++x2) {
+                    const auto interval2 = xAxis[x2].interval();
+                    const auto paddedInterval2 = xAxis[x2].interval().withPadding(12 * 60);
+
+                    if (interval1.intersectsInSameDay(paddedInterval2) || paddedInterval1.intersectsInSameDay(interval2))
+                        m_IntersectingShiftsInSameDayMatrix.set(x1, x2);
+                    if (interval1.intersectsOtherFromNextDay(paddedInterval2) || paddedInterval1.intersectsOtherFromNextDay(interval2))
+                        m_IntersectingShiftsInAdjacentDaysMatrix.set(x1, x2);
+                    if (interval1.intersectsOtherFromPrevDay(paddedInterval2) || paddedInterval1.intersectsOtherFromPrevDay(interval2))
+                        m_IntersectingShiftsInAdjacentDaysMatrix.set(x2, x1);
                 }
             }
         }
