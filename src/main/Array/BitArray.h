@@ -403,7 +403,8 @@ namespace BitArray {
             for (size_t i = 0; i < iterationCount; ++i) {
                 uint64_t word = this->word(offset + (i << 6));
                 for (uint8_t j = 0; j < 64; ++j) {
-                    if (word & 1 << j == 0) continue;
+                    // ReSharper disable once CppRedundantParentheses
+                    if ((word & (1 << j)) == 0) continue;
                     const array_size_t index = i << 6 | j;
                     result.push_back(index);
                 }
@@ -411,7 +412,8 @@ namespace BitArray {
             if (const auto remainingBits = static_cast<int8_t>(dst.m_Size & 63); remainingBits > 0) {
                 uint64_t word = this->wordn(iterationCount << 6, remainingBits);
                 for (uint8_t j = 0; j < remainingBits; ++j) {
-                    if (word & 1 << j == 0) continue;
+                    // ReSharper disable once CppRedundantParentheses
+                    if ((word & (1 << j)) == 0) continue;
                     const array_size_t index = iterationCount << 6 | j;
                     result.push_back(index);
                 }
