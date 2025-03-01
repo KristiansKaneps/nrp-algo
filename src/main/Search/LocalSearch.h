@@ -5,18 +5,22 @@
 
 #include "State/State.h"
 #include "Constraints/Constraint.h"
+#include "Heuristics/HeuristicProvider.h"
 #include "Score/Score.h"
 
 namespace Search {
     template<typename X, typename Y, typename Z, typename W>
     class LocalSearch {
     public:
-        // ReSharper disable once CppRedundantQualifier
-        explicit LocalSearch(const State::State<X, Y, Z, W> *initialState,
-                             const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints) :
+        // ReSharper disable CppRedundantQualifier
+        explicit LocalSearch(const ::State::State<X, Y, Z, W> *initialState,
+                             const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints,
+                             const ::Heuristics::HeuristicProvider<X, Y, Z, W> &heuristicProvider) :
             mp_InitialState(initialState),
             m_Constraints(constraints),
+            m_HeuristicProvider(heuristicProvider),
             m_Task(*initialState, m_Constraints) { }
+        // ReSharper restore CppRedundantQualifier
 
         LocalSearch(const LocalSearch& other) = default;
 
@@ -28,7 +32,7 @@ namespace Search {
         bool step() {
             // Finalizer
             if (shouldStep()) [[likely]] {
-                m_Task.step();
+                m_Task.step(m_HeuristicProvider);
                 return m_Task.m_NewBestFound;
                 // ReSharper disable once CppRedundantElseKeywordInsideCompoundStatement
             } else {
@@ -40,7 +44,8 @@ namespace Search {
 
         [[nodiscard]] bool isDone() const { return m_Done; }
 
-        State::State<X, Y, Z, W> getBestState() const { return m_Task.getOutputState(); }
+        // ReSharper disable once CppRedundantQualifier
+        ::State::State<X, Y, Z, W> getBestState() const { return m_Task.getOutputState(); }
         [[nodiscard]] Score::Score getBestScore() const { return m_Task.getOutputScore(); }
 
         [[nodiscard]] Score::Score evaluateCurrentBestState() const {
@@ -69,9 +74,12 @@ namespace Search {
 
     private:
         bool m_Done = false;
-        const State::State<X, Y, Z, W> *mp_InitialState;
+        // ReSharper disable once CppRedundantQualifier
+        const ::State::State<X, Y, Z, W> *mp_InitialState;
         // ReSharper disable once CppRedundantQualifier
         const std::vector<::Constraints::Constraint<X, Y, Z, W> *> m_Constraints;
+        // ReSharper disable once CppRedundantQualifier
+        const ::Heuristics::HeuristicProvider<X, Y, Z, W> m_HeuristicProvider;
         Task::LocalSearchTask<X, Y, Z, W> m_Task;
     };
 }

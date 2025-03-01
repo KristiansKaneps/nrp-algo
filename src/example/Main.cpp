@@ -31,7 +31,7 @@ static void onNewBest(const Search::LocalSearch<Shift, Employee, Day, Skill> &lo
 }
 
 void solve() {
-    Search::LocalSearch localSearch(&gp_AppState->state, gp_AppState->constraints);
+    Search::LocalSearch localSearch(&gp_AppState->state, gp_AppState->constraints, gp_AppState->heuristicProvider);
 
     bool mutexWasLocked = false;
 

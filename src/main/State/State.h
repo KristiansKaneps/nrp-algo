@@ -71,6 +71,12 @@ namespace State {
         [[nodiscard]] const Axes::AxisEntity& z(const axis_size_t zIndex) const { return (*m_Z)[zIndex]; }
         [[nodiscard]] const Axes::AxisEntity& w(const axis_size_t wIndex) const { return (*m_W)[wIndex]; }
 
+        uint8_t toggle(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w) {
+            const uint8_t newValue = m_Matrix.get(index(x, y, z, w) ^ 1) & 1;
+            m_Matrix.assign(index(x, y, z, w), newValue);
+            return newValue;
+        }
+
         void assign(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w,
                     const bool value) { m_Matrix.assign(index(x, y, z, w), static_cast<uint8_t>(value)); }
 

@@ -9,11 +9,12 @@
 #include "Domain/Constraints/RestBetweenShiftsConstraint.h"
 #include "Domain/Constraints/EmployeeAvailabilityConstraint.h"
 
+#include "Domain/Heuristics/DomainHeuristicProvider.h"
+#include "Domain/Heuristics/RandomAssignmentTogglePerturbator.h"
+
 #include "Search/LocalSearch.h"
 
 #include "Time/RangeCollection.h"
-
-#include "State/State.h"
 
 using namespace Domain;
 
@@ -86,7 +87,7 @@ void Example::create() {
     auto *axisZ = new Axes::Axis(days, dayCount);
     auto *axisW = new Axes::Axis(skills, skillCount);
 
-    State::State<Shift, Employee, Day, Skill> state(
+    Domain::State::DomainState state(
         range,
         timeZone,
         axisX,
@@ -122,6 +123,12 @@ void Example::create() {
         employeeAvailabilityConstraint,
     };
 
+    auto heuristic1 = new Domain::Heuristics::RandomAssignmentTogglePerturbator();
+
+    const auto heuristicProvider = Domain::Heuristics::DomainHeuristicProvider({
+        heuristic1,
+    });
+
     std::cout << "State 1 score: " << Evaluation::evaluateState(state, constraints) << std::endl;
     state.clearAll();
     // state.random(0.025);
@@ -131,6 +138,7 @@ void Example::create() {
         .score = Evaluation::evaluateState(state, constraints),
         .state = state,
         .constraints = constraints,
+        .heuristicProvider = heuristicProvider,
     };
 
     gp_Update = new LocalSearchUpdate{
