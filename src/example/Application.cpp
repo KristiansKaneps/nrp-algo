@@ -1,9 +1,101 @@
 #include "Application.h"
 
+using State::state_size_t;
+
+struct DayAvailability {
+    struct Region {
+        float start, width;
+    };
+
+    Availability::Type type;
+    Region region;
+};
+
+std::vector<std::vector<DayAvailability>> employeeAvailabilityPerDay {};
+
 void Application::onStart() {
     appState().renderCache.employeeTotalWorkDuration = new uint64_t[appState().state.sizeY()];
     appState().renderCache.dayCoverageValid = new bool[appState().state.sizeZ()];
     appState().renderCache.xw = new BitArray::BitArray(appState().state.sizeX() * appState().state.sizeW());
+
+    employeeAvailabilityPerDay.reserve(appState().state.sizeY() * appState().state.sizeZ());
+    for (axis_size_t z = 0; z < appState().state.sizeZ(); ++z) {
+        const auto &dayRange = appState().state.range().getDayRangeAt(z, appState().state.timeZone());
+        for (axis_size_t y = 0; y < appState().state.sizeY(); ++y) {
+            const auto &e = appState().state.y()[y];
+
+            std::vector<DayAvailability> dayAvailabilities;
+
+            const auto &unpaidUnavailabilityRanges = e.unpaidUnavailableAvailability().m_RangeCollection.ranges();
+            for (auto it = unpaidUnavailabilityRanges.cbegin(); it != unpaidUnavailabilityRanges.cend(); ++it) {
+                const auto &range = *it;
+                if (range.intersects(dayRange)) {
+                    const auto &start = range.start() > dayRange.start() ? range.start() : dayRange.start();
+                    const auto &end = range.end() > dayRange.end() ? dayRange.end() : range.end();
+
+                    using std::chrono_literals::operator ""min;
+
+                    const auto dayDuration = static_cast<double>(dayRange.duration<std::chrono::minutes>() / 1min);
+                    const auto startOffset = static_cast<double>(duration_cast<std::chrono::minutes>(start - dayRange.start()) / 1min);
+                    const auto endOffset = static_cast<double>(duration_cast<std::chrono::minutes>(dayRange.end() - end) / 1min);
+
+                    const auto startPercentage = static_cast<float>(startOffset / dayDuration);
+                    const auto widthPercentage = static_cast<float>((endOffset - startOffset) / dayDuration);
+
+                    dayAvailabilities.push_back({Availability::Type::UNAVAILABLE, {startPercentage, widthPercentage}});
+                }
+            }
+
+            const auto &paidUnavailabilityRanges = e.paidUnavailableAvailability().m_RangeCollection.ranges();
+            for (auto it = paidUnavailabilityRanges.cbegin(); it != paidUnavailabilityRanges.cend(); ++it) {
+                const auto &range = *it;
+                if (range.intersects(dayRange)) {
+                    const auto &start = range.start() > dayRange.start() ? range.start() : dayRange.start();
+                    const auto &end = range.end() > dayRange.end() ? dayRange.end() : range.end();
+
+                    using std::chrono_literals::operator ""min;
+
+                    const auto dayDuration = static_cast<double>(dayRange.duration<std::chrono::minutes>() / 1min);
+                    const auto startOffset = static_cast<double>(duration_cast<std::chrono::minutes>(start - dayRange.start()) / 1min);
+                    const auto endOffset = static_cast<double>(duration_cast<std::chrono::minutes>(dayRange.end() - end) / 1min);
+
+                    const auto startPercentage = static_cast<float>(startOffset / dayDuration);
+                    const auto widthPercentage = static_cast<float>((endOffset - startOffset) / dayDuration);
+
+                    dayAvailabilities.push_back({Availability::Type::UNAVAILABLE, {startPercentage, widthPercentage}});
+                }
+            }
+
+            const auto &desiredRanges = e.desiredAvailability().m_RangeCollection.ranges();
+            for (auto it = desiredRanges.cbegin(); it != desiredRanges.cend(); ++it) {
+                const auto &range = *it;
+                if (range.intersects(dayRange)) {
+                    const auto &start = range.start() > dayRange.start() ? range.start() : dayRange.start();
+                    const auto &end = range.end() > dayRange.end() ? dayRange.end() : range.end();
+
+                    using std::chrono_literals::operator ""min;
+
+                    const auto dayDuration = static_cast<double>(dayRange.duration<std::chrono::minutes>() / 1min);
+                    const auto startOffset = static_cast<double>(duration_cast<std::chrono::minutes>(start - dayRange.start()) / 1min);
+                    const auto endOffset = static_cast<double>(duration_cast<std::chrono::minutes>(dayRange.end() - end) / 1min);
+
+                    const auto startPercentage = static_cast<float>(startOffset / dayDuration);
+                    const auto widthPercentage = static_cast<float>((endOffset - startOffset) / dayDuration);
+
+                    dayAvailabilities.push_back({Availability::Type::DESIRED, {startPercentage, widthPercentage}});
+                }
+            }
+
+            employeeAvailabilityPerDay.push_back(dayAvailabilities);
+
+            // if (e.unpaidUnavailableAvailability().m_RangeCollection.intersects(dayRange) || e.paidUnavailableAvailability().m_RangeCollection.intersects(dayRange))
+            //     employeeAvailabilityPerDay[y * appState().state.sizeZ() + z] = Availability::Type::UNAVAILABLE;
+            // else if (e.desiredAvailability().m_RangeCollection.intersects(dayRange))
+            //     employeeAvailabilityPerDay[y * appState().state.sizeZ() + z] = Availability::Type::DESIRED;
+            // else
+            //     employeeAvailabilityPerDay[y * appState().state.sizeZ() + z] = Availability::Type::AVAILABLE;
+        }
+    }
 }
 
 void Application::onClose() { g_LocalSearchShouldStop = true; }
@@ -135,12 +227,23 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
 
     auto xw = *appState.renderCache.xw;
     for (axis_size_t i = 0; i < dayCount; ++i) {
-        const int ox = static_cast<int>(static_cast<axis_size_t>(rowIdWidth) + i * static_cast<axis_size_t>(colWidth)) +
-            2;
+        const int ox = static_cast<int>(static_cast<axis_size_t>(rowIdWidth) + i * static_cast<axis_size_t>(colWidth));
 
         for (axis_size_t j = 0; j < employeeCount; ++j) {
-            const int oy = static_cast<int>(static_cast<axis_size_t>(colIdHeight) + j * static_cast<axis_size_t>(
-                rowHeight)) + 2;
+            const int oy = static_cast<int>(static_cast<axis_size_t>(colIdHeight) + j * static_cast<axis_size_t>(rowHeight));
+
+            const auto &availabilities = employeeAvailabilityPerDay[j * appState.state.sizeZ() + i];
+            for (const auto &availability : availabilities) {
+                if (availability.type != Availability::Type::AVAILABLE) {
+                    const Color color = availability.type == Availability::Type::UNAVAILABLE ? Color {255, 127, 127, 63} : Color {127, 255, 127, 63};
+
+                    const int rectX = ox + (colWidth - 1) * availability.region.start;
+                    const int rectW = (colWidth - 1) * availability.region.width;
+
+                    DrawRectangle(rectX, oy, rectW, rowHeight - 1, color);
+                }
+            }
+
 
             appState.state.getPlaneXW(xw, j, i);
 
@@ -150,7 +253,7 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
                 for (axis_size_t l = 0; l < skillCount; ++l) {
                     if (xw.get(k * skillCount + l)) {
                         const Shift& s = appState.state.x().entities()[k];
-                        DrawText(s.name().c_str(), ox + inlineOffset, oy, 8, BLACK);
+                        DrawText(s.name().c_str(), ox + inlineOffset + 2, oy + 2, 8, BLACK);
                         inlineOffset += 7;
                         break;
                     }
