@@ -12,13 +12,14 @@ namespace Heuristics {
 
         ~HeuristicProvider() = default;
 
-        Perturbator<X, Y, Z, W> * operator[](const size_t index) const { return m_Perturbators[index]; }
+        Perturbator<X, Y, Z, W> * operator[](const size_t index) const {
+            auto *perturbator = m_Perturbators[index];
+            perturbator->reset();
+            return perturbator;
+        }
 
     private:
-        /**
-         * Perturbators should be copied.
-         */
-        std::vector<Perturbator<X, Y, Z, W> *> m_Perturbators;
+        const std::vector<Perturbator<X, Y, Z, W> *> m_Perturbators;
     };
 }
 

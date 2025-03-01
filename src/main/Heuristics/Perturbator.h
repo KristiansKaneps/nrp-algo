@@ -4,6 +4,9 @@
 #include "State/State.h"
 
 namespace Heuristics {
+    template<typename X, typename Y, typename Z, typename W>
+    class HeuristicProvider;
+
     /**
      * A perturbator is a low level heuristic (LLH) that modifies a candidate solution resulting in another candidate
      * solution.
@@ -16,6 +19,10 @@ namespace Heuristics {
 
         virtual void modify(State::State<X, Y, Z, W>& state) = 0;
         virtual void revert(State::State<X, Y, Z, W>& state) const = 0;
+    private:
+        virtual void reset() { }
+
+        friend class HeuristicProvider<X, Y, Z, W>;
     };
 
     template<typename X, typename Y, typename Z, typename W>
