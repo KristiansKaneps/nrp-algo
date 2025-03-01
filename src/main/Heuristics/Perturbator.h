@@ -19,9 +19,9 @@ namespace Heuristics {
 
         virtual void modify(State::State<X, Y, Z, W>& state) = 0;
         virtual void revert(State::State<X, Y, Z, W>& state) const = 0;
-    private:
+    protected:
         virtual void reset() { }
-
+    private:
         friend class HeuristicProvider<X, Y, Z, W>;
     };
 
