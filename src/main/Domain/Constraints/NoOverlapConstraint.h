@@ -1,18 +1,13 @@
 #ifndef NOOVERLAPCONSTRAINT_H
 #define NOOVERLAPCONSTRAINT_H
 
-#include "Constraints/Constraint.h"
+#include "DomainConstraint.h"
 
 #include "Array/BitSquareMatrix.h"
 #include "Array/BitSymmetricalMatrix.h"
 
-#include "Domain/Entities/Shift.h"
-#include "Domain/Entities/Employee.h"
-#include "Domain/Entities/Day.h"
-#include "Domain/Entities/Skill.h"
-
-namespace Constraints {
-    class NoOverlapConstraint final : public Constraint<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill> {
+namespace Domain::Constraints {
+    class NoOverlapConstraint final : public DomainConstraint {
     public:
         explicit NoOverlapConstraint(const Axes::Axis<Domain::Shift>& xAxis) : Constraint("NO_OVERLAP"),
                                                                                m_IntersectingShiftsInSameDayMatrix(

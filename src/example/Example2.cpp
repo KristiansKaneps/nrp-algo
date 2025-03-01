@@ -343,14 +343,14 @@ void Example::create() {
 
     state.printSize();
 
-    auto *noOverlapConstraint = new Constraints::NoOverlapConstraint(state.x());
-    auto *requiredSkillConstraint = new Constraints::RequiredSkillConstraint(state.x(), state.y(), state.w());
-    auto *shiftCoverageConstraint = new Constraints::ShiftCoverageConstraint(state.range(), state.timeZone(), state.x(), state.z());
-    auto *employmentDurationConstraint = new Constraints::EmploymentMaxDurationConstraint(state.range(), state.timeZone(), state.x(), state.y(), state.z());
-    auto *restBetweenShiftsConstraint = new Constraints::RestBetweenShiftsConstraint(state.x());
-    auto *employeeAvailabilityConstraint = new Constraints::EmployeeAvailabilityConstraint(state.range(), state.timeZone(), state.x(), state.y(), state.z());
+    auto *noOverlapConstraint = new Domain::Constraints::NoOverlapConstraint(state.x());
+    auto *requiredSkillConstraint = new Domain::Constraints::RequiredSkillConstraint(state.x(), state.y(), state.w());
+    auto *shiftCoverageConstraint = new Domain::Constraints::ShiftCoverageConstraint(state.range(), state.timeZone(), state.x(), state.z());
+    auto *employmentDurationConstraint = new Domain::Constraints::EmploymentMaxDurationConstraint(state.range(), state.timeZone(), state.x(), state.y(), state.z());
+    auto *restBetweenShiftsConstraint = new Domain::Constraints::RestBetweenShiftsConstraint(state.x());
+    auto *employeeAvailabilityConstraint = new Domain::Constraints::EmployeeAvailabilityConstraint(state.range(), state.timeZone(), state.x(), state.y(), state.z());
 
-    const auto constraints = std::vector<Constraints::Constraint<Shift, Employee, Day, Skill> *> {
+    const auto constraints = std::vector<::Constraints::Constraint<Shift, Employee, Day, Skill> *> {
         noOverlapConstraint,
         requiredSkillConstraint,
         shiftCoverageConstraint,

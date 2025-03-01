@@ -11,8 +11,9 @@ namespace Search {
     template<typename X, typename Y, typename Z, typename W>
     class LocalSearch {
     public:
+        // ReSharper disable once CppRedundantQualifier
         explicit LocalSearch(const State::State<X, Y, Z, W> *initialState,
-                             const std::vector<Constraints::Constraint<X, Y, Z, W> *> &constraints) :
+                             const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints) :
             mp_InitialState(initialState),
             m_Constraints(constraints),
             m_Task(*initialState, m_Constraints) { }
@@ -25,6 +26,7 @@ namespace Search {
          * @return `true` if new best state is found, `false` otherwise
          */
         bool step() {
+            // Finalizer
             if (shouldStep()) [[likely]] {
                 m_Task.step();
                 return m_Task.m_NewBestFound;
@@ -43,7 +45,8 @@ namespace Search {
 
         [[nodiscard]] Score::Score evaluateCurrentBestState() const {
             Score::Score score {};
-            for (Constraints::Constraint<X, Y, Z, W> *constraint : m_Constraints)
+            // ReSharper disable once CppRedundantQualifier
+            for (::Constraints::Constraint<X, Y, Z, W> *constraint : m_Constraints)
                 score += constraint->evaluate(m_Task.getOutputState());
             return score;
         }
@@ -67,7 +70,8 @@ namespace Search {
     private:
         bool m_Done = false;
         const State::State<X, Y, Z, W> *mp_InitialState;
-        const std::vector<Constraints::Constraint<X, Y, Z, W> *> m_Constraints;
+        // ReSharper disable once CppRedundantQualifier
+        const std::vector<::Constraints::Constraint<X, Y, Z, W> *> m_Constraints;
         Task::LocalSearchTask<X, Y, Z, W> m_Task;
     };
 }

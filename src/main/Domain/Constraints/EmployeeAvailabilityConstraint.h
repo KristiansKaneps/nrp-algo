@@ -1,18 +1,12 @@
 #ifndef EMPLOYEEAVAILABILITYCONSTRAINT_H
 #define EMPLOYEEAVAILABILITYCONSTRAINT_H
 
-#include "Constraints/Constraint.h"
+#include "DomainConstraint.h"
 
 #include "Array/BitMatrix.h"
 
-#include "Domain/Entities/Shift.h"
-#include "Domain/Entities/Employee.h"
-#include "Domain/Entities/Day.h"
-#include "Domain/Entities/Skill.h"
-
-namespace Constraints {
-    class EmployeeAvailabilityConstraint final : public Constraint<
-            Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill> {
+namespace Domain::Constraints {
+    class EmployeeAvailabilityConstraint final : public DomainConstraint {
     public:
         explicit EmployeeAvailabilityConstraint(const Time::Range& range, const std::chrono::time_zone *timeZone,
                                                 const Axes::Axis<Domain::Shift>& xAxis,

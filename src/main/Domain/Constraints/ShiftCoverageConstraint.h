@@ -1,7 +1,7 @@
 #ifndef SHIFTCOVERAGECONSTRAINT_H
 #define SHIFTCOVERAGECONSTRAINT_H
 
-#include "Constraints/Constraint.h"
+#include "DomainConstraint.h"
 
 #include <chrono>
 
@@ -12,9 +12,8 @@
 #include "Domain/Entities/Day.h"
 #include "Domain/Entities/Skill.h"
 
-namespace Constraints {
-    class ShiftCoverageConstraint final : public Constraint<
-            Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill> {
+namespace Domain::Constraints {
+    class ShiftCoverageConstraint final : public DomainConstraint {
     public:
         explicit ShiftCoverageConstraint(const Time::Range& range, const std::chrono::time_zone *timeZone,
                                          const Axes::Axis<Domain::Shift>& xAxis,

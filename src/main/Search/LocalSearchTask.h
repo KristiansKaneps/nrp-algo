@@ -5,7 +5,6 @@
 #include "State/State.h"
 #include "Constraints/Constraint.h"
 #include "Score/Score.h"
-#include "Moves/Move.h"
 #include "Utils/Random.h"
 
 #include <array>
@@ -16,8 +15,9 @@ namespace Search::Task {
     public:
         LocalSearchTask(const LocalSearchTask&) = delete;
 
+        // ReSharper disable once CppRedundantQualifier
         explicit LocalSearchTask(const State::State<X, Y, Z, W> inputState,
-                                 const std::vector<Constraints::Constraint<X, Y, Z, W> *> &constraints) :
+                                 const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints) :
             m_InitScore(Evaluation::evaluateState(inputState, constraints)),
             m_CurrentState(inputState),
             m_CurrentScore(m_InitScore),
@@ -48,7 +48,7 @@ namespace Search::Task {
 
             // Generate new candidate solution
             State::State<X, Y, Z, W> candidateState = m_CurrentState;
-            const uint32_t moveCount = m_Random.randomInt(1, 5);
+            const uint32_t moveCount = m_Random.randomInt(1, 2);
             for (uint32_t i = 0; i < moveCount; ++i) {
                 const auto x = m_Random.randomInt(0, m_OutputState.sizeX() - 1);
                 const auto y = m_Random.randomInt(0, m_OutputState.sizeY() - 1);
@@ -68,7 +68,7 @@ namespace Search::Task {
             const uint32_t v = m_Iterations % Lh;
             const Score::Score& fv = m_History[v];
 
-            // Acceptance criteria
+            // Selector (Acceptance criteria)
             if (candidateScore > fv || candidateScore >= m_CurrentScore) {
                 m_CurrentState = candidateState;
                 m_CurrentScore = candidateScore;
@@ -97,7 +97,8 @@ namespace Search::Task {
         inline static Random::RandomGenerator m_Random {};
         State::State<X, Y, Z, W> m_OutputState;
         Score::Score m_OutputScore;
-        const std::vector<Constraints::Constraint<X, Y, Z, W> *>& m_Constraints;
+        // ReSharper disable once CppRedundantQualifier
+        const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& m_Constraints;
     };
 }
 

@@ -1,18 +1,12 @@
 #ifndef REQUIREDSKILLCONSTRAINT_H
 #define REQUIREDSKILLCONSTRAINT_H
 
-#include "Constraints/Constraint.h"
+#include "DomainConstraint.h"
 
 #include "Array/BitMatrix.h"
 
-#include "Domain/Entities/Shift.h"
-#include "Domain/Entities/Employee.h"
-#include "Domain/Entities/Day.h"
-#include "Domain/Entities/Skill.h"
-
-namespace Constraints {
-    class RequiredSkillConstraint final : public Constraint<
-            Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill> {
+namespace Domain::Constraints {
+    class RequiredSkillConstraint final : public DomainConstraint {
     public:
         explicit RequiredSkillConstraint(const Axes::Axis<Domain::Shift>& xAxis,
                                          const Axes::Axis<Domain::Employee>& yAxis,

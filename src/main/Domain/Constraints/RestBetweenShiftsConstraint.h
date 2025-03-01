@@ -1,19 +1,13 @@
 #ifndef RESTBETWEENSHIFTSCONSTRAINT_H
 #define RESTBETWEENSHIFTSCONSTRAINT_H
 
-#include "Constraints/Constraint.h"
+#include "DomainConstraint.h"
 
 #include "Array/BitSquareMatrix.h"
 #include "Array/BitSymmetricalMatrix.h"
 
-#include "Domain/Entities/Shift.h"
-#include "Domain/Entities/Employee.h"
-#include "Domain/Entities/Day.h"
-#include "Domain/Entities/Skill.h"
-
-namespace Constraints {
-    class RestBetweenShiftsConstraint final : public Constraint<
-            Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill> {
+namespace Domain::Constraints {
+    class RestBetweenShiftsConstraint final : public DomainConstraint {
     public:
         explicit RestBetweenShiftsConstraint(const Axes::Axis<Domain::Shift>& xAxis) :
             Constraint("REST_BETWEEN_SHIFTS"),

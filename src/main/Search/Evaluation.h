@@ -7,9 +7,11 @@
 
 namespace Evaluation {
     template<typename X, typename Y, typename Z, typename W>
-    Score::Score evaluateState(const State::State<X, Y, Z, W>& state, const std::vector<Constraints::Constraint<X, Y, Z, W> *>& constraints) {
+    // ReSharper disable once CppRedundantQualifier
+    Score::Score evaluateState(const State::State<X, Y, Z, W>& state, const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& constraints) {
         Score::Score score {};
-        for (Constraints::Constraint<X, Y, Z, W> *constraint : constraints)
+        // ReSharper disable once CppRedundantQualifier
+        for (::Constraints::Constraint<X, Y, Z, W> *constraint : constraints)
             score += constraint->evaluate(state);
         return score;
     }

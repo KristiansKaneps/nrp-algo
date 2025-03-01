@@ -3,16 +3,10 @@
 
 #include <chrono>
 
-#include "Constraints/Constraint.h"
+#include "DomainConstraint.h"
 
-#include "Domain/Entities/Shift.h"
-#include "Domain/Entities/Employee.h"
-#include "Domain/Entities/Day.h"
-#include "Domain/Entities/Skill.h"
-
-namespace Constraints {
-    class EmploymentMaxDurationConstraint final : public Constraint<
-            Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill> {
+namespace Domain::Constraints {
+    class EmploymentMaxDurationConstraint final : public DomainConstraint {
     public:
         explicit EmploymentMaxDurationConstraint(const Time::Range& range, const std::chrono::time_zone *timeZone,
                                                  const Axes::Axis<Domain::Shift>& xAxis,
