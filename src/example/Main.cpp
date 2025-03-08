@@ -1,4 +1,5 @@
 #define LOCALSEARCH_DEBUG
+// #define MEMORY_USAGE_DEBUG
 
 
 #include "Application.h"
@@ -20,6 +21,10 @@
 
 #include "Example.h"
 
+#ifdef MEMORY_USAGE_DEBUG
+#include "Memory/AllocationMetrics.h"
+#endif
+
 using namespace Domain;
 
 static void onNewBest(const Search::LocalSearch<Shift, Employee, Day, Skill> &localSearch) {
@@ -28,6 +33,10 @@ static void onNewBest(const Search::LocalSearch<Shift, Employee, Day, Skill> &lo
         .score = localSearch.getBestScore(),
     };
     g_UpdateFlag = LocalSearchUpdateFlag::NEW_BEST_AVAILABLE;
+
+    #ifdef MEMORY_USAGE_DEBUG
+    Memory::printMemoryUsage();
+    #endif
 }
 
 void solve() {
