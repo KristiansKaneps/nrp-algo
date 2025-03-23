@@ -57,6 +57,13 @@ namespace Time {
             return duration;
         }
 
+        template<typename Duration = std::chrono::minutes, typename TimeZone = const std::chrono::time_zone *>
+        Duration duration(TimeZone zone) const {
+            Duration duration = Duration::zero();
+            for (const auto& range : m_Ranges) duration += range.duration<Duration>(zone);
+            return duration;
+        }
+
         [[nodiscard]] bool intersects(const Ray& ray) const {
             if (ray.type() == RAY) [[unlikely]] {
                 return std::ranges::any_of(m_Ranges, [ray](const Range& range) -> bool {
