@@ -43,7 +43,7 @@ namespace Time {
         }
 
         template<typename TimeZone = const std::chrono::time_zone *>
-        static DailyInterval fromRange(const Range &range, TimeZone timeZone) {
+        static DailyInterval fromRange(const Range& range, TimeZone timeZone) {
             using std::chrono_literals::operator ""min;
             const day_minutes_t durationMinutes = range.duration(timeZone) / 1min;
             const auto dayStart = range.getDayStartAt(0, timeZone);
@@ -52,22 +52,23 @@ namespace Time {
         }
 
         [[nodiscard]] day_minutes_t startInMinutes() const { return m_StartInMinutes; }
-        [[nodiscard]] day_minutes_t durationInMinutes() const { return m_DurationInMinutes; }
 
         [[nodiscard]] day_minutes_t endInMinutes() const {
             return static_cast<day_minutes_t>(m_StartInMinutes + m_DurationInMinutes);
         }
 
+        [[nodiscard]] day_minutes_t durationInMinutes() const { return m_DurationInMinutes; }
+
         [[nodiscard]] std::chrono::duration<uint16_t, std::ratio<60>> start() const {
             return std::chrono::duration<uint16_t, std::ratio<60>>(m_StartInMinutes);
         }
 
-        [[nodiscard]] std::chrono::duration<uint16_t, std::ratio<60>> duration() const {
-            return std::chrono::duration<uint16_t, std::ratio<60>>(m_DurationInMinutes);
-        }
-
         [[nodiscard]] std::chrono::duration<uint16_t, std::ratio<60>> end() const {
             return std::chrono::duration<uint16_t, std::ratio<60>>(m_StartInMinutes + m_DurationInMinutes);
+        }
+
+        [[nodiscard]] std::chrono::duration<uint16_t, std::ratio<60>> duration() const {
+            return std::chrono::duration<uint16_t, std::ratio<60>>(m_DurationInMinutes);
         }
 
         [[nodiscard]] std::string startAsString() const {
@@ -188,8 +189,8 @@ namespace Time {
     }
 }
 
-template <>
-    struct std::hash<Time::DailyInterval> {
+template<>
+struct std::hash<Time::DailyInterval> {
     std::size_t operator()(const Time::DailyInterval& k) const noexcept {
         using std::size_t;
         using std::hash;
