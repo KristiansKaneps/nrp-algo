@@ -32,7 +32,7 @@ namespace Domain::Constraints {
             mp_ShiftDurationInMinutes = nullptr;
         }
 
-        [[nodiscard]] Score::Score evaluate(
+        [[nodiscard]] ConstraintScore evaluate(
             const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
             Score::Score totalScore{};
 
@@ -88,7 +88,7 @@ namespace Domain::Constraints {
                 totalScore.hard += employeeHardScore;
             }
 
-            return totalScore;
+            return ConstraintScore(totalScore);
         }
 
     private:

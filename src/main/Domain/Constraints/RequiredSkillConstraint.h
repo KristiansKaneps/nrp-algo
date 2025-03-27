@@ -27,7 +27,7 @@ namespace Domain::Constraints {
 
         ~RequiredSkillConstraint() override = default;
 
-        [[nodiscard]] Score::Score evaluate(
+        [[nodiscard]] ConstraintScore evaluate(
             const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
             score_t totalScore = 0;
 
@@ -42,7 +42,7 @@ namespace Domain::Constraints {
                 }
             }
 
-            return {.strict = totalScore, .hard = 0, .soft = 0};
+            return ConstraintScore({.strict = totalScore, .hard = 0, .soft = 0});
         }
 
     protected:

@@ -39,7 +39,7 @@ namespace Domain::Constraints {
 
         ~RestBetweenShiftsConstraint() override = default;
 
-        [[nodiscard]] Score::Score evaluate(
+        [[nodiscard]] ConstraintScore evaluate(
             const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
             score_t totalScore = 0;
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
@@ -74,7 +74,7 @@ namespace Domain::Constraints {
                 totalScore += employeeScore;
             }
 
-            return {.strict = totalScore, .hard = 0, .soft = 0};
+            return ConstraintScore({.strict = totalScore, .hard = 0, .soft = 0});
         }
 
     private:

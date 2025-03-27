@@ -33,7 +33,7 @@ namespace Domain::Constraints {
 
         ~NoOverlapConstraint() override = default;
 
-        [[nodiscard]] Score::Score evaluate(
+        [[nodiscard]] ConstraintScore evaluate(
             const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
             score_t totalScore = 0;
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
@@ -68,15 +68,14 @@ namespace Domain::Constraints {
                 totalScore += employeeScore;
             }
 
-            return {.strict = totalScore, .hard = 0, .soft = 0};
+            return ConstraintScore({.strict = totalScore, .hard = 0, .soft = 0});
         }
 
     private:
         BitMatrix::BitSymmetricalMatrix m_IntersectingShiftsInSameDayMatrix;
         /**
-         * If x > y, then the bit is set if x (in the previous day) intersects y (in the next day).<br>
-         * If y > x, then the bit is set if y (in the previous day) intersects x (in the next day).<br>
-         * If x == y, then the bit is not set, because it is impossible for identical shifts to overlap in adjacent days
+         * The bit is set if x (in the previous day) intersects y (in the next day).<br>
+         * In other words, x corresponds to the previous day and y corresponds to the next day.<br>
          * (single shift's maximum duration limit is 24H).
          */
         BitMatrix::BitSquareMatrix m_IntersectingShiftsInAdjacentDaysMatrix;

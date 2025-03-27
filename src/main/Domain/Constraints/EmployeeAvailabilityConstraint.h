@@ -41,7 +41,7 @@ namespace Domain::Constraints {
 
         ~EmployeeAvailabilityConstraint() override = default;
 
-        [[nodiscard]] Score::Score evaluate(
+        [[nodiscard]] ConstraintScore evaluate(
             const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
             Score::Score totalScore {};
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
@@ -66,7 +66,7 @@ namespace Domain::Constraints {
                 totalScore.soft += shiftDesiredScore;
             }
 
-            return totalScore;
+            return ConstraintScore(totalScore);
         }
 
     private:

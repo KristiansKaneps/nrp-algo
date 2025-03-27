@@ -14,6 +14,8 @@ namespace Domain::Constraints {
     using axis_size_t = State::axis_size_t;
     using state_size_t = State::state_size_t;
     using score_t = Score::score_t;
+
+    using ConstraintScore = ::Constraints::ConstraintScore;
 }
 
 #endif //DOMAINCONSTRAINT_H
