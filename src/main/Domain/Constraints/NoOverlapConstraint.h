@@ -16,6 +16,7 @@ namespace Domain::Constraints {
                                                                                m_IntersectingShiftsInAdjacentDaysMatrix(
                                                                                    BitMatrix::createSquareMatrix(
                                                                                        xAxis.size())) {
+            if (xAxis.size() == 0) [[unlikely]] return;
             for (axis_size_t x1 = 0; x1 < xAxis.size() - 1; ++x1) {
                 const auto interval1 = xAxis[x1].interval();
                 for (axis_size_t x2 = x1 + 1; x2 < xAxis.size(); ++x2) {
