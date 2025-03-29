@@ -2,6 +2,7 @@
 
 #if EXAMPLE == 1
 
+#include "Domain/Constraints/ValidShiftDayConstraint.h"
 #include "Domain/Constraints/NoOverlapConstraint.h"
 #include "Domain/Constraints/RequiredSkillConstraint.h"
 #include "Domain/Constraints/ShiftCoverageConstraint.h"
@@ -11,6 +12,7 @@
 
 #include "Domain/Heuristics/DomainHeuristicProvider.h"
 #include "Domain/Heuristics/RandomAssignmentTogglePerturbator.h"
+#include "Domain/Heuristics/AddCoverShiftsPerturbator.h"
 
 #include "Search/LocalSearch.h"
 
@@ -50,10 +52,10 @@ void Example::create() {
     const Time::DailyInterval interval3("08:00", 1440);
     const Time::DailyInterval interval4("20:00", 1440);
 
-    new(shifts + 0) Shift(0, interval1, "E", 2);
-    new(shifts + 1) Shift(1, interval2, "L", 2);
-    new(shifts + 2) Shift(2, interval3, "DN", 2);
-    new(shifts + 3) Shift(3, interval4, "ND", 2);
+    new(shifts + 0) Shift(0, Shift::ALL_WEEKDAYS, interval1, "E", 2);
+    new(shifts + 1) Shift(1, Shift::ALL_WEEKDAYS, interval2, "L", 2);
+    new(shifts + 2) Shift(2, Shift::ALL_WEEKDAYS, interval3, "DN", 2);
+    new(shifts + 3) Shift(3, Shift::ALL_WEEKDAYS, interval4, "ND", 2);
 
     for (uint32_t i = 0; i < employeeCount; ++i) { new(employees + i) Employee(i); }
 
@@ -107,6 +109,7 @@ void Example::create() {
 
     state.printSize();
 
+    auto *validShiftDayConstraint = new Domain::Constraints::ValidShiftDayConstraint(state.range(), state.timeZone(), state.x(), state.z());
     auto *noOverlapConstraint = new Domain::Constraints::NoOverlapConstraint(state.x());
     auto *requiredSkillConstraint = new Domain::Constraints::RequiredSkillConstraint(state.x(), state.y(), state.w());
     auto *shiftCoverageConstraint = new Domain::Constraints::ShiftCoverageConstraint(state.range(), state.timeZone(), state.x(), state.z());
@@ -115,6 +118,7 @@ void Example::create() {
     auto *employeeAvailabilityConstraint = new Domain::Constraints::EmployeeAvailabilityConstraint(state.range(), state.timeZone(), state.x(), state.y(), state.z());
 
     const auto constraints = std::vector<::Constraints::Constraint<Shift, Employee, Day, Skill> *> {
+        validShiftDayConstraint,
         noOverlapConstraint,
         requiredSkillConstraint,
         shiftCoverageConstraint,
@@ -124,9 +128,11 @@ void Example::create() {
     };
 
     auto heuristic1 = new Domain::Heuristics::RandomAssignmentTogglePerturbator();
+    auto heuristic2 = new Domain::Heuristics::AddCoverShiftsPerturbator();
 
     const auto heuristicProvider = Domain::Heuristics::DomainHeuristicProvider({
         heuristic1,
+        heuristic2,
     });
 
     std::cout << "State 1 score: " << Evaluation::evaluateState(state, constraints) << std::endl;

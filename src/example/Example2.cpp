@@ -2,6 +2,7 @@
 
 #if EXAMPLE == 2
 
+#include "Domain/Constraints/ValidShiftDayConstraint.h"
 #include "Domain/Constraints/NoOverlapConstraint.h"
 #include "Domain/Constraints/RequiredSkillConstraint.h"
 #include "Domain/Constraints/ShiftCoverageConstraint.h"
@@ -11,6 +12,7 @@
 
 #include "Domain/Heuristics/DomainHeuristicProvider.h"
 #include "Domain/Heuristics/RandomAssignmentTogglePerturbator.h"
+#include "Domain/Heuristics/AddCoverShiftsPerturbator.h"
 
 #include "Search/LocalSearch.h"
 
@@ -77,6 +79,8 @@ void Example::create() {
         skillAccumulator.addSkill(skillId, skillName, skillComplementary);
     }
 
+    std::cout << "Total skill count: " << skillAccumulator.size() << std::endl;
+
     database.execute(
         "select u.id, u.name, u.surname, u.email, a.type, a.unavailability_subtype, a.start_date, a.end_date "
         "from users u join organizational_unit_users ouu on ouu.user_id = u.id and ouu.organizational_unit_id = 'b2ecb1e5-0cf6-41e9-95cf-07a30dd14ebd' "
@@ -110,6 +114,8 @@ void Example::create() {
             userAccumulator.addAvailability(userId, availabilityRange, availabilityType, unavailabilitySubtype);
         }
     }
+
+    std::cout << "Total user count: " << userAccumulator.size() << std::endl;
 
     std::unordered_map<std::string, std::unordered_map<std::string, Workload::ChangeEvent>> workloadChangeEvents;
 
@@ -192,10 +198,13 @@ void Example::create() {
         userAccumulator.addSkills(userId, userSkills);
     }
 
+    const std::string shiftTableName = "shifts";
+    const std::string shiftSkillsTableName = "shift_skills";
+
     database.execute(
         "select s.id, s.summary, s.weight, s.color, s.start_date, s.end_date, s.locked, s.user_id, "
         "s.assigned_skill_id "
-        "from draft_shifts s "
+        "from " + shiftTableName + " s "
         "where s.department_id = '5193c3e7-1a87-40a9-9ef6-f1acb276f00f' and "
         "s.start_date < '" + rangeEnd + "' and s.end_date > '" + rangeStart + '\''
     );
@@ -228,12 +237,14 @@ void Example::create() {
         }
     }
 
+    std::cout << "Total shift count: " << shiftAccumulator.size() << std::endl;
+
     std::set<std::string> actualShiftSkillIds;
 
     for (size_t i = 0; i < shiftAccumulator.size(); ++i) {
         const std::string shiftId = shiftAccumulator[i];
         database.execute(
-            "select sk.skill_id, sk.weight from draft_shift_skills sk "
+            "select sk.skill_id, sk.weight from " + shiftSkillsTableName + " sk "
             "join skills s on s.id = sk.skill_id "
             "where s.organization_id = '79cf52f8-8c59-457e-9b2a-d5ec1f983776' "
             "and (s.deleted_at is null or s.deleted_at > '" + rangeStart + "') "
@@ -285,7 +296,7 @@ void Example::create() {
                 else name = "L";
             }
         }
-        auto &s = *(new(shifts + i) Shift(i, t.interval, name, t.slots, t.slots >> 1 > 0 ? t.slots >> 1 : 1));
+        auto &s = *(new(shifts + i) Shift(i, Shift::ALL_WEEKDAYS, t.interval, name, t.slots, t.slots >> 1 > 0 ? t.slots >> 1 : 1));
         for (size_t j = 0; j < t.skills.size(); ++j) {
             const auto &shiftSkill = t.skills[j];
             const size_t skillIndex = skillAccumulator.getIndex(shiftSkill.m_SkillId);
@@ -344,6 +355,7 @@ void Example::create() {
 
     state.printSize();
 
+    auto *validShiftDayConstraint = new Domain::Constraints::ValidShiftDayConstraint(state.range(), state.timeZone(), state.x(), state.z());
     auto *noOverlapConstraint = new Domain::Constraints::NoOverlapConstraint(state.x());
     auto *requiredSkillConstraint = new Domain::Constraints::RequiredSkillConstraint(state.x(), state.y(), state.w());
     auto *shiftCoverageConstraint = new Domain::Constraints::ShiftCoverageConstraint(state.range(), state.timeZone(), state.x(), state.z());
@@ -352,6 +364,7 @@ void Example::create() {
     auto *employeeAvailabilityConstraint = new Domain::Constraints::EmployeeAvailabilityConstraint(state.range(), state.timeZone(), state.x(), state.y(), state.z());
 
     const auto constraints = std::vector<::Constraints::Constraint<Shift, Employee, Day, Skill> *> {
+        validShiftDayConstraint,
         noOverlapConstraint,
         requiredSkillConstraint,
         shiftCoverageConstraint,
@@ -361,9 +374,11 @@ void Example::create() {
     };
 
     auto heuristic1 = new Domain::Heuristics::RandomAssignmentTogglePerturbator();
+    auto heuristic2 = new Domain::Heuristics::AddCoverShiftsPerturbator();
 
     const auto heuristicProvider = Domain::Heuristics::DomainHeuristicProvider({
         heuristic1,
+        heuristic2,
     });
 
     std::cout << "State 1 score: " << Evaluation::evaluateState(state, constraints) << std::endl;

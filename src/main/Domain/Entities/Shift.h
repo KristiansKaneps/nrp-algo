@@ -14,17 +14,26 @@ namespace Domain {
 
     class Shift : public Axes::AxisEntity {
     public:
-        Shift(const axis_size_t index, const Time::DailyInterval& interval, const std::string& name, const uint8_t slotCount, const uint8_t requiredSlotCount) : m_Index(index),
+        static constexpr uint8_t ALL_WEEKDAYS = 0b11111111;
+        static constexpr uint8_t ONLY_WORKDAYS = 0b00011111;
+        static constexpr uint8_t ONLY_WEEKENDS = 0b01100000;
+        static constexpr uint8_t ALL_WEEKDAYS_EXCEPT_HOLIDAYS = 0b01111111; // TODO: Implement holidays as 8th bit
+        static constexpr uint8_t ONLY_WEEKENDS_AND_HOLIDAYS = 0b11100000; // TODO: Implement holidays as 8th bit
+        static constexpr uint8_t ONLY_HOLIDAYS = 0b10000000; // TODO: Implement holidays as 8th bit
+
+        Shift(const axis_size_t index, const uint8_t weekdayBitMask, const Time::DailyInterval& interval, const std::string& name, const uint8_t slotCount, const uint8_t requiredSlotCount) : m_Index(index),
+            m_WeekdayBitMask(weekdayBitMask),
             m_Interval(interval),
             m_Name(name),
             m_SlotCount(slotCount),
             m_RequiredSlotCount(requiredSlotCount) { }
 
-        Shift(const axis_size_t index, const Time::DailyInterval& interval, const std::string& name, const uint8_t slotCount) : Shift(index, interval, name, slotCount, slotCount) { }
+        Shift(const axis_size_t index, const uint8_t weekdayBitMask, const Time::DailyInterval& interval, const std::string& name, const uint8_t slotCount) : Shift(index, weekdayBitMask, interval, name, slotCount, slotCount) { }
 
-        Shift(const axis_size_t index, const Time::DailyInterval& interval, const std::string& name) : Shift(index, interval, name, 1) { }
+        Shift(const axis_size_t index, const uint8_t weekdayBitMask, const Time::DailyInterval& interval, const std::string& name) : Shift(index, weekdayBitMask, interval, name, 1) { }
 
         [[nodiscard]] axis_size_t index() const { return m_Index; }
+        [[nodiscard]] uint8_t weekdayBitMask() const { return m_WeekdayBitMask; }
         [[nodiscard]] const Time::DailyInterval& interval() const { return m_Interval; }
         [[nodiscard]] const std::string& name() const { return m_Name; }
         [[nodiscard]] uint8_t slotCount() const { return m_SlotCount; }
@@ -63,6 +72,7 @@ namespace Domain {
 
     private:
         const axis_size_t m_Index;
+        const uint8_t m_WeekdayBitMask;
         const Time::DailyInterval m_Interval;
         const std::string m_Name;
         const uint8_t m_SlotCount;
