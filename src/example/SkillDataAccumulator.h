@@ -53,7 +53,7 @@ namespace SkillData {
                 // ReSharper disable once CppTooWideScopeInitStatement
                 const auto &skillId = *it;
                 if (!skillIds.contains(skillId)) {
-                    m_Ids.erase(it);
+                    it = m_Ids.erase(it);
                     continue;
                 }
 
