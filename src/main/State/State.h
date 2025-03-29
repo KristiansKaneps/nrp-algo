@@ -47,6 +47,8 @@ namespace State {
 
         void printFlatSize() const { std::cout << flatSize() << std::endl; }
 
+        [[nodiscard]] bool isValid() const { return m_Size.isValid(); }
+
         [[nodiscard]] const Time::Range& range() const { return m_Range; }
         [[nodiscard]] const std::chrono::time_zone *timeZone() const { return mp_TimeZone; }
 

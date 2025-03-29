@@ -14,6 +14,8 @@ namespace State {
         axis_size_t depth;
         axis_size_t concepts;
 
+        [[nodiscard]] bool isValid() const { return width > 0 && height > 0 && depth > 0 && concepts > 0; }
+
         [[nodiscard]] state_size_t volume() const { return width * height * depth * concepts; }
 
         [[nodiscard]] constexpr state_size_t offset(const axis_size_t x, const axis_size_t y) const {
