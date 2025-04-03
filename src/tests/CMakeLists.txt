@@ -3,22 +3,7 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_library(test_main OBJECT test_main.cpp)
 
-include(ExternalProject)
-find_package(Git REQUIRED)
-
-ExternalProject_Add(
-        doctest
-        PREFIX ${CMAKE_BINARY_DIR}/doctest
-        GIT_REPOSITORY https://github.com/doctest/doctest.git
-        TIMEOUT 10
-        UPDATE_COMMAND ${GIT_EXECUTABLE} pull
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ""
-        LOG_DOWNLOAD ON
-)
-ExternalProject_Get_Property(doctest source_dir)
-set(DOCTEST_INCLUDE_DIR ${source_dir}/doctest CACHE INTERNAL "Path to include folder for doctest")
+set(DOCTEST_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/doctest)
 
 include_directories(${DOCTEST_INCLUDE_DIR})
 
