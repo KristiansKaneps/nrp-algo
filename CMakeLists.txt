@@ -72,8 +72,6 @@ else()
     message(STATUS "CXX Debug Flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
 endif()
 
-set(BUILD_TESTING TRUE)
-
 # Tests
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     add_subdirectory(${CMAKE_SOURCE_DIR}/src/tests)
