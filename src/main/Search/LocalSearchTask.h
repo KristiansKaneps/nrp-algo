@@ -54,6 +54,7 @@ namespace Search::Task {
             // Generate new candidate solution
             ::State::State<X, Y, Z, W>& candidateState = m_CurrentState;
             auto perturbator = heuristicProvider[0];
+            perturbator->reset(candidateState);
             perturbator->modify(candidateState);
             // `m_CurrentState` is now the new candidate state.
 

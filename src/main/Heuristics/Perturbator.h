@@ -17,10 +17,10 @@ namespace Heuristics {
         explicit Perturbator() = default;
         virtual ~Perturbator() = default;
 
-        virtual void modify(State::State<X, Y, Z, W>& state) = 0;
-        virtual void revert(State::State<X, Y, Z, W>& state) const = 0;
-    protected:
-        virtual void reset() { }
+        virtual void reset(const ::State::State<X, Y, Z, W>& state) = 0;
+
+        virtual void modify(::State::State<X, Y, Z, W>& state) = 0;
+        virtual void revert(::State::State<X, Y, Z, W>& state) const = 0;
     private:
         friend class HeuristicProvider<X, Y, Z, W>;
     };
@@ -30,8 +30,10 @@ namespace Heuristics {
     public:
         explicit IdentityPerturbator() = default;
 
-        void modify(State::State<X, Y, Z, W>& state) override {}
-        void revert(State::State<X, Y, Z, W>& state) const override {}
+        void reset(const ::State::State<X, Y, Z, W>& state) override {}
+
+        void modify(::State::State<X, Y, Z, W>& state) override {}
+        void revert(::State::State<X, Y, Z, W>& state) const override {}
     };
 }
 

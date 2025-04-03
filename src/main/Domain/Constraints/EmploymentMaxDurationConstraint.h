@@ -74,13 +74,15 @@ namespace Domain::Constraints {
                     const int64_t diff = maxWorkloadDurationInMinutes - totalDurationInMinutes;
 
                     if (diff < 0) {
+                        employeeHardScore -= 1;
+
                         const int64_t overtimeDiff = diff + maxWorkloadOvertimeDurationInMinutes;
 
                         if (overtimeDiff < 0) {
                             employeeStrictScore -= 1;
-                        } else {
-                            employeeHardScore += 2 * diff;
                         }
+                    } else {
+                        employeeHardScore -= 2;
                     }
                 }
 

@@ -1,5 +1,5 @@
-#ifndef RANDOMASSIGNMENTTOGGLEPERTURBATOR_H
-#define RANDOMASSIGNMENTTOGGLEPERTURBATOR_H
+#ifndef ADDCOVERSHIFTSPERTURBATOR_H
+#define ADDCOVERSHIFTSPERTURBATOR_H
 
 #include "DomainPerturbator.h"
 #include "Domain/State/DomainState.h"
@@ -7,9 +7,9 @@
 #include "Utils/Random.h"
 
 namespace Domain::Heuristics {
-    class RandomAssignmentTogglePerturbator final : public DomainPerturbator {
+    class AddCoverShiftsPerturbator final : public DomainPerturbator {
     public:
-        explicit RandomAssignmentTogglePerturbator() = default;
+        explicit AddCoverShiftsPerturbator() = default;
 
         void reset(const State::DomainState& state) override {
             m_X = m_Random.randomInt(0, state.sizeX() - 1);
@@ -33,4 +33,4 @@ namespace Domain::Heuristics {
     };
 }
 
-#endif //RANDOMASSIGNMENTTOGGLEPERTURBATOR_H
+#endif //ADDCOVERSHIFTSPERTURBATOR_H

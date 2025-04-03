@@ -13,9 +13,7 @@ namespace Heuristics {
         ~HeuristicProvider() = default;
 
         Perturbator<X, Y, Z, W> * operator[](const size_t index) const {
-            auto *perturbator = m_Perturbators[index];
-            perturbator->reset();
-            return perturbator;
+            return m_Perturbators[index];
         }
 
     private:
