@@ -2,3 +2,4 @@ cmake-*/
 CMakeFiles/
 .idea/
 build/
+Testing/

@@ -7,6 +7,12 @@ endif()
 
 project(nrp C CXX)
 
+# Enable testing
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    include(CTest)
+endif()
+enable_testing()
+
 # Add all Source Files
 file(GLOB_RECURSE LIBRARY_SOURCE_FILES
         ${CMAKE_SOURCE_DIR}/src/main/*.cpp
@@ -64,4 +70,11 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
     message(STATUS "CXX Release Flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
 else()
     message(STATUS "CXX Debug Flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
+endif()
+
+set(BUILD_TESTING TRUE)
+
+# Tests
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+    add_subdirectory(${CMAKE_SOURCE_DIR}/src/tests)
 endif()
