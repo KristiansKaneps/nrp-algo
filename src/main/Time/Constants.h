@@ -5,6 +5,16 @@
 #include <chrono>
 #include <regex>
 
+#ifdef _WIN32
+// Windows does not have timegm(), so we define it manually
+inline time_t timegm(std::tm* t) {
+    time_t local = std::mktime(t);
+    std::tm utc_tm;
+    gmtime_s(&utc_tm, &local);
+    return local + (t->tm_hour - utc_tm.tm_hour) * 3600;
+}
+#endif
+
 namespace Time {
     // ReSharper disable CppRedundantTemplateArguments
     using Instant = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>;
@@ -79,20 +89,18 @@ namespace Time {
         tm.tm_min = minute;
         tm.tm_sec = second;
 
+        tm.tm_sec -= offsetSeconds;  // Adjust for time zone
+
         // Convert tm to time_t
-        const std::time_t timeT = std::mktime(&tm); // This assumes local time
-        if (timeT == -1) [[unlikely]] {
-            std::cerr << "std::mktime failed for input: " << input << std::endl;
+        std::time_t utcTimeT = timegm(&tm);
+        if (utcTimeT == -1) [[unlikely]] {
+            std::cerr << "timegm failed for input: " << input << std::endl;
             throw std::runtime_error("Failed to convert time");
         }
 
-        // Convert to UTC by subtracting the offset
-        const std::time_t utcTimeT = timeT - offsetSeconds;
-
         // Build the time_point with nanoseconds precision
-        const auto baseTime = std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>(
-            std::chrono::seconds(utcTimeT));
-        return baseTime + std::chrono::nanoseconds(nanoseconds);
+        return std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>(
+            std::chrono::seconds(utcTimeT)) + std::chrono::nanoseconds(nanoseconds);
     }
 }
 
