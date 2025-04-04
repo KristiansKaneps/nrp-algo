@@ -27,10 +27,10 @@ using namespace Domain;
 
 void Example::create() {
     std::tm tm = {};
-    std::stringstream ss("2025-02-01T00:00:00Z");
+    std::stringstream ss("2025-03-01T00:00:00Z");
     ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S%z");
     auto start = std::chrono::system_clock::from_time_t(std::mktime(&tm));
-    ss = std::stringstream("2025-03-01T00:00:00Z");
+    ss = std::stringstream("2025-04-01T00:00:00Z");
     ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S%z");
     auto end = std::chrono::system_clock::from_time_t(std::mktime(&tm));
 
