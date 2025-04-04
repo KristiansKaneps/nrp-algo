@@ -51,7 +51,7 @@ namespace ShiftData {
             return m_Ids;
         }
 
-        std::vector<ShiftTemplate> templates() const {
+        [[nodiscard]] std::vector<ShiftTemplate> templates() const {
             std::vector<ShiftTemplate> result;
             for (const auto& val : m_ShiftTemplateMap | std::views::values) {
                 ShiftTemplate shiftTemplate = val;

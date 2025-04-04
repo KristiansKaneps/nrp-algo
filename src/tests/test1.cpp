@@ -14,10 +14,10 @@ SCENARIO("time range day intervals") {
         const Time::Range rangeUtc(startUtc, endUtc);
         const Time::Range rangeLocal(startLocal, endLocal);
 
-        WHEN("getting day range at starting instant (which is at 00:00 UTC)") {
-            const std::chrono::tzdb& tzdb = std::chrono::get_tzdb();
-            const std::chrono::time_zone* utc = tzdb.locate_zone("UTC");
+        const std::chrono::tzdb& tzdb = std::chrono::get_tzdb();
+        const std::chrono::time_zone* utc = tzdb.locate_zone("UTC");
 
+        WHEN("getting day range at starting instant (which is at 00:00 UTC)") {
             const auto dayRange = rangeUtc.getDayRangeAt(0, utc);
 
             THEN("its start point is expected to be the same as month range's") {
@@ -38,9 +38,6 @@ SCENARIO("time range day intervals") {
         }
 
         WHEN("getting day range at starting instant (which is at 22:00 UTC)") {
-            const std::chrono::tzdb& tzdb = std::chrono::get_tzdb();
-            const std::chrono::time_zone* utc = tzdb.locate_zone("UTC");
-
             const auto dayRange = rangeLocal.getDayRangeAt(0, utc);
 
             THEN("its start point is expected to be the same as month range's") {
