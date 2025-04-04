@@ -15,8 +15,14 @@ target_include_directories(test_main
 add_executable(dummy_test dummy_test.cpp $<TARGET_OBJECTS:test_main>)
 add_test(NAME dummy_test COMMAND dummy_test)
 
-add_executable(test1 test1.cpp $<TARGET_OBJECTS:test_main> ${LIBRARY_SOURCE_FILES} ${LIBRARY_HEADER_FILES})
-target_include_directories(test1
-        PUBLIC ${CMAKE_SOURCE_DIR}/src/main
-)
-add_test(NAME test1 COMMAND test1)
+# Function to add tests (syntax: `test(testName)` corresponds to testName.cpp file).
+function(test testName)
+    add_executable(${testName} ${testName}.cpp $<TARGET_OBJECTS:test_main> ${LIBRARY_SOURCE_FILES} ${LIBRARY_HEADER_FILES})
+    target_include_directories(${testName}
+            PUBLIC ${CMAKE_SOURCE_DIR}/src/main
+    )
+    add_test(NAME ${testName} COMMAND ${testName})
+endfunction()
+
+# Add tests.
+include(AddTests.cmake)

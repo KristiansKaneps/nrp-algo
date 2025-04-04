@@ -89,6 +89,90 @@ namespace Time {
             return std::chrono::round<Duration>(std::chrono::floor<Duration>(end.get_local_time()) - std::chrono::floor<Duration>(start.get_local_time()));
         }
 
+        template<typename TimeZone = const std::chrono::time_zone *>
+        int32_t getWorkdayCount(TimeZone zone) const {
+            return getDayCount(zone, 0x1f);
+        }
+
+        template<typename TimeZone = const std::chrono::time_zone *>
+        int32_t getDayCount(TimeZone zone, const uint8_t weekdayBitMask) const {
+            if ((m_End == MIN_INSTANT && m_Start == MAX_INSTANT) || m_End == m_Start) [[unlikely]] return 0;
+            auto zonedStart = std::chrono::zoned_time(zone, m_Start);
+            auto zonedEnd = std::chrono::zoned_time(zone, m_End);
+            int32_t sign = 1;
+            if (zonedStart.get_sys_time() > zonedEnd.get_sys_time()) [[unlikely]] {
+                std::swap(zonedStart, zonedEnd);
+                sign = -1;
+            }
+
+            int32_t dayCount = 0;
+
+            constexpr auto oneDay = std::chrono::days(1);
+
+            for (
+                auto zonedInstant = std::chrono::zoned_time(zone, std::chrono::floor<std::chrono::days>(zonedStart.get_local_time()));
+                zonedInstant.get_sys_time() < zonedEnd.get_sys_time();
+                zonedInstant = std::chrono::zoned_time(zone, std::chrono::floor<std::chrono::days>(zonedInstant.get_local_time() + oneDay))
+            ) {
+                if (!(weekdayBitMask >> InstantToWeekday(zonedInstant) & 1)) continue;
+                dayCount += 1;
+            }
+
+            return dayCount * sign;
+        }
+
+        template<typename TimeZone = const std::chrono::time_zone *>
+        float getPartialWorkdayCount(TimeZone zone) const {
+            return getPartialDayCount(zone, 0x1f);
+        }
+
+        template<typename TimeZone = const std::chrono::time_zone *>
+        float getPartialDayCount(TimeZone zone, const uint8_t weekdayBitMask) const {
+            if ((m_End == MIN_INSTANT && m_Start == MAX_INSTANT) || m_End == m_Start) [[unlikely]] return 0;
+            auto zonedStart = std::chrono::zoned_time(zone, m_Start);
+            auto zonedEnd = std::chrono::zoned_time(zone, m_End);
+            int32_t sign = 1;
+            if (zonedStart.get_sys_time() > zonedEnd.get_sys_time()) [[unlikely]] {
+                std::swap(zonedStart, zonedEnd);
+                sign = -1;
+            }
+
+            float dayCount = 0.0f;
+
+            constexpr auto oneDay = std::chrono::days(1);
+
+            const auto localStartDayTimePoint = std::chrono::floor<std::chrono::days>(zonedStart.get_local_time());
+            const auto localEndDayTimePoint = std::chrono::floor<std::chrono::days>(zonedEnd.get_local_time());
+            auto startDay = std::chrono::zoned_time(zone, localStartDayTimePoint);
+            auto endDay = std::chrono::zoned_time(zone, localEndDayTimePoint);
+            auto nextStartDay = std::chrono::zoned_time(zone, std::chrono::floor<std::chrono::days>(localStartDayTimePoint + oneDay));
+
+            if (weekdayBitMask >> InstantToWeekday(zonedStart) & 1) {
+                const auto fullDayDuration = std::chrono::duration<float>(nextStartDay.get_sys_time() - startDay.get_sys_time());
+                if (fullDayDuration > fullDayDuration.zero()) {
+                    dayCount += (nextStartDay.get_sys_time() - zonedStart.get_sys_time()) / fullDayDuration;
+                }
+            }
+
+            for (
+                auto day = nextStartDay;
+                day.get_sys_time() < endDay.get_sys_time();
+                day = std::chrono::zoned_time(zone, std::chrono::floor<std::chrono::days>(day.get_local_time() + oneDay))
+            ) {
+                if (!(weekdayBitMask >> InstantToWeekday(day) & 1)) continue;
+                dayCount += 1.0f;
+            }
+
+            if (weekdayBitMask >> InstantToWeekday(zonedEnd) & 1) {
+                const auto fullDayDuration = std::chrono::duration<float>(std::chrono::zoned_time(zone, std::chrono::ceil<std::chrono::days>(zonedEnd.get_local_time())).get_sys_time() - endDay.get_sys_time());
+                if (fullDayDuration > fullDayDuration.zero()) {
+                    dayCount += (zonedEnd.get_sys_time() - endDay.get_sys_time()) / fullDayDuration;
+                }
+            }
+
+            return dayCount * static_cast<float>(sign);
+        }
+
         [[nodiscard]] bool isStartAdjacentTo(const Ray& other) const override {
             if (other.type() == RAY) [[unlikely]] return other.m_Start == m_Start;
             if (other.type() == RANGE) [[likely]] {

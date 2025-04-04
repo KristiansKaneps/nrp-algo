@@ -1,0 +1,3 @@
+# List of tests:
+test(test1)
+test(test2)

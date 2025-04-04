@@ -5,16 +5,6 @@
 #include <chrono>
 #include <regex>
 
-#ifdef _WIN32
-// Windows does not have timegm(), so we define it manually
-inline time_t timegm(std::tm* t) {
-    time_t local = std::mktime(t);
-    std::tm utc_tm;
-    gmtime_s(&utc_tm, &local);
-    return local + (t->tm_hour - utc_tm.tm_hour) * 3600;
-}
-#endif
-
 namespace Time {
     // ReSharper disable CppRedundantTemplateArguments
     using Instant = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>;
@@ -47,11 +37,11 @@ namespace Time {
 
         // Extract the main components
         const int year = std::stoi(match[1].str());
-        const int month = std::stoi(match[2].str());
-        const int day = std::stoi(match[3].str());
-        const int hour = std::stoi(match[4].str());
-        const int minute = std::stoi(match[5].str());
-        const int second = std::stoi(match[6].str());
+        const unsigned int month = std::stoi(match[2].str());
+        const unsigned int day = std::stoi(match[3].str());
+        const unsigned int hour = std::stoi(match[4].str());
+        const unsigned int minute = std::stoi(match[5].str());
+        const unsigned int second = std::stoi(match[6].str());
 
         // Extract fractional seconds if they exist
         int64_t nanoseconds = 0;
@@ -67,40 +57,52 @@ namespace Time {
         }
 
         // Extract the UTC offset (e.g., "+00", "+02:00", "Z")
-        int offsetSeconds = 0;
-        if (match[8].matched) {
-            if (const std::string offset = match[8].str(); offset == "Z" || offset == "+00" || offset == "+00:00") {
-                offsetSeconds = 0; // UTC
-            } else {
-                // Parse offset: "+HH:MM" or "+HHMM"
-                const int sign = (offset[0] == '+') ? 1 : -1;
-                const int hours = std::stoi(offset.substr(1, 2));
-                const int minutes = (offset.size() == 5 || offset.size() == 6) ? std::stoi(offset.substr(4, 2)) : 0;
-                offsetSeconds = sign * (hours * 3600 + minutes * 60);
-            }
+        const std::string offset = match[8].str();
+        std::chrono::duration<int> offsetDuration;
+        if (offset == "Z" || offset == "+00" || offset == "+00:00") {
+            offsetDuration = std::chrono::hours(0); // UTC
+        } else {
+            // Parse offset: "+HH:MM" or "+HHMM"
+            const int sign = (offset[0] == '+') ? 1 : -1;
+            const int hours = std::stoi(offset.substr(1, 2));
+            const int minutes = (offset.size() == 5 || offset.size() == 6) ? std::stoi(offset.substr(4, 2)) : 0;
+            offsetDuration = std::chrono::hours(sign * hours) + std::chrono::minutes(sign * minutes);
         }
 
-        // Create a tm struct for the base time
-        std::tm tm = {};
-        tm.tm_year = year - 1900; // tm_year is years since 1900
-        tm.tm_mon = month - 1;    // tm_mon is 0-based
-        tm.tm_mday = day;
-        tm.tm_hour = hour;
-        tm.tm_min = minute;
-        tm.tm_sec = second;
+        // Create the time point using UTC, then adjust by the offset.
+        const std::chrono::year_month_day ymd{std::chrono::year{year}, std::chrono::month{month}, std::chrono::day{day}};
+        const auto sec = std::chrono::seconds{std::chrono::hours{hour} + std::chrono::minutes{minute} + std::chrono::seconds{second}};
 
-        tm.tm_sec -= offsetSeconds;  // Adjust for time zone
+        // Use system_clock to get the UTC time and then adjust for the offset.
+        auto time_point = std::chrono::sys_days{ymd} + sec;
+        time_point -= offsetDuration;
 
-        // Convert tm to time_t
-        std::time_t utcTimeT = timegm(&tm);
-        if (utcTimeT == -1) [[unlikely]] {
-            std::cerr << "timegm failed for input: " << input << std::endl;
-            throw std::runtime_error("Failed to convert time");
-        }
+        // Return the time_point with nanoseconds precision
+        return time_point + std::chrono::nanoseconds(nanoseconds);
+    }
 
-        // Build the time_point with nanoseconds precision
-        return std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>(
-            std::chrono::seconds(utcTimeT)) + std::chrono::nanoseconds(nanoseconds);
+    /**
+     * @return weekday as an unsigned 8-bit int (0 - Monday, ..., 6 - Sunday)
+     */
+    template<typename TimeZone = const std::chrono::time_zone *>
+    static uint8_t InstantToWeekday(const Instant& instant, TimeZone zone) {
+        auto localTime = zone->to_local(instant);
+        // POSIX standard (0 - Sunday, 1 - Monday, ..., 6 - Saturday).
+        const auto weekdayIsoStd = std::chrono::year_month_weekday{std::chrono::floor<std::chrono::days>(localTime)}.weekday();
+        // `is_encoding()` converts POSIX to ISO 8601 standard (1 - Monday, ..., 7 - Sunday)
+        return static_cast<uint8_t>(weekdayIsoStd.iso_encoding() - 1);
+    }
+
+    /**
+     * @return weekday as an unsigned 8-bit int (0 - Monday, ..., 6 - Sunday)
+     */
+    template<typename TimeZone = const std::chrono::time_zone *>
+    static uint8_t InstantToWeekday(const std::chrono::zoned_time<TimeZone>& zonedInstant) {
+        auto localTime = zonedInstant.get_local_time();
+        // POSIX standard (0 - Sunday, 1 - Monday, ..., 6 - Saturday).
+        const auto weekdayIsoStd = std::chrono::year_month_weekday{std::chrono::floor<std::chrono::days>(localTime)}.weekday();
+        // `is_encoding()` converts POSIX to ISO 8601 standard (1 - Monday, ..., 7 - Sunday)
+        return static_cast<uint8_t>(weekdayIsoStd.iso_encoding() - 1);
     }
 }
 
