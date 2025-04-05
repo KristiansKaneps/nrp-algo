@@ -9,6 +9,11 @@ namespace Time {
         Range(const Instant& start, const Instant& end) : Ray(start),
                                                           m_End(end) { }
 
+        template<class Duration = std::chrono::system_clock::duration>
+        Range(const std::chrono::time_point<std::chrono::system_clock, Duration>& start,
+              const std::chrono::time_point<std::chrono::system_clock, Duration>& end) : Ray(start),
+            m_End(std::chrono::time_point_cast<INSTANT_PRECISION>(end)) { }
+
         Range(const Range& other) : Range(other.m_Start, other.m_End) { }
 
         [[nodiscard]] PeriodType type() const override { return RANGE; }
@@ -56,11 +61,13 @@ namespace Time {
         }
 
         template<typename TimeZone = const std::chrono::time_zone *>
-        std::chrono::zoned_time<std::chrono::system_clock::duration, TimeZone> getDayAt(const size_t dayIndex, TimeZone zone) const {
+        std::chrono::zoned_time<std::chrono::system_clock::duration, TimeZone> getDayAt(
+            const size_t dayIndex, TimeZone zone) const {
             using namespace std::chrono_literals;
             const auto zonedStart = std::chrono::zoned_time(zone, m_Start);
             const auto localDay = floor<std::chrono::days>(zonedStart.get_local_time()) + std::chrono::days(dayIndex);
-            const std::chrono::zoned_time<std::chrono::system_clock::duration, TimeZone> zonedDay = std::chrono::zoned_time(zone, zone->to_sys(localDay));
+            const std::chrono::zoned_time<std::chrono::system_clock::duration, TimeZone> zonedDay =
+                std::chrono::zoned_time(zone, zone->to_sys(localDay));
             return zonedDay;
         }
 
@@ -86,13 +93,13 @@ namespace Time {
             if (m_End == MIN_INSTANT && m_Start == MAX_INSTANT) [[unlikely]] return Duration::zero();
             const auto start = std::chrono::zoned_time(zone, m_Start);
             const auto end = std::chrono::zoned_time(zone, m_End);
-            return std::chrono::round<Duration>(std::chrono::floor<Duration>(end.get_local_time()) - std::chrono::floor<Duration>(start.get_local_time()));
+            return std::chrono::round<Duration>(
+                std::chrono::floor<Duration>(end.get_local_time()) - std::chrono::floor<Duration>(
+                    start.get_local_time()));
         }
 
         template<typename TimeZone = const std::chrono::time_zone *>
-        int32_t getWorkdayCount(TimeZone zone) const {
-            return getDayCount(zone, 0x1f);
-        }
+        int32_t getWorkdayCount(TimeZone zone) const { return getDayCount(zone, 0x1f); }
 
         template<typename TimeZone = const std::chrono::time_zone *>
         int32_t getDayCount(TimeZone zone, const uint8_t weekdayBitMask) const {
@@ -110,9 +117,11 @@ namespace Time {
             constexpr auto oneDay = std::chrono::days(1);
 
             for (
-                auto zonedInstant = std::chrono::zoned_time(zone, std::chrono::floor<std::chrono::days>(zonedStart.get_local_time()));
+                auto zonedInstant = std::chrono::zoned_time(
+                    zone, std::chrono::floor<std::chrono::days>(zonedStart.get_local_time()));
                 zonedInstant.get_sys_time() < zonedEnd.get_sys_time();
-                zonedInstant = std::chrono::zoned_time(zone, std::chrono::floor<std::chrono::days>(zonedInstant.get_local_time() + oneDay))
+                zonedInstant = std::chrono::zoned_time(
+                    zone, std::chrono::floor<std::chrono::days>(zonedInstant.get_local_time() + oneDay))
             ) {
                 if (!(weekdayBitMask >> InstantToWeekday(zonedInstant) & 1)) continue;
                 dayCount += 1;
@@ -122,9 +131,7 @@ namespace Time {
         }
 
         template<typename TimeZone = const std::chrono::time_zone *>
-        float getPartialWorkdayCount(TimeZone zone) const {
-            return getPartialDayCount(zone, 0x1f);
-        }
+        float getPartialWorkdayCount(TimeZone zone) const { return getPartialDayCount(zone, 0x1f); }
 
         template<typename TimeZone = const std::chrono::time_zone *>
         float getPartialDayCount(TimeZone zone, const uint8_t weekdayBitMask) const {
@@ -145,10 +152,12 @@ namespace Time {
             const auto localEndDayTimePoint = std::chrono::floor<std::chrono::days>(zonedEnd.get_local_time());
             auto startDay = std::chrono::zoned_time(zone, localStartDayTimePoint);
             auto endDay = std::chrono::zoned_time(zone, localEndDayTimePoint);
-            auto nextStartDay = std::chrono::zoned_time(zone, std::chrono::floor<std::chrono::days>(localStartDayTimePoint + oneDay));
+            auto nextStartDay = std::chrono::zoned_time(
+                zone, std::chrono::floor<std::chrono::days>(localStartDayTimePoint + oneDay));
 
             if (weekdayBitMask >> InstantToWeekday(zonedStart) & 1) {
-                const auto fullDayDuration = std::chrono::duration<float>(nextStartDay.get_sys_time() - startDay.get_sys_time());
+                const auto fullDayDuration = std::chrono::duration<float>(
+                    nextStartDay.get_sys_time() - startDay.get_sys_time());
                 if (fullDayDuration > fullDayDuration.zero()) {
                     dayCount += (nextStartDay.get_sys_time() - zonedStart.get_sys_time()) / fullDayDuration;
                 }
@@ -157,14 +166,17 @@ namespace Time {
             for (
                 auto day = nextStartDay;
                 day.get_sys_time() < endDay.get_sys_time();
-                day = std::chrono::zoned_time(zone, std::chrono::floor<std::chrono::days>(day.get_local_time() + oneDay))
+                day = std::chrono::zoned_time(
+                    zone, std::chrono::floor<std::chrono::days>(day.get_local_time() + oneDay))
             ) {
                 if (!(weekdayBitMask >> InstantToWeekday(day) & 1)) continue;
                 dayCount += 1.0f;
             }
 
             if (weekdayBitMask >> InstantToWeekday(zonedEnd) & 1) {
-                const auto fullDayDuration = std::chrono::duration<float>(std::chrono::zoned_time(zone, std::chrono::ceil<std::chrono::days>(zonedEnd.get_local_time())).get_sys_time() - endDay.get_sys_time());
+                const auto fullDayDuration = std::chrono::duration<float>(
+                    std::chrono::zoned_time(zone, std::chrono::ceil<std::chrono::days>(zonedEnd.get_local_time())).
+                    get_sys_time() - endDay.get_sys_time());
                 if (fullDayDuration > fullDayDuration.zero()) {
                     dayCount += (zonedEnd.get_sys_time() - endDay.get_sys_time()) / fullDayDuration;
                 }
@@ -221,8 +233,8 @@ namespace Time {
     }
 }
 
-template <>
-    struct std::hash<Time::Range> {
+template<>
+struct std::hash<Time::Range> {
     std::size_t operator()(const Time::Range& k) const noexcept {
         using std::size_t;
         using std::hash;

@@ -5,9 +5,11 @@
 #include <chrono>
 #include <regex>
 
+#define INSTANT_PRECISION std::chrono::milliseconds
+
 namespace Time {
     // ReSharper disable CppRedundantTemplateArguments
-    using Instant = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>;
+    using Instant = std::chrono::time_point<std::chrono::system_clock, INSTANT_PRECISION>;
 
     constexpr Instant MIN_INSTANT = Instant::min();
     constexpr Instant MAX_INSTANT = Instant::max();
@@ -74,11 +76,11 @@ namespace Time {
         const auto sec = std::chrono::seconds{std::chrono::hours{hour} + std::chrono::minutes{minute} + std::chrono::seconds{second}};
 
         // Use system_clock to get the UTC time and then adjust for the offset.
-        auto time_point = std::chrono::sys_days{ymd} + sec;
-        time_point -= offsetDuration;
+        auto timePoint = std::chrono::sys_days{ymd} + sec;
+        timePoint -= offsetDuration;
 
         // Return the time_point with nanoseconds precision
-        return time_point + std::chrono::nanoseconds(nanoseconds);
+        return std::chrono::time_point_cast<INSTANT_PRECISION>(timePoint + std::chrono::nanoseconds(nanoseconds));
     }
 
     /**

@@ -16,6 +16,10 @@ namespace Time {
     public:
         Ray(const Instant& start) : m_Start(start) { } // NOLINT(*-explicit-constructor)
 
+        template<class Duration = std::chrono::system_clock::duration>
+        Ray(const std::chrono::time_point<std::chrono::system_clock, Duration>& start) : m_Start(
+            std::chrono::time_point_cast<INSTANT_PRECISION>(start)) { } // NOLINT(*-explicit-constructor)
+
         Ray(const Ray& other) : Ray(other.m_Start) { }
 
         virtual ~Ray() = default;
@@ -42,8 +46,10 @@ namespace Time {
             return start1 < start2 ? start2 : start1;
         }
 
-        [[nodiscard]] Range rangeTo(const Instant& end) const;
-        [[nodiscard]] Range rangeFrom(const Instant& start) const;
+        template<class Duration = std::chrono::system_clock::duration>
+        [[nodiscard]] Range rangeTo(const std::chrono::time_point<std::chrono::system_clock, Duration>& end) const;
+        template<class Duration = std::chrono::system_clock::duration>
+        [[nodiscard]] Range rangeFrom(const std::chrono::time_point<std::chrono::system_clock, Duration>& start) const;
 
         template<typename Duration = std::chrono::minutes, typename TimePoint = Instant>
         Duration durationTo(const TimePoint& end) const { return std::chrono::round<Duration>(end - m_Start); }
@@ -70,8 +76,8 @@ namespace Time {
     };
 }
 
-template <>
-    struct std::hash<Time::Ray> {
+template<>
+struct std::hash<Time::Ray> {
     std::size_t operator()(const Time::Ray& k) const noexcept {
         using std::size_t;
         using std::hash;
