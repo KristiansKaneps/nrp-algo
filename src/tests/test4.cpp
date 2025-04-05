@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include "Time/Range.h"
+#include "Time/RangeCollection.h"
 
 SCENARIO("time range intersections") {
     GIVEN("two intersecting and non-adjacent ranges") {
@@ -138,6 +139,64 @@ SCENARIO("time range intersections") {
 
             THEN("intersections must be equal") {
                 CHECK(intersection1.get() == intersection2.get());
+            }
+        }
+    }
+
+    GIVEN("a range and a range collection that intersects") {
+        const auto start1 = Time::StringToInstant("2025-02-01T00:00:00Z");
+        const auto end1 = Time::StringToInstant("2025-03-01T00:00:00Z");
+        const auto start2 = Time::StringToInstant("2025-03-03T00:00:00Z");
+        const auto end2 = Time::StringToInstant("2025-04-01T00:00:00Z");
+
+        const auto start3 = Time::StringToInstant("2025-03-02T00:00:00Z");
+        const auto end3 = Time::StringToInstant("2025-03-04T00:00:00Z");
+
+        const Time::Range range1(start1, end1);
+        const Time::Range range2(start2, end2);
+
+        const Time::Range range(start3, end3);
+
+        Time::RangeCollection collection(2);
+        collection.add(range1);
+        collection.add(range2);
+
+        WHEN("checking their intersection") {
+            const bool intersects1 = collection.intersects(range);
+            const bool intersects2 = range.intersects(collection);
+
+            THEN("it must be true") {
+                CHECK(intersects1);
+                CHECK(intersects2);
+            }
+        }
+    }
+
+    GIVEN("a range and a range collection that does not intersect") {
+        const auto start1 = Time::StringToInstant("2025-02-01T00:00:00Z");
+        const auto end1 = Time::StringToInstant("2025-03-01T00:00:00Z");
+        const auto start2 = Time::StringToInstant("2025-03-03T00:00:00Z");
+        const auto end2 = Time::StringToInstant("2025-04-01T00:00:00Z");
+
+        const auto start3 = Time::StringToInstant("2025-03-02T00:00:00Z");
+        const auto end3 = Time::StringToInstant("2025-03-03T00:00:00Z");
+
+        const Time::Range range1(start1, end1);
+        const Time::Range range2(start2, end2);
+
+        const Time::Range range(start3, end3);
+
+        Time::RangeCollection collection(2);
+        collection.add(range1);
+        collection.add(range2);
+
+        WHEN("checking their intersection") {
+            const bool intersects1 = collection.intersects(range);
+            const bool intersects2 = range.intersects(collection);
+
+            THEN("it must be false") {
+                CHECK(!intersects1);
+                CHECK(!intersects2);
             }
         }
     }
