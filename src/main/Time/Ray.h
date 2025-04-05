@@ -4,6 +4,7 @@
 #include "Time/Constants.h"
 
 namespace Time {
+    class Ray;
     class Range;
     class RangeCollection;
 
@@ -11,6 +12,8 @@ namespace Time {
         RAY,
         RANGE
     };
+
+    std::ostream& operator<<(std::ostream& out, const Ray& ray);
 
     class Ray {
     public:
@@ -68,12 +71,21 @@ namespace Time {
 
         [[nodiscard]] virtual bool intersects(const RangeCollection& other) const;
 
+        [[nodiscard]] Ray getRayIntersection(const Ray& other) const {
+            return Ray(other.m_Start < m_Start ? m_Start : other.m_Start);
+        }
+
     protected:
         Instant m_Start;
 
         friend class Range;
         friend class RangeCollection;
     };
+
+    inline std::ostream& operator<<(std::ostream& out, const Ray& ray) {
+        out << '[' << ray.start() << ']';
+        return out;
+    }
 }
 
 template<>

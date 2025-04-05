@@ -4,6 +4,9 @@
 #include "Time/Ray.h"
 
 namespace Time {
+    class Range;
+    std::ostream& operator<<(std::ostream& out, const Range& range);
+
     class Range : public Ray {
     public:
         Range(const Instant& start, const Instant& end) : Ray(start),
@@ -216,16 +219,24 @@ namespace Time {
 
         [[nodiscard]] bool intersects(const RangeCollection& other) const override;
 
+        [[nodiscard]] std::unique_ptr<const Range> getIntersection(const Ray& other) const {
+            if (other.type() == RAY) [[unlikely]] {
+                if (m_End <= other.m_Start) return std::unique_ptr<const Range>(nullptr);
+                return std::make_unique<const Range>(m_Start > other.m_Start ? m_Start : other.m_Start, m_End);
+            }
+            if (other.type() == RANGE) [[likely]] {
+                const auto r = static_cast<const Range&>(other); // NOLINT(*-pro-type-static-cast-downcast)
+                if (r.m_Start >= m_End || m_Start >= r.m_End) return std::unique_ptr<const Range>(nullptr);
+                return std::make_unique<const Range>(m_Start > r.m_Start ? m_Start : r.m_Start, m_End > r.m_End ? r.m_End : m_End);
+            }
+            return std::unique_ptr<const Range>(nullptr);
+        }
+
     protected:
         Instant m_End;
 
         friend class RangeCollection;
     };
-
-    inline std::ostream& operator<<(std::ostream& out, const Instant& instant) {
-        out << InstantToString(instant);
-        return out;
-    }
 
     inline std::ostream& operator<<(std::ostream& out, const Range& range) {
         out << '[' << range.start() << "; " << range.end() << ']';

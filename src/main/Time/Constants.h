@@ -14,7 +14,8 @@ namespace Time {
     constexpr Instant MIN_INSTANT = Instant::min();
     constexpr Instant MAX_INSTANT = Instant::max();
 
-    static std::string InstantToString(const Instant& instant) {
+    template<typename Duration = std::chrono::minutes>
+    static std::string InstantToString(const std::chrono::time_point<std::chrono::system_clock, Duration>& instant) {
         // Truncate to seconds for base time formatting
         const auto seconds = std::chrono::time_point_cast<std::chrono::seconds>(instant);
         // Extract nanoseconds as a remainder
@@ -105,6 +106,12 @@ namespace Time {
         const auto weekdayIsoStd = std::chrono::year_month_weekday{std::chrono::floor<std::chrono::days>(localTime)}.weekday();
         // `is_encoding()` converts POSIX to ISO 8601 standard (1 - Monday, ..., 7 - Sunday)
         return static_cast<uint8_t>(weekdayIsoStd.iso_encoding() - 1);
+    }
+
+    template<typename Duration = std::chrono::minutes>
+    std::ostream& operator<<(std::ostream& out, const std::chrono::time_point<std::chrono::system_clock, Duration>& instant) {
+        out << InstantToString(instant);
+        return out;
     }
 }
 
