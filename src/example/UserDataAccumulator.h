@@ -26,6 +26,7 @@ namespace UserData {
         ADDITIONAL_LEAVE,
         STUDY_LEAVE,
         DECREE_LEAVE,
+        BUSINESS_TRIP,
     };
 
     struct Skill {

@@ -47,6 +47,7 @@ namespace Domain {
             ADDITIONAL_LEAVE,
             STUDY_LEAVE,
             DECREE_LEAVE,
+            BUSINESS_TRIP,
         };
 
         class Availability {
