@@ -61,7 +61,7 @@ namespace Time {
 
         // Extract the UTC offset (e.g., "+00", "+02:00", "Z")
         const std::string offset = match[8].str();
-        std::chrono::duration<int> offsetDuration;
+        std::chrono::duration<int> offsetDuration{};
         if (offset == "Z" || offset == "+00" || offset == "+00:00") {
             offsetDuration = std::chrono::hours(0); // UTC
         } else {
