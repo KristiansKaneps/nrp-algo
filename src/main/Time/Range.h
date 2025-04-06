@@ -5,6 +5,7 @@
 
 namespace Time {
     class Range;
+    class RangeCollection;
     std::ostream& operator<<(std::ostream& out, const Range& range);
 
     class Range : public Ray {
@@ -191,7 +192,7 @@ namespace Time {
         [[nodiscard]] bool isStartAdjacentTo(const Ray& other) const override {
             if (other.type() == RAY) [[unlikely]] return other.m_Start == m_Start;
             if (other.type() == RANGE) [[likely]] {
-                const auto r = static_cast<const Range&>(other); // NOLINT(*-pro-type-static-cast-downcast)
+                const auto &r = static_cast<const Range&>(other); // NOLINT(*-pro-type-static-cast-downcast)
                 return r.m_End == m_Start;
             }
             return other.isStartAdjacentTo(*this);
@@ -207,11 +208,27 @@ namespace Time {
             return isStartAdjacentTo(other) || isEndAdjacentTo(other);
         }
 
+        [[nodiscard]] bool fullyContains(const Ray& other) const override {
+            if (other.type() == RAY) [[unlikely]] return false;
+            const auto &r = static_cast<const Range&>(other);
+            return m_Start <= r.m_Start && m_End >= r.m_End;
+        }
+
+        [[nodiscard]] bool fullyContains(const RangeCollection& other) const override;
+
+        [[nodiscard]] bool isFullyContainedBy(const Ray& other) const override {
+            if (other.type() == RAY) [[unlikely]] return other.fullyContains(*this);
+            const auto &r = static_cast<const Range&>(other);
+            return m_Start >= r.m_Start && m_End <= r.m_End;
+        }
+
+        [[nodiscard]] bool isFullyContainedBy(const RangeCollection& other) const override;
+
         [[nodiscard]] bool intersects(const Ray& other) const override {
             if (other.type() == RAY) [[unlikely]]
                 return other.m_Start < m_End;
             if (other.type() == RANGE) [[likely]] {
-                const auto r = static_cast<const Range&>(other); // NOLINT(*-pro-type-static-cast-downcast)
+                const auto &r = static_cast<const Range&>(other); // NOLINT(*-pro-type-static-cast-downcast)
                 return r.m_Start < m_End && r.m_End > m_Start;
             }
             return other.intersects(*this);
@@ -219,18 +236,40 @@ namespace Time {
 
         [[nodiscard]] bool intersects(const RangeCollection& other) const override;
 
+        [[nodiscard]] Range getIntersectionUnsafe(const Ray& other) const {
+            if (other.type() == RAY) [[unlikely]] {
+                if (m_End <= other.m_Start) return {MAX_INSTANT, MIN_INSTANT};
+                return {m_Start > other.m_Start ? m_Start : other.m_Start, m_End};
+            }
+            if (other.type() == RANGE) [[likely]] {
+                const auto &r = static_cast<const Range&>(other); // NOLINT(*-pro-type-static-cast-downcast)
+                if (r.m_Start >= m_End || m_Start >= r.m_End) return {MAX_INSTANT, MIN_INSTANT};
+                return {m_Start > r.m_Start ? m_Start : r.m_Start, m_End > r.m_End ? r.m_End : m_End};
+            }
+            return {MAX_INSTANT, MIN_INSTANT};
+        }
+
         [[nodiscard]] std::unique_ptr<const Range> getIntersection(const Ray& other) const {
             if (other.type() == RAY) [[unlikely]] {
-                if (m_End <= other.m_Start) return std::unique_ptr<const Range>(nullptr);
+                if (m_End <= other.m_Start) return {nullptr};
                 return std::make_unique<const Range>(m_Start > other.m_Start ? m_Start : other.m_Start, m_End);
             }
             if (other.type() == RANGE) [[likely]] {
-                const auto r = static_cast<const Range&>(other); // NOLINT(*-pro-type-static-cast-downcast)
-                if (r.m_Start >= m_End || m_Start >= r.m_End) return std::unique_ptr<const Range>(nullptr);
+                const auto &r = static_cast<const Range&>(other); // NOLINT(*-pro-type-static-cast-downcast)
+                if (r.m_Start >= m_End || m_Start >= r.m_End) return {nullptr};
                 return std::make_unique<const Range>(m_Start > r.m_Start ? m_Start : r.m_Start, m_End > r.m_End ? r.m_End : m_End);
             }
-            return std::unique_ptr<const Range>(nullptr);
+            return {nullptr};
         }
+
+        RangeCollection getIntersection(RangeCollection& other) const;
+
+        [[nodiscard]] RangeCollection getSymmetricDifference(const Range& other) const;
+
+        RangeCollection operator+(const Range& rhs) const;
+        RangeCollection operator+(const RangeCollection& rhs) const;
+        RangeCollection operator-(const Range& rhs) const;
+        RangeCollection operator-(const RangeCollection& rhs) const;
 
     protected:
         Instant m_End;

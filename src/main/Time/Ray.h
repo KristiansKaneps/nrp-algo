@@ -64,6 +64,18 @@ namespace Time {
 
         [[nodiscard]] virtual bool isAdjacentTo(const Ray& other) const { return isStartAdjacentTo(other); }
 
+        [[nodiscard]] virtual bool fullyContains(const Ray& other) const {
+            return m_Start <= other.m_Start;
+        }
+
+        [[nodiscard]] virtual bool fullyContains(const RangeCollection& other) const;
+
+        [[nodiscard]] virtual bool isFullyContainedBy(const Ray& other) const {
+            return m_Start >= other.m_Start;
+        }
+
+        [[nodiscard]] virtual bool isFullyContainedBy(const RangeCollection& other) const;
+
         [[nodiscard]] virtual bool intersects(const Ray& other) const { // NOLINT(*-no-recursion)
             if (other.type() == RAY) [[unlikely]] return true;
             return other.intersects(*this);

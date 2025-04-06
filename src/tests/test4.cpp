@@ -48,7 +48,7 @@ SCENARIO("time range intersections") {
                 CHECK(*intersection1 == *intersection2);
             }
 
-            THEN("intersection should have correct start and end") {
+            THEN("intersection should have correct start and end time") {
                 CHECK(intersection1->start() == start2);
                 CHECK(intersection1->end() == end1);
             }
@@ -170,6 +170,58 @@ SCENARIO("time range intersections") {
                 CHECK(intersects2);
             }
         }
+
+        WHEN("getting their intersection") {
+            const auto intersection = range.getIntersection(collection);
+
+            THEN("there must be an intersection of 1 range") {
+                CHECK(intersection.size() == 1);
+            }
+
+            THEN("intersection should have correct start and end time") {
+                CHECK(intersection.ranges()[0].start() == start2);
+                CHECK(intersection.ranges()[0].end() == end3);
+            }
+        }
+
+        WHEN("getting their difference (range - collection)") {
+            const auto difference= range - collection;
+
+            THEN("result must contain 1 range") {
+                CHECK(difference.size() == 1);
+            }
+
+            THEN("result should have correct start and end time") {
+                const auto &r = difference.ranges()[0];
+                CHECK(r.start() == start3);
+                CHECK(r.end() == start2);
+            }
+        }
+
+        WHEN("getting their difference (collection - range)") {
+            const auto difference= collection - range;
+
+            THEN("result must contain 2 ranges") {
+                CHECK(difference.size() == 2);
+            }
+
+            THEN("result should have correct start and end times") {
+                bool success1 = false;
+                bool success2 = false;
+                bool success3 = false;
+                bool success4 = false;
+                for (const auto &r : difference.ranges()) {
+                    success1 = success1 || r.start() == start1;
+                    success2 = success2 || r.end() == end1;
+                    success3 = success3 || r.start() == end3;
+                    success4 = success4 || r.end() == end2;
+                }
+                CHECK(success1);
+                CHECK(success2);
+                CHECK(success3);
+                CHECK(success4);
+            }
+        }
     }
 
     GIVEN("a range and a range collection that does not intersect") {
@@ -197,6 +249,53 @@ SCENARIO("time range intersections") {
             THEN("it must be false") {
                 CHECK(!intersects1);
                 CHECK(!intersects2);
+            }
+        }
+
+        WHEN("getting their intersection") {
+            const auto intersection = range.getIntersection(collection);
+
+            THEN("there must not be an intersection of any range") {
+                CHECK(intersection.size() == 0);
+            }
+        }
+
+        WHEN("getting their difference (range - collection)") {
+            const auto difference= range - collection;
+
+            THEN("result must contain 1 range") {
+                CHECK(difference.size() == 1);
+            }
+
+            THEN("result should have correct start and end time") {
+                const auto &r = difference.ranges()[0];
+                CHECK(r.start() == start3);
+                CHECK(r.end() == end3);
+            }
+        }
+
+        WHEN("getting their difference (collection - range)") {
+            const auto difference= collection - range;
+
+            THEN("result must contain 2 ranges") {
+                CHECK(difference.size() == 2);
+            }
+
+            THEN("result should have correct start and end times") {
+                bool success1 = false;
+                bool success2 = false;
+                bool success3 = false;
+                bool success4 = false;
+                for (const auto &r : difference.ranges()) {
+                    success1 = success1 || r.start() == start1;
+                    success2 = success2 || r.end() == end1;
+                    success3 = success3 || r.start() == start2;
+                    success4 = success4 || r.end() == end2;
+                }
+                CHECK(success1);
+                CHECK(success2);
+                CHECK(success3);
+                CHECK(success4);
             }
         }
     }
