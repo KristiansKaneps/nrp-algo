@@ -100,7 +100,7 @@ void Example::create() {
         const char *userName = database.value(i, 1);
         const char *userSurname = database.value(i, 2);
         const char *userEmail = database.value(i, 3);
-        const auto availabilityType = static_cast<UserData::AvailabilityType>(atoi(database.value(i, 4))); // NOLINT(*-err34-c)
+        const auto availabilityType = static_cast<UserData::AvailabilityType>(2 - atoi(database.value(i, 4))); // NOLINT(*-err34-c)
         const auto unavailabilitySubtype = static_cast<UserData::UnavailabilitySubtype>(atoi(database.value(i, 5))); // NOLINT(*-err34-c)
 
         userAccumulator.addUserFullName(userId, userEmail, userName, userSurname);
