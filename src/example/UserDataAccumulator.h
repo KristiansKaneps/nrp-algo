@@ -145,11 +145,20 @@ namespace UserData {
             switch (type) {
                 case AvailabilityType::UNAVAILABLE:
                     if (subtype > UnavailabilitySubtype::NONE) {
-                        m_AvailabilityPaidUnavailableMap[id].m_RangeCollection.add(range);
-                    } else { m_AvailabilityUnpaidUnavailableMap[id].m_RangeCollection.add(range); }
+                        auto &collection = m_AvailabilityPaidUnavailableMap[id].m_RangeCollection;
+                        collection.subtract(range);
+                        collection.add(range);
+                    } else {
+                        auto &collection = m_AvailabilityUnpaidUnavailableMap[id].m_RangeCollection;
+                        collection.subtract(range);
+                        collection.add(range);
+                    }
                     break;
-                case AvailabilityType::DESIRED:
-                    m_AvailabilityDesiredMap[id].m_RangeCollection.add(range);
+                case AvailabilityType::DESIRED: {
+                    auto &collection = m_AvailabilityDesiredMap[id].m_RangeCollection;
+                    collection.subtract(range);
+                    collection.add(range);
+                }
                 default:
                     return;
             }
