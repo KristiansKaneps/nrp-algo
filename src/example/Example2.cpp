@@ -296,7 +296,9 @@ void Example::create() {
                 else name = "L";
             }
         }
-        auto &s = *(new(shifts + i) Shift(i, Shift::ALL_WEEKDAYS, t.interval, name, t.slots, t.slots >> 1 > 0 ? t.slots >> 1 : 1));
+        const Time::day_minutes_t restMinutesBefore = t.interval.durationInMinutes() >= 16 * 60 ? static_cast<Time::day_minutes_t>(t.interval.durationInMinutes() * 2) : t.interval.durationInMinutes();
+        const Time::day_minutes_t restMinutesAfter = t.interval.durationInMinutes() >= 16 * 60 ? static_cast<Time::day_minutes_t>(t.interval.durationInMinutes() * 2) : t.interval.durationInMinutes();
+        auto &s = *(new(shifts + i) Shift(i, Shift::ALL_WEEKDAYS, t.interval, name, t.slots, t.slots >> 1 > 0 ? t.slots >> 1 : 1, restMinutesBefore, restMinutesAfter));
         for (size_t j = 0; j < t.skills.size(); ++j) {
             const auto &shiftSkill = t.skills[j];
             const size_t skillIndex = skillAccumulator.getIndex(shiftSkill.m_SkillId);

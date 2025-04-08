@@ -14,17 +14,10 @@ namespace Time {
     public:
         static constexpr day_minutes_t MINUTES_IN_A_DAY = 24 * 60;
         static constexpr day_minutes_t MINUTES_IN_TWO_DAYS = 2 * MINUTES_IN_A_DAY;
-        static constexpr day_minutes_t DURATION_MINUTES_UPPER_BOUND = MINUTES_IN_TWO_DAYS + 2 * 60;
 
         DailyInterval(const day_minutes_t startInMinutes, const day_minutes_t durationInMinutes) :
             m_StartInMinutes(startInMinutes),
             m_DurationInMinutes(durationInMinutes) {
-            assert(
-                startInMinutes >= -MINUTES_IN_A_DAY && startInMinutes < MINUTES_IN_TWO_DAYS &&
-                "Start [minutes] should be in range (-MINUTES_IN_A_DAY) <= (startInMinutes) < (MINUTES_IN_TWO_DAYS).");
-            assert(
-                durationInMinutes > 0 && durationInMinutes <= DURATION_MINUTES_UPPER_BOUND &&
-                "Duration [minutes] should be in range (0) < (durationInMinutes) <= (DURATION_MINUTES_UPPER_BOUND).");
         }
 
         DailyInterval(const char *startAsString, const day_minutes_t durationInMinutes) : DailyInterval(
@@ -162,6 +155,19 @@ namespace Time {
             return {
                 static_cast<day_minutes_t>(m_StartInMinutes - padding),
                 static_cast<day_minutes_t>(m_DurationInMinutes + 2 * padding),
+            };
+        }
+
+        /**
+         * Applies padding to this daily interval.
+         * @param startPadding Padding to apply to start.
+         * @param endPadding Padding to apply to end.
+         * @return New daily interval with applied padding.
+         */
+        [[nodiscard]] DailyInterval withPadding(const day_minutes_t startPadding, const day_minutes_t endPadding) const {
+            return {
+                static_cast<day_minutes_t>(m_StartInMinutes - startPadding),
+                static_cast<day_minutes_t>(m_DurationInMinutes + startPadding + endPadding),
             };
         }
 

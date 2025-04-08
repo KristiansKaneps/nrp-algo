@@ -54,8 +54,8 @@ void Example::create() {
 
     new(shifts + 0) Shift(0, Shift::ALL_WEEKDAYS, interval1, "E", 2);
     new(shifts + 1) Shift(1, Shift::ALL_WEEKDAYS, interval2, "L", 2);
-    new(shifts + 2) Shift(2, Shift::ALL_WEEKDAYS, interval3, "DN", 2);
-    new(shifts + 3) Shift(3, Shift::ALL_WEEKDAYS, interval4, "ND", 2);
+    new(shifts + 2) Shift(2, Shift::ALL_WEEKDAYS, interval3, "DN", 2, 2 * interval3.durationInMinutes());
+    new(shifts + 3) Shift(3, Shift::ALL_WEEKDAYS, interval4, "ND", 2, 2 * interval4.durationInMinutes());
 
     for (uint32_t i = 0; i < employeeCount; ++i) { new(employees + i) Employee(i); }
 

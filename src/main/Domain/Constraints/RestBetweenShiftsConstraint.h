@@ -14,8 +14,10 @@ namespace Domain::Constraints {
             m_IntersectingShiftsInSameDayMatrix(BitMatrix::createIdentitySymmetricalMatrix(xAxis.size())),
             m_IntersectingShiftsInAdjacentDaysMatrix(BitMatrix::createSquareMatrix(xAxis.size())) {
             for (axis_size_t x1 = 0; x1 < xAxis.size(); ++x1) {
-                const auto interval1 = xAxis[x1].interval();
-                const auto paddedInterval1 = xAxis[x1].interval().withPadding(12 * 60);
+                const auto &shift1 = xAxis[x1];
+                const auto &interval1 = shift1.interval();
+                std::cout << "Shift interval: " << shift1.interval() << std::endl;
+                const auto paddedInterval1 = interval1.withPadding(shift1.restMinutesBefore(), shift1.restMinutesAfter());
 
                 if (
                     paddedInterval1.intersectsOtherFromNextDay(interval1)
@@ -24,8 +26,9 @@ namespace Domain::Constraints {
                     m_IntersectingShiftsInSameDayMatrix.set(x1, x1);
 
                 for (axis_size_t x2 = x1 + 1; x2 < xAxis.size(); ++x2) {
-                    const auto interval2 = xAxis[x2].interval();
-                    const auto paddedInterval2 = xAxis[x2].interval().withPadding(12 * 60);
+                    const auto &shift2 = xAxis[x2];
+                    const auto &interval2 = shift2.interval();
+                    const auto paddedInterval2 = interval2.withPadding(shift2.restMinutesBefore(), shift2.restMinutesAfter());
 
                     if (interval1.intersectsInSameDay(paddedInterval2) || paddedInterval1.intersectsInSameDay(interval2))
                         m_IntersectingShiftsInSameDayMatrix.set(x1, x2);
@@ -80,10 +83,8 @@ namespace Domain::Constraints {
     private:
         BitMatrix::BitSymmetricalMatrix m_IntersectingShiftsInSameDayMatrix;
         /**
-         * If x > y, then the bit is set if x (in the previous day) intersects y (in the next day).<br>
-         * If y > x, then the bit is set if y (in the previous day) intersects x (in the next day).<br>
-         * If x == y, then the bit is set if x (in the previous day) intersects y (in the next day) or the other way
-         * around.
+         * The bit is set if x (in the previous day) intersects y (in the next day).<br>
+         * In other words, x corresponds to the previous day and y corresponds to the next day.
          */
         BitMatrix::BitSquareMatrix m_IntersectingShiftsInAdjacentDaysMatrix;
     };
