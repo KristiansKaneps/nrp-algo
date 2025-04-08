@@ -24,8 +24,6 @@ namespace Domain::Constraints {
             m_MaxOffsetDays = (maxDuration + Time::DailyInterval::MINUTES_IN_A_DAY - 1) / Time::DailyInterval::MINUTES_IN_A_DAY;
             m_IntersectingShiftsInAdjacentDaysMatrices.reserve(m_MaxOffsetDays);
 
-            std::cout << "Max offset days: " << m_MaxOffsetDays << std::endl;
-
             for (axis_size_t x1 = 0; x1 < xAxis.size(); ++x1) {
                 const auto& shift1 = xAxis[x1];
                 const auto& interval1 = shift1.interval();
