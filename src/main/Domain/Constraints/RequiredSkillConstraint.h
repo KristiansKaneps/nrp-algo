@@ -76,12 +76,12 @@ namespace Domain::Constraints {
                 const auto employeeSkill = employeeSkills.find(skillIndex);
                 if (employeeSkill == employeeSkills.cend()) continue;
 
-                #if EXAMPLE != 2
-                if (shiftSkillWeight <= employeeSkill->second.weight)
-                    return true;
-                #else
+                // #if EXAMPLE != 2
+                // if (shiftSkillWeight <= employeeSkill->second.weight)
+                //     return true;
+                // #else
                 return true;
-                #endif
+                // #endif
             }
 
             return false;

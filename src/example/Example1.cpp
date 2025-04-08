@@ -54,8 +54,8 @@ void Example::create() {
 
     new(shifts + 0) Shift(0, Shift::ALL_WEEKDAYS, interval1, "E", 2);
     new(shifts + 1) Shift(1, Shift::ALL_WEEKDAYS, interval2, "L", 2);
-    new(shifts + 2) Shift(2, Shift::ALL_WEEKDAYS, interval3, "DN", 2, 2 * interval3.durationInMinutes());
-    new(shifts + 3) Shift(3, Shift::ALL_WEEKDAYS, interval4, "ND", 2, 2 * interval4.durationInMinutes());
+    new(shifts + 2) Shift(2, Shift::ALL_WEEKDAYS, interval3, "DN", 1, 2 * interval3.durationInMinutes());
+    new(shifts + 3) Shift(3, Shift::ALL_WEEKDAYS, interval4, "ND", 1, 2 * interval4.durationInMinutes());
 
     for (uint32_t i = 0; i < employeeCount; ++i) { new(employees + i) Employee(i); }
 
@@ -69,6 +69,18 @@ void Example::create() {
     employees[2].addSkill(0, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
     employees[2].addSkill(3, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
     employees[2].addSkill(1, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
+
+    for (size_t i = 0; i < employeeCount; ++i) {
+        auto &employee = employees[i];
+        employee.addSkill(0, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
+        employee.addSkill(1, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
+    }
+
+    for (size_t i = employeeCount >> 1; i < employeeCount; ++i) {
+        auto &employee = employees[i];
+        employee.addSkill(2, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
+        employee.addSkill(3, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
+    }
 
     shifts[0].addRequiredAllSkill(0, 1.0f);
     shifts[0].addRequiredOneSkill(1, 1.0f);

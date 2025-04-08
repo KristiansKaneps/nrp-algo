@@ -24,9 +24,9 @@ namespace Domain::Constraints {
 
                     if (interval1.intersectsInSameDay(interval2))
                         m_IntersectingShiftsInSameDayMatrix.set(x1, x2);
-                    if (interval1.intersectsOtherFromNextDay(interval2))
+                    if (interval1.intersectsOtherInNextDay(interval2))
                         m_IntersectingShiftsInAdjacentDaysMatrix.set(x1, x2);
-                    if (interval1.intersectsOtherFromPrevDay(interval2))
+                    if (interval1.intersectsOtherInPrevDay(interval2))
                         m_IntersectingShiftsInAdjacentDaysMatrix.set(x2, x1);
                 }
             }
@@ -76,7 +76,8 @@ namespace Domain::Constraints {
         BitMatrix::BitSymmetricalMatrix m_IntersectingShiftsInSameDayMatrix;
         /**
          * The bit is set if x (in the previous day) intersects y (in the next day).<br>
-         * In other words, x corresponds to the previous day and y corresponds to the next day.
+         * In other words, x corresponds to the previous day and y corresponds to the next day.<br>
+         * Single shift's maximum duration limit is 24H.
          */
         BitMatrix::BitSquareMatrix m_IntersectingShiftsInAdjacentDaysMatrix;
     };

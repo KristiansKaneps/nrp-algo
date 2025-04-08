@@ -5,7 +5,7 @@
 #include "Time/Range.h"
 #include "Time/DailyInterval.h"
 
-SCENARIO("daily interval to range") {
+SCENARIO("daily interval intersection and conversion to range") {
     GIVEN("a bunch of intervals") {
         const auto interval1 = Time::DailyInterval("08:00", "16:00");
         const auto interval2 = Time::DailyInterval("16:00", "24:00");
@@ -18,6 +18,164 @@ SCENARIO("daily interval to range") {
         const std::chrono::time_zone* utc = tzdb.locate_zone("UTC");
 
         const auto day = std::chrono::zoned_time(utc, instant);
+
+        WHEN("checking interval intersections in the same day") {
+            THEN("first and second interval should not intersect in the same day") {
+                CHECK(!interval1.intersectsInSameDay(interval2));
+                CHECK(!interval2.intersectsInSameDay(interval1));
+                CHECK(!interval1.intersectsOtherInOffsetDay(interval2, 0));
+                CHECK(!interval2.intersectsOtherInOffsetDay(interval1, 0));
+            }
+
+            THEN("second and third interval should intersect in the same day") {
+                CHECK(interval2.intersectsInSameDay(interval3));
+                CHECK(interval3.intersectsInSameDay(interval2));
+                CHECK(interval2.intersectsOtherInOffsetDay(interval3, 0));
+                CHECK(interval3.intersectsOtherInOffsetDay(interval2, 0));
+            }
+
+            THEN("third and fourth interval should intersect in the same day") {
+                CHECK(interval4.intersectsInSameDay(interval3));
+                CHECK(interval3.intersectsInSameDay(interval4));
+                CHECK(interval4.intersectsOtherInOffsetDay(interval3, 0));
+                CHECK(interval3.intersectsOtherInOffsetDay(interval4, 0));
+            }
+
+            THEN("first and fourth interval should not intersect in the same day") {
+                CHECK(!interval1.intersectsInSameDay(interval4));
+                CHECK(!interval4.intersectsInSameDay(interval1));
+                CHECK(!interval1.intersectsOtherInOffsetDay(interval4, 0));
+                CHECK(!interval4.intersectsOtherInOffsetDay(interval1, 0));
+            }
+
+            THEN("second and fourth interval should intersect in the same day") {
+                CHECK(interval2.intersectsInSameDay(interval4));
+                CHECK(interval4.intersectsInSameDay(interval2));
+                CHECK(interval2.intersectsOtherInOffsetDay(interval4, 0));
+                CHECK(interval4.intersectsOtherInOffsetDay(interval2, 0));
+            }
+
+            THEN("third and fourth interval should intersect in the same day") {
+                CHECK(interval3.intersectsInSameDay(interval4));
+                CHECK(interval4.intersectsInSameDay(interval3));
+                CHECK(interval3.intersectsOtherInOffsetDay(interval4, 0));
+                CHECK(interval4.intersectsOtherInOffsetDay(interval3, 0));
+            }
+
+            THEN("second and third interval should intersect in the same day") {
+                CHECK(interval2.intersectsInSameDay(interval3));
+                CHECK(interval3.intersectsInSameDay(interval2));
+                CHECK(interval2.intersectsOtherInOffsetDay(interval3, 0));
+                CHECK(interval3.intersectsOtherInOffsetDay(interval2, 0));
+            }
+        }
+
+        WHEN("checking interval intersections in two adjacent days") {
+            THEN("first and second interval should not intersect (interval1 -> interval2 and interval2 -> interval1)") {
+                CHECK(!interval1.intersectsOtherInNextDay(interval2));
+                CHECK(!interval2.intersectsOtherInPrevDay(interval1));
+                CHECK(!interval2.intersectsOtherInNextDay(interval1));
+                CHECK(!interval1.intersectsOtherInPrevDay(interval2));
+                CHECK(!interval1.intersectsOtherInOffsetDay(interval2, 1));
+                CHECK(!interval2.intersectsOtherInOffsetDay(interval1, -1));
+                CHECK(!interval2.intersectsOtherInOffsetDay(interval1, 1));
+                CHECK(!interval1.intersectsOtherInOffsetDay(interval2, -1));
+            }
+
+            THEN("second and third interval should not intersect (interval2 -> interval3 and interval3 -> interval2)") {
+                CHECK(!interval2.intersectsOtherInNextDay(interval3));
+                CHECK(!interval3.intersectsOtherInPrevDay(interval2));
+                CHECK(!interval3.intersectsOtherInNextDay(interval2));
+                CHECK(!interval2.intersectsOtherInPrevDay(interval3));
+                CHECK(!interval2.intersectsOtherInOffsetDay(interval3, 1));
+                CHECK(!interval3.intersectsOtherInOffsetDay(interval2, -1));
+                CHECK(!interval3.intersectsOtherInOffsetDay(interval2, 1));
+                CHECK(!interval2.intersectsOtherInOffsetDay(interval3, -1));
+            }
+
+            THEN("third and fourth interval should not intersect (interval3 -> interval4)") {
+                CHECK(!interval3.intersectsOtherInNextDay(interval4));
+                CHECK(!interval4.intersectsOtherInPrevDay(interval3));
+                CHECK(!interval3.intersectsOtherInOffsetDay(interval4, 1));
+                CHECK(!interval4.intersectsOtherInOffsetDay(interval3, -1));
+            }
+
+            THEN("third and fourth interval should intersect (interval4 -> interval3)") {
+                CHECK(interval4.intersectsOtherInNextDay(interval3));
+                CHECK(interval3.intersectsOtherInPrevDay(interval4));
+                CHECK(interval4.intersectsOtherInOffsetDay(interval3, 1));
+                CHECK(interval3.intersectsOtherInOffsetDay(interval4, -1));
+            }
+
+            THEN("first and fourth interval should not intersect (interval1 -> interval4)") {
+                CHECK(!interval1.intersectsOtherInNextDay(interval4));
+                CHECK(!interval4.intersectsOtherInPrevDay(interval1));
+                CHECK(!interval1.intersectsOtherInOffsetDay(interval4, 1));
+                CHECK(!interval4.intersectsOtherInOffsetDay(interval1, -1));
+            }
+
+            THEN("first and fourth interval should intersect (interval4 -> interval1)") {
+                CHECK(interval4.intersectsOtherInNextDay(interval1));
+                CHECK(interval1.intersectsOtherInPrevDay(interval4));
+                CHECK(interval4.intersectsOtherInOffsetDay(interval1, 1));
+                CHECK(interval1.intersectsOtherInOffsetDay(interval4, -1));
+            }
+
+            THEN("second and fourth interval should not intersect (interval2 -> interval4 and interval4 -> interval2)") {
+                CHECK(!interval2.intersectsOtherInNextDay(interval4));
+                CHECK(!interval4.intersectsOtherInPrevDay(interval2));
+                CHECK(!interval4.intersectsOtherInNextDay(interval2));
+                CHECK(!interval2.intersectsOtherInPrevDay(interval4));
+                CHECK(!interval2.intersectsOtherInOffsetDay(interval4, 1));
+                CHECK(!interval4.intersectsOtherInOffsetDay(interval2, -1));
+                CHECK(!interval4.intersectsOtherInOffsetDay(interval2, 1));
+                CHECK(!interval2.intersectsOtherInOffsetDay(interval4, -1));
+            }
+
+            THEN("third and fourth interval should not intersect (interval3 -> interval4)") {
+                CHECK(!interval3.intersectsOtherInNextDay(interval4));
+                CHECK(!interval4.intersectsOtherInPrevDay(interval3));
+                CHECK(!interval3.intersectsOtherInOffsetDay(interval4, 1));
+                CHECK(!interval4.intersectsOtherInOffsetDay(interval3, -1));
+            }
+
+            THEN("third and fourth interval should intersect (interval4 -> interval3)") {
+                CHECK(!interval4.intersectsOtherInNextDay(interval2));
+                CHECK(!interval2.intersectsOtherInPrevDay(interval4));
+                CHECK(!interval4.intersectsOtherInOffsetDay(interval2, 1));
+                CHECK(!interval2.intersectsOtherInOffsetDay(interval4, -1));
+            }
+
+            THEN("second and third interval should not intersect (interval2 -> interval3 and interval3 -> interval2)") {
+                CHECK(!interval2.intersectsOtherInNextDay(interval3));
+                CHECK(!interval3.intersectsOtherInPrevDay(interval2));
+                CHECK(!interval3.intersectsOtherInNextDay(interval2));
+                CHECK(!interval2.intersectsOtherInPrevDay(interval3));
+                CHECK(!interval2.intersectsOtherInOffsetDay(interval3, 1));
+                CHECK(!interval3.intersectsOtherInOffsetDay(interval2, -1));
+                CHECK(!interval3.intersectsOtherInOffsetDay(interval2, 1));
+                CHECK(!interval2.intersectsOtherInOffsetDay(interval3, -1));
+            }
+        }
+
+        WHEN("checking 24h interval intersections in two 'adjacent' days (padded with 48h and 2 day offset)") {
+            const auto interval3Padded = interval3.withPadding(48 * 60);
+            const auto interval4Padded = interval4.withPadding(48 * 60);
+
+            THEN("there should be an intersection (interval3)") {
+                CHECK(interval3Padded.intersectsOtherInOffsetDay(interval3, 2));
+                CHECK(interval3.intersectsOtherInOffsetDay(interval3Padded, 2));
+                CHECK(interval3Padded.intersectsOtherInOffsetDay(interval3, -2));
+                CHECK(interval3.intersectsOtherInOffsetDay(interval3Padded, -2));
+            }
+
+            THEN("there should be an intersection (interval4)") {
+                CHECK(interval4Padded.intersectsOtherInOffsetDay(interval4, 2));
+                CHECK(interval4.intersectsOtherInOffsetDay(interval4Padded, 2));
+                CHECK(interval4Padded.intersectsOtherInOffsetDay(interval4, -2));
+                CHECK(interval4.intersectsOtherInOffsetDay(interval4Padded, -2));
+            }
+        }
 
         WHEN("expanding intervals to ranges") {
             const auto range1 = interval1.toRange(day);

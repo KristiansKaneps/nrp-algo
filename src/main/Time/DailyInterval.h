@@ -1,7 +1,6 @@
 #ifndef DAILYINTERVAL_H
 #define DAILYINTERVAL_H
 
-#include <cassert>
 #include <cstdint>
 #include <chrono>
 
@@ -17,8 +16,7 @@ namespace Time {
 
         DailyInterval(const day_minutes_t startInMinutes, const day_minutes_t durationInMinutes) :
             m_StartInMinutes(startInMinutes),
-            m_DurationInMinutes(durationInMinutes) {
-        }
+            m_DurationInMinutes(durationInMinutes) { }
 
         DailyInterval(const char *startAsString, const day_minutes_t durationInMinutes) : DailyInterval(
             parseString(startAsString), durationInMinutes) { }
@@ -108,6 +106,17 @@ namespace Time {
         }
 
         /**
+         * @param other Interval that is in the offset day with respect to this interval.
+         * @param offset Day offset number in respect to this interval's day.
+         * @return true if intersects, false otherwise
+         */
+        [[nodiscard]] bool intersectsOtherInOffsetDay(const DailyInterval& other, const int32_t offset) const {
+            return static_cast<int32_t>(m_StartInMinutes) < other.m_StartInMinutes + other.m_DurationInMinutes + offset
+                * MINUTES_IN_A_DAY && static_cast<int32_t>(m_StartInMinutes) +
+                static_cast<int32_t>(m_DurationInMinutes) > other.m_StartInMinutes + offset * MINUTES_IN_A_DAY;
+        }
+
+        /**
          * @param other Interval that is in the same day as this interval.
          * @return true if intersects, false otherwise
          */
@@ -120,7 +129,7 @@ namespace Time {
          * @param other Interval that is in the previous day with respect to this interval.
          * @return true if intersects, false otherwise
          */
-        [[nodiscard]] bool intersectsOtherFromPrevDay(const DailyInterval& other) const {
+        [[nodiscard]] bool intersectsOtherInPrevDay(const DailyInterval& other) const {
             return other.m_StartInMinutes + other.m_DurationInMinutes - MINUTES_IN_A_DAY > m_StartInMinutes;
         }
 
@@ -128,7 +137,7 @@ namespace Time {
          * @param other Interval that is in the next day with respect to this interval.
          * @return true if intersects, false otherwise
          */
-        [[nodiscard]] bool intersectsOtherFromNextDay(const DailyInterval& other) const {
+        [[nodiscard]] bool intersectsOtherInNextDay(const DailyInterval& other) const {
             return m_StartInMinutes + m_DurationInMinutes > other.m_StartInMinutes + MINUTES_IN_A_DAY;
         }
 
@@ -164,7 +173,8 @@ namespace Time {
          * @param endPadding Padding to apply to end.
          * @return New daily interval with applied padding.
          */
-        [[nodiscard]] DailyInterval withPadding(const day_minutes_t startPadding, const day_minutes_t endPadding) const {
+        [[nodiscard]] DailyInterval
+        withPadding(const day_minutes_t startPadding, const day_minutes_t endPadding) const {
             return {
                 static_cast<day_minutes_t>(m_StartInMinutes - startPadding),
                 static_cast<day_minutes_t>(m_DurationInMinutes + startPadding + endPadding),
