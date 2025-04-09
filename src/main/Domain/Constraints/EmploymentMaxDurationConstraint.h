@@ -72,18 +72,13 @@ namespace Domain::Constraints {
                     }
 
                     const int64_t diff = maxWorkloadDurationInMinutes - totalDurationInMinutes;
+                    const int64_t overtimeDiff = diff + maxWorkloadOvertimeDurationInMinutes;
 
-                    if (diff < 0) {
-                        employeeHardScore -= 1;
+                    constexpr int64_t ABS_DIFF_ALLOWANCE = 3 * 60;
+                    const int64_t absDiff = abs(diff);
 
-                        const int64_t overtimeDiff = diff + maxWorkloadOvertimeDurationInMinutes;
-
-                        if (overtimeDiff < 0) {
-                            employeeStrictScore -= 1;
-                        }
-                    } else {
-                        employeeHardScore -= 2;
-                    }
+                    employeeStrictScore -= overtimeDiff < 0;
+                    employeeHardScore -= (absDiff - 1) / ABS_DIFF_ALLOWANCE; // scale with larger differences
                 }
 
                 totalScore.strict += employeeStrictScore;
