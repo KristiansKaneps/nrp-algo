@@ -12,7 +12,8 @@ namespace Domain::Constraints {
                                                  const Axes::Axis<Domain::Shift>& xAxis,
                                                  const Axes::Axis<Domain::Employee>& yAxis,
                                                  const Axes::Axis<Domain::Day>& zAxis) : Constraint(
-            "EMPLOYMENT_MAX_DURATION") {
+                "EMPLOYMENT_MAX_DURATION"),
+            m_WorkloadDurationInRange(range.getWorkdayCount(timeZone) * 8 * 60) {
             mp_ShiftDurationInMinutes = new int32_t[xAxis.size() * zAxis.size()];
 
             for (axis_size_t x = 0; x < xAxis.size(); ++x) {
@@ -34,7 +35,7 @@ namespace Domain::Constraints {
 
         [[nodiscard]] ConstraintScore evaluate(
             const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
-            Score::Score totalScore{};
+            Score::Score totalScore {};
 
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                 score_t employeeStrictScore = 0;
@@ -46,15 +47,14 @@ namespace Domain::Constraints {
                     const auto& skillIndex = state.w()[w].index();
                     const auto *s = e.skill(skillIndex);
 
-                    constexpr int64_t workloadDurationInRange = 168 * 60L;
-
                     int64_t maxWorkloadDurationInMinutes = 0;
                     int64_t maxWorkloadOvertimeDurationInMinutes = 0;
 
                     if (s != nullptr && s->strategy != Workload::Strategy::NONE) {
                         maxWorkloadOvertimeDurationInMinutes = static_cast<int64_t>(s->event.maxOvertimeHours * 60L);
                         if (s->strategy == Workload::Strategy::STATIC) {
-                            maxWorkloadDurationInMinutes = static_cast<int64_t>(workloadDurationInRange * s->event.staticLoad);
+                            maxWorkloadDurationInMinutes = static_cast<int64_t>(m_WorkloadDurationInRange * s->event.
+                                staticLoad);
                         } else if (s->strategy == Workload::Strategy::DYNAMIC) {
                             maxWorkloadDurationInMinutes = static_cast<int64_t>(s->event.dynamicLoadHours * 60L);
                         }
@@ -89,6 +89,7 @@ namespace Domain::Constraints {
         }
 
     private:
+        const int64_t m_WorkloadDurationInRange;
         int32_t *mp_ShiftDurationInMinutes {};
     };
 }
