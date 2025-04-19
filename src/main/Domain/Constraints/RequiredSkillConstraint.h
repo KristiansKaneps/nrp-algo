@@ -29,7 +29,7 @@ namespace Domain::Constraints {
 
         [[nodiscard]] ConstraintScore evaluate(
             const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
-            score_t totalScore = 0;
+            ConstraintScore totalScore;
 
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
                 for (axis_size_t y = 0; y < state.sizeY(); ++y) {
@@ -37,12 +37,14 @@ namespace Domain::Constraints {
                         state.getLineXYZ(m_EvaluateCache, x, y, z);
                         const auto offsetZ = m_AssignableShiftEmployeeSkillMatrix.offsetZ(x, y);
                         m_AssignableShiftEmployeeSkillMatrix.validateZ(m_EvaluateCache, offsetZ);
-                        totalScore -= static_cast<score_t>(m_EvaluateCache.count());
+                        const axis_size_t bitCount = m_EvaluateCache.count();
+                        if (bitCount == 0) continue;
+                        totalScore.violate(Violation::xyz(x, y, z, {-static_cast<score_t>(bitCount)}));
                     }
                 }
             }
 
-            return ConstraintScore({.strict = totalScore, .hard = 0, .soft = 0});
+            return totalScore;
         }
 
     protected:

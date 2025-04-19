@@ -8,12 +8,12 @@ namespace Score {
     typedef int64_t score_t;
 
     struct Score {
-        score_t strict;
-        score_t hard;
-        score_t soft;
+        score_t strict{};
+        score_t hard{};
+        score_t soft{};
 
-        bool isFeasible() const { return strict >= 0 && hard >= 0; }
-        bool isZero() const { return strict >= 0 && hard >= 0 && soft >= 0; }
+        [[nodiscard]] bool isFeasible() const { return strict >= 0 && hard >= 0; }
+        [[nodiscard]] bool isZero() const { return strict >= 0 && hard >= 0 && soft >= 0; }
 
         Score& operator=(const Score& rhs) = default;
 

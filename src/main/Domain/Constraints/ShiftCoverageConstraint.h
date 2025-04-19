@@ -39,12 +39,11 @@ namespace Domain::Constraints {
 
         [[nodiscard]] ConstraintScore evaluate(
             const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
-            score_t totalScore = 0;
+            ConstraintScore totalScore;
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
-                score_t shiftScore = 0;
                 const auto& s = state.x()[x];
-                const axis_size_t slotCount = s.slotCount();
-                const axis_size_t reqSlotCount = s.slotCount();
+                const uint8_t slotCount = s.slotCount();
+                const uint8_t reqSlotCount = s.slotCount();
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
                     score_t dayScore = 0;
 
@@ -56,20 +55,20 @@ namespace Domain::Constraints {
                     const auto shiftDurationInMinutes = mp_ShiftDurationInMinutes[x * state.sizeZ() + z];
 
                     if (slotCount != 0 && assignedEmployeeCount > slotCount) {
-                        dayScore -= static_cast<score_t>(assignedEmployeeCount - slotCount) * shiftDurationInMinutes;
+                        dayScore -= static_cast<score_t>(assignedEmployeeCount - static_cast<axis_size_t>(slotCount)) *
+                            shiftDurationInMinutes;
                     }
 
                     if (assignedEmployeeCount < reqSlotCount) {
-                        dayScore -= static_cast<score_t>(reqSlotCount - assignedEmployeeCount) * shiftDurationInMinutes;
+                        dayScore -= static_cast<score_t>(static_cast<axis_size_t>(reqSlotCount) - assignedEmployeeCount)
+                            * shiftDurationInMinutes;
                     }
 
-                    shiftScore += dayScore;
+                    totalScore.violate(Violation::xz(x, z, {0, dayScore, 0}));
                 }
-
-                totalScore += shiftScore;
             }
 
-            return ConstraintScore({.strict = 0, .hard = totalScore, .soft = 0});
+            return totalScore;
         }
 
     private:

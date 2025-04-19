@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "ConstraintScore.h"
+#include "State/State.h"
 
 namespace Constraints {
     template<typename X, typename Y, typename Z, typename W>

@@ -140,6 +140,10 @@ namespace BitMatrix {
             return m_Array[index(x, y, z)];
         }
 
+        /**
+         * @param dst Destination array.
+         * @param srcOffset Source array offset.
+         */
         void validateZ(BitArray::BitArray& dst, const dimension_size_t srcOffset) const {
             assert(srcOffset <= m_Array.m_Size && "Offset (srcOffset) should not exceed total matrix size.");
             const size_t iterationCount = dst.m_Size >> 6; // 64 == 2^6

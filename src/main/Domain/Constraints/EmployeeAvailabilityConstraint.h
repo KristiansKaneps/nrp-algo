@@ -43,30 +43,23 @@ namespace Domain::Constraints {
 
         [[nodiscard]] ConstraintScore evaluate(
             const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
-            Score::Score totalScore {};
+            ConstraintScore totalScore;
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
-                score_t shiftUnavailabilityScore = 0;
-                score_t shiftDesiredScore = 0;
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
-                    score_t dayUnavailabilityScore = 0;
-                    score_t dayDesiredScore = 0;
-
                     for (axis_size_t y = 0; y < state.sizeY(); ++y) {
-                        dayUnavailabilityScore -= state.get(x, y, z) & m_IntersectingEmployeeUnavailabilitiesAndShifts.
-                            get(x, y, z);
-                        dayDesiredScore += state.get(x, y, z) & m_IntersectingEmployeeDesiredAvailabilitiesAndShifts.
-                            get(x, y, z);
+                        if (state.get(x, y, z) & m_IntersectingEmployeeUnavailabilitiesAndShifts.
+                            get(x, y, z)) {
+                            totalScore.violate(Violation::xyz(x, y, z, {-1}));
+                        }
+                        if (state.get(x, y, z) & m_IntersectingEmployeeDesiredAvailabilitiesAndShifts.
+                            get(x, y, z)) {
+                            totalScore.addSoftScore(1);
+                        }
                     }
-
-                    shiftUnavailabilityScore += dayUnavailabilityScore;
-                    shiftDesiredScore += dayDesiredScore;
                 }
-
-                totalScore.strict += shiftUnavailabilityScore;
-                totalScore.soft += shiftDesiredScore;
             }
 
-            return ConstraintScore(totalScore);
+            return totalScore;
         }
 
     private:

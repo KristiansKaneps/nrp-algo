@@ -21,7 +21,8 @@ namespace Domain::Constraints {
                 if (duration + shift.restMinutesAfter() > maxDuration)
                     maxDuration = duration + shift.restMinutesAfter();
             }
-            m_MaxOffsetDays = (maxDuration + Time::DailyInterval::MINUTES_IN_A_DAY - 1) / Time::DailyInterval::MINUTES_IN_A_DAY;
+            m_MaxOffsetDays = (maxDuration + Time::DailyInterval::MINUTES_IN_A_DAY - 1) /
+                Time::DailyInterval::MINUTES_IN_A_DAY;
             m_IntersectingShiftsInAdjacentDaysMatrices.reserve(m_MaxOffsetDays);
 
             for (axis_size_t x1 = 0; x1 < xAxis.size(); ++x1) {
@@ -74,32 +75,30 @@ namespace Domain::Constraints {
 
         [[nodiscard]] ConstraintScore evaluate(
             const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
-            score_t totalScore = 0;
+            ConstraintScore totalScore;
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
-                score_t employeeScore = 0;
-
                 axis_size_t z = 0;
-                score_t dayScore = 0;
 
                 // Check same day intersections for z = 0
                 for (axis_size_t x1 = 0; x1 < state.sizeX() - 1; ++x1) {
                     if (!state.get(x1, y, z)) continue; // not assigned
                     for (axis_size_t x2 = x1 + 1; x2 < state.sizeX(); ++x2) {
-                        if (!state.get(x2, y, z)) continue; // not assigned
-                        dayScore -= m_IntersectingShiftsInSameDayMatrix.get(x1, x2);
+                        if (!state.get(x2, y, z) || !m_IntersectingShiftsInSameDayMatrix.get(x1, x2)) continue
+                            ; // not assigned or not intersecting
+                        totalScore.violate(Violation::xyz(x1, y, z, {-1}));
+                        totalScore.violate(Violation::xyz(x2, y, z, {-1}));
                     }
                 }
-                employeeScore += dayScore;
 
                 for (z = 1; z < state.sizeZ(); ++z) {
-                    dayScore = 0;
-
                     // Check same day intersections for z > 0
                     for (axis_size_t x1 = 0; x1 < state.sizeX() - 1; ++x1) {
                         if (!state.get(x1, y, z)) continue; // not assigned
                         for (axis_size_t x2 = x1 + 1; x2 < state.sizeX(); ++x2) {
-                            if (!state.get(x2, y, z)) continue; // not assigned
-                            dayScore -= m_IntersectingShiftsInSameDayMatrix.get(x1, x2);
+                            if (!state.get(x2, y, z) || !m_IntersectingShiftsInSameDayMatrix.get(x1, x2)) continue
+                                ; // not assigned or not intersecting
+                            totalScore.violate(Violation::xyz(x1, y, z, {-1}));
+                            totalScore.violate(Violation::xyz(x2, y, z, {-1}));
                         }
                     }
 
@@ -110,21 +109,19 @@ namespace Domain::Constraints {
                             if (offsetDay > z) continue;
                             if (state.get(x1, y, z - offsetDay)) {
                                 for (axis_size_t x2 = 0; x2 < state.sizeX(); ++x2) {
-                                    if (!state.get(x2, y, z)) continue; // not assigned
-                                    dayScore -= m_IntersectingShiftsInAdjacentDaysMatrices[i].get(x1, x2) +
-                                            m_IntersectingShiftsInAdjacentDaysMatrices[i].get(x2, x1);
+                                    if (!state.get(x2, y, z) || (!m_IntersectingShiftsInAdjacentDaysMatrices[i].
+                                        get(x1, x2) && !m_IntersectingShiftsInAdjacentDaysMatrices[i].get(x2, x1)))
+                                        continue; // not assigned or not intersecting
+                                    totalScore.violate(Violation::xyz(x1, y, z, {-1}));
+                                    totalScore.violate(Violation::xyz(x2, y, z, {-1}));
                                 }
                             }
                         }
                     }
-
-                    employeeScore += dayScore;
                 }
-
-                totalScore += employeeScore;
             }
 
-            return ConstraintScore({.strict = totalScore, .hard = 0, .soft = 0});
+            return totalScore;
         }
 
     private:

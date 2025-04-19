@@ -80,7 +80,7 @@ namespace BitArray {
         virtual void copyTo(BitArrayInterface& dst, array_size_t srcOffset, array_size_t srcStride,
                             array_size_t dstOffset) const = 0;
 
-        [[nodiscard]] virtual ArrayIndexRange getDifferenceBounds(const BitArrayInterface &other) const = 0;
+        [[nodiscard]] virtual ArrayIndexRange getDifferenceBounds(const BitArrayInterface& other) const = 0;
 
         virtual void random(float probability) = 0;
         virtual void random() { random(0.5f); }
@@ -100,77 +100,76 @@ namespace BitArray {
         friend class BitMatrix::BitMatrix3D;
     };
 
+    template<std::integral T>
+    constexpr uint8_t countBits(const T bits) {
+        #ifdef _WIN32
+        return static_cast<uint8_t>(__popcnt64(bits));
+        #else
+        return static_cast<uint8_t>(__builtin_popcountll(bits));
+        #endif
+        // ===== C++ 20 variant: =====
+        // return static_cast<uint8_t>(std::popcount(bits));
+        // ===== Manual bit-twiddling variant: =====
+        // uint8_t count = 0;
+        // word_t bits = this->bits;
+        // while (bits) {
+        //     bits &= bits - 1; // Clears the lowest set bit
+        //     count++;
+        // }
+        // return count;
+    }
+
     struct Word {
         typedef uint32_t word_t;
 
         word_t bits;
 
-        constexpr word_t operator~() const {
-            return ~(this->bits);
-        }
+        constexpr word_t operator~() const { return ~(this->bits); }
 
-        constexpr word_t operator|(const word_t rhs) const {
-            return this->bits | rhs;
-        }
+        constexpr word_t operator|(const word_t rhs) const { return this->bits | rhs; }
 
-        constexpr word_t operator|(const Word& rhs) const {
-            return this->bits | rhs.bits;
-        }
+        constexpr word_t operator|(const Word& rhs) const { return this->bits | rhs.bits; }
 
-        constexpr word_t operator&(const word_t rhs) const {
-            return this->bits & rhs;
-        }
+        constexpr word_t operator&(const word_t rhs) const { return this->bits & rhs; }
 
-        constexpr word_t operator&(const Word& rhs) const {
-            return this->bits & rhs.bits;
-        }
+        constexpr word_t operator&(const Word& rhs) const { return this->bits & rhs.bits; }
 
-        constexpr word_t operator^(const word_t rhs) const {
-            return this->bits ^ rhs;
-        }
+        constexpr word_t operator^(const word_t rhs) const { return this->bits ^ rhs; }
 
-        constexpr word_t operator^(const Word& rhs) const {
-            return this->bits ^ rhs.bits;
-        }
+        constexpr word_t operator^(const Word& rhs) const { return this->bits ^ rhs.bits; }
 
-        constexpr void operator|=(const word_t rhs) {
-            this->bits |= rhs;
-        }
+        constexpr void operator|=(const word_t rhs) { this->bits |= rhs; }
 
-        constexpr void operator|=(const Word& rhs) {
-            this->bits |= rhs.bits;
-        }
+        constexpr void operator|=(const Word& rhs) { this->bits |= rhs.bits; }
 
-        constexpr void operator&=(const word_t rhs) {
-            this->bits &= rhs;
-        }
+        constexpr void operator&=(const word_t rhs) { this->bits &= rhs; }
 
-        constexpr void operator&=(const Word& rhs) {
-            this->bits &= rhs.bits;
-        }
+        constexpr void operator&=(const Word& rhs) { this->bits &= rhs.bits; }
 
-        constexpr void operator^=(const word_t rhs) {
-            this->bits ^= rhs;
-        }
+        constexpr void operator^=(const word_t rhs) { this->bits ^= rhs; }
 
-        constexpr void operator^=(const Word& rhs) {
-            this->bits ^= rhs.bits;
-        }
+        constexpr void operator^=(const Word& rhs) { this->bits ^= rhs.bits; }
 
         static constexpr array_size_t length = sizeof(word_t) * 8;
         static constexpr uint8_t BYTE_SIZE = sizeof(word_t);
         static constexpr word_t ALL_BITS_SET = static_cast<word_t>(-1);
+
+        [[nodiscard]] constexpr uint8_t countBits() const {
+            return ::BitArray::countBits(bits);
+        }
     };
 
     class BitArray final : public BitArrayInterface {
     public:
-        explicit BitArray(const array_size_t size) : BitArrayInterface(size), m_WordCount((size + Word::length - 1) / Word::length), m_Words(nullptr) {
-            if (m_WordCount > 0) [[likely]] {
-                m_Words = new Word[m_WordCount]();
-            }
+        explicit BitArray(const array_size_t size) : BitArrayInterface(size),
+                                                     m_WordCount((size + Word::length - 1) / Word::length),
+                                                     m_Words(nullptr) {
+            if (m_WordCount > 0) [[likely]] { m_Words = new Word[m_WordCount](); }
         }
 
-        BitArray(const BitArray& other) : BitArrayInterface(other.m_Size), m_WordCount(other.m_WordCount), m_Words(nullptr) {
+        BitArray(const BitArray& other) : BitArrayInterface(other.m_Size),
+                                          m_WordCount(other.m_WordCount),
+                                          m_Words(nullptr) {
             if (other.m_WordCount > 0) [[likely]] {
                 m_Words = new Word[m_WordCount];
                 for (array_size_t i = 0; i < m_WordCount; ++i) {
@@ -180,7 +179,7 @@ namespace BitArray {
             }
         }
 
-        BitArray &operator=(const BitArray& rhs) {
+        BitArray& operator=(const BitArray& rhs) {
             if (this == &rhs) [[unlikely]] return *this;
             delete[] m_Words;
             m_Size = rhs.m_Size;
@@ -260,6 +259,7 @@ namespace BitArray {
         void set(const array_size_t index) override {
             m_Words[wordIndex(index)] |= static_cast<Word::word_t>(1) << bitIndex(index);
         }
+
         void clear(const array_size_t index) override {
             m_Words[wordIndex(index)] &= ~(static_cast<Word::word_t>(1) << bitIndex(index));
         }
@@ -276,24 +276,28 @@ namespace BitArray {
                 }
             } else {
                 m_Words[wordIndex].bits = (m_Words[wordIndex].bits & ((static_cast<Word::word_t>(1) << bitIndex) - 1))
-                                          | static_cast<Word::word_t>(word << bitIndex);
+                    | static_cast<Word::word_t>(word << bitIndex);
                 if (wordIndex + 1 < m_WordCount) {
-                    m_Words[wordIndex + 1].bits = (m_Words[wordIndex + 1].bits & (Word::ALL_BITS_SET >> (~(Word::length - bitIndex))))
-                                                  | static_cast<Word::word_t>(word >> (Word::length - bitIndex));
+                    m_Words[wordIndex + 1].bits = (m_Words[wordIndex + 1].bits & (Word::ALL_BITS_SET >> (~(Word::length
+                            - bitIndex))))
+                        | static_cast<Word::word_t>(word >> (Word::length - bitIndex));
                 }
                 if (wordIndex + 2 < m_WordCount) {
-                    m_Words[wordIndex + 2].bits = (m_Words[wordIndex + 2].bits & (Word::ALL_BITS_SET >> (~(Word::length - bitIndex))))
-                                                  | static_cast<Word::word_t>(word >> (Word::length * 2 - bitIndex));
+                    m_Words[wordIndex + 2].bits = (m_Words[wordIndex + 2].bits & (Word::ALL_BITS_SET >> (~(Word::length
+                            - bitIndex))))
+                        | static_cast<Word::word_t>(word >> (Word::length * 2 - bitIndex));
                 }
             }
         }
 
         [[nodiscard]] uint8_t get(const array_size_t index) const override {
-            return static_cast<uint8_t>((m_Words[wordIndex(index)] & static_cast<Word::word_t>(1) << bitIndex(index)) >> bitIndex(index));
+            return static_cast<uint8_t>((m_Words[wordIndex(index)] & static_cast<Word::word_t>(1) << bitIndex(index)) >>
+                bitIndex(index));
         }
 
         uint8_t operator[](const array_size_t index) const override {
-            return static_cast<uint8_t>((m_Words[wordIndex(index)] & static_cast<Word::word_t>(1) << bitIndex(index)) >> bitIndex(index));
+            return static_cast<uint8_t>((m_Words[wordIndex(index)] & static_cast<Word::word_t>(1) << bitIndex(index)) >>
+                bitIndex(index));
         }
 
         [[nodiscard]] uint64_t word(const array_size_t index) const override {
@@ -304,15 +308,17 @@ namespace BitArray {
             if (bitIndex == 0) {
                 if (wordIndex + 1 >= m_WordCount)
                     return m_Words[wordIndex].bits;
-                return static_cast<uint64_t>(m_Words[wordIndex].bits) | static_cast<uint64_t>(m_Words[wordIndex + 1].bits) << Word::length;
+                return static_cast<uint64_t>(m_Words[wordIndex].bits) | static_cast<uint64_t>(m_Words[wordIndex + 1].
+                    bits) << Word::length;
             }
-            if (wordIndex + 1 >= m_WordCount) {
-                return m_Words[wordIndex].bits >> bitIndex;
-            }
+            if (wordIndex + 1 >= m_WordCount) { return m_Words[wordIndex].bits >> bitIndex; }
             if (wordIndex + 2 >= m_WordCount) {
-                return static_cast<uint64_t>(m_Words[wordIndex].bits) >> bitIndex | static_cast<uint64_t>(m_Words[wordIndex + 1].bits) << Word::length - bitIndex;
+                return static_cast<uint64_t>(m_Words[wordIndex].bits) >> bitIndex | static_cast<uint64_t>(m_Words[
+                    wordIndex + 1].bits) << Word::length - bitIndex;
             }
-            return static_cast<uint64_t>(m_Words[wordIndex].bits) >> bitIndex | static_cast<uint64_t>(m_Words[wordIndex + 1].bits) << Word::length - bitIndex | static_cast<uint64_t>(m_Words[wordIndex + 2].bits) << 2 * Word::length - bitIndex;
+            return static_cast<uint64_t>(m_Words[wordIndex].bits) >> bitIndex | static_cast<uint64_t>(m_Words[wordIndex
+                    + 1].bits) << Word::length - bitIndex | static_cast<uint64_t>(m_Words[wordIndex + 2].bits) << 2 *
+                Word::length - bitIndex;
         }
 
         [[nodiscard]] uint64_t wordn(const array_size_t index, const uint8_t n) const override {
@@ -331,9 +337,9 @@ namespace BitArray {
             }
         }
 
-        [[nodiscard]] ArrayIndexRange getDifferenceBounds(const BitArrayInterface &other) const override {
+        [[nodiscard]] ArrayIndexRange getDifferenceBounds(const BitArrayInterface& other) const override {
             assert(m_Size == other.m_Size && "Can't get difference bounds (comparison) for different size bit arrays.");
-            ArrayIndexRange result{};
+            ArrayIndexRange result {};
             for (array_size_t i = m_Size; i > 0; --i) {
                 if (get(i - 1) != other.get(i - 1))
                     result.start = i - 1;
@@ -354,22 +360,19 @@ namespace BitArray {
                     m_Words[wordIndex(i)] |= static_cast<Word::word_t>(1) << bitIndex(i);
             }
         }
+
         void random() override {
             std::random_device dev;
             std::mt19937 rng(dev());
             std::uniform_int_distribution<std::mt19937::result_type> dist(0, Word::ALL_BITS_SET);
-            for (array_size_t i = 0; i < m_WordCount - 1; ++i) {
-                m_Words[i].bits = dist(rng);
-            }
+            for (array_size_t i = 0; i < m_WordCount - 1; ++i) { m_Words[i].bits = dist(rng); }
             m_Words[m_WordCount - 1].bits = dist(rng) & (static_cast<Word::word_t>(1) << m_Size % m_WordCount) - 1;
         }
 
         [[nodiscard]] bool test(const array_size_t index, const array_size_t length) const override {
             assert(index + length <= m_Size && "Parameter (index and length) sum should not exceed array length.");
             const size_t iterationCount = length / Word::length;
-            for (size_t i = 0; i < iterationCount; ++i) {
-                if (word(index + i * Word::length)) return true;
-            }
+            for (size_t i = 0; i < iterationCount; ++i) { if (word(index + i * Word::length)) return true; }
             const auto remainingBits = static_cast<int8_t>(length & Word::length - 1);
             return remainingBits > 0 && wordn(index + iterationCount * Word::length, remainingBits);
         }
@@ -377,23 +380,9 @@ namespace BitArray {
         [[nodiscard]] array_size_t count() const override {
             array_size_t count = 0;
             for (array_size_t i = 0; i < m_WordCount; ++i) {
-                const Word::word_t word = m_Words[i].bits;
-                #ifdef _WIN32
-                count += __popcnt64(word);
-                #else
-                count += __builtin_popcountll(word);
-                #endif
-                // C++ 20 variant:
-                // count += std::popcount(word);
-                // Manual bit-twiddling variant:
-                // Word::word_t word = m_Words[i].bits;
-                // while (word) {
-                //     word &= (word - 1); // Clears the lowest set bit
-                //     count++;
-                // }
-        }
-
-        return count;
+                count += m_Words[i].countBits();
+            }
+            return count;
         }
 
         void collectTestIndices(const BitArray& dst, const array_size_t offset,
@@ -419,17 +408,14 @@ namespace BitArray {
                 }
             }
         }
+
     protected:
         array_size_t m_WordCount;
-        Word* m_Words;
+        Word *m_Words;
 
-        static constexpr array_size_t wordIndex(const array_size_t index) {
-            return index / Word::length;
-        }
+        static constexpr array_size_t wordIndex(const array_size_t index) { return index / Word::length; }
 
-        static constexpr array_size_t bitIndex(const array_size_t index) {
-            return index % Word::length;
-        }
+        static constexpr array_size_t bitIndex(const array_size_t index) { return index % Word::length; }
     };
 
     inline std::ostream& operator<<(std::ostream& out, const BitArrayInterface& array) {

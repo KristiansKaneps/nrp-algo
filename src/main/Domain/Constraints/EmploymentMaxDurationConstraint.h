@@ -35,7 +35,7 @@ namespace Domain::Constraints {
 
         [[nodiscard]] ConstraintScore evaluate(
             const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
-            Score::Score totalScore {};
+            ConstraintScore totalScore;
 
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                 score_t employeeStrictScore = 0;
@@ -77,15 +77,16 @@ namespace Domain::Constraints {
                     constexpr int64_t ABS_DIFF_ALLOWANCE = 3 * 60;
                     const int64_t absDiff = abs(diff);
 
-                    employeeStrictScore -= overtimeDiff < 0;
-                    employeeHardScore -= (absDiff - 1) / ABS_DIFF_ALLOWANCE; // scale with larger differences
-                }
+                    const score_t strict = -(overtimeDiff < 0);
+                    const score_t hard = -((absDiff - 1) / ABS_DIFF_ALLOWANCE); // scale with larger differences
 
-                totalScore.strict += employeeStrictScore;
-                totalScore.hard += employeeHardScore;
+                    if (strict != 0 || hard != 0) {
+                        totalScore.violate(Violation::yw(y, w, {strict, hard}));
+                    }
+                }
             }
 
-            return ConstraintScore(totalScore);
+            return totalScore;
         }
 
     private:

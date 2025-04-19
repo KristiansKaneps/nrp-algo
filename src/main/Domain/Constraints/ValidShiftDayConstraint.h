@@ -20,28 +20,26 @@ namespace Domain::Constraints {
                 for (axis_size_t x = 0; x < xAxis.size(); ++x) {
                     const auto& shift = xAxis[x];
                     // TODO: Implement holidays as 8th bit
-                    if ((shift.weekdayBitMask() >> weekday & 0b1) == 0) {
-                        m_AssignableShiftAndDayPairMatrix.set(x, z);
-                    }
+                    if ((shift.weekdayBitMask() >> weekday & 0b1) == 0) { m_AssignableShiftAndDayPairMatrix.set(x, z); }
                 }
             }
-
         }
 
         ~ValidShiftDayConstraint() override = default;
 
         [[nodiscard]] ConstraintScore evaluate(
             const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
-            score_t totalScore = 0;
+            ConstraintScore totalScore;
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
-                score_t shiftScore = 0;
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
-                    shiftScore -= static_cast<score_t>(m_AssignableShiftAndDayPairMatrix.get(x, z));
+                    totalScore.violate(Violation::xz(x, z, {
+                                                              -static_cast<score_t>(m_AssignableShiftAndDayPairMatrix.
+                                                                  get(x, z))
+                                                          }));
                 }
-                totalScore += shiftScore;
             }
 
-            return ConstraintScore({.strict = totalScore, .hard = 0, .soft = 0});
+            return totalScore;
         }
 
     private:

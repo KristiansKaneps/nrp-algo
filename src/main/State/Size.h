@@ -50,21 +50,6 @@ namespace State {
             return x * height * depth * concepts + y * depth * concepts + z * concepts;
         }
     };
-
-    struct Location {
-        axis_size_t x;
-        axis_size_t y;
-        axis_size_t z;
-        axis_size_t w;
-
-        [[nodiscard]] constexpr bool operator==(const Location &other) const {
-            return x == other.x && y == other.y && z == other.z && w == other.w;
-        }
-
-        [[nodiscard]] constexpr state_size_t index(const Size &size) const {
-            return size.index(x, y, z, w);
-        }
-    };
 }
 
 #endif //SIZE_H

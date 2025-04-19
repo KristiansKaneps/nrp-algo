@@ -15,7 +15,9 @@ namespace Domain::Constraints {
     using state_size_t = State::state_size_t;
     using score_t = Score::score_t;
 
+    using Score = ::Score::Score;
     using ConstraintScore = ::Constraints::ConstraintScore;
+    using Violation = ::Constraints::Violation;
 }
 
 #endif //DOMAINCONSTRAINT_H
