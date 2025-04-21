@@ -53,8 +53,8 @@ namespace Domain::Constraints {
                     if (s != nullptr && s->strategy != Workload::Strategy::NONE) {
                         maxWorkloadOvertimeDurationInMinutes = static_cast<int64_t>(s->event.maxOvertimeHours * 60L);
                         if (s->strategy == Workload::Strategy::STATIC) {
-                            maxWorkloadDurationInMinutes = static_cast<int64_t>(m_WorkloadDurationInRange * s->event.
-                                staticLoad);
+                            maxWorkloadDurationInMinutes = static_cast<int64_t>(static_cast<double>(
+                                m_WorkloadDurationInRange) * s->event.staticLoad);
                         } else if (s->strategy == Workload::Strategy::DYNAMIC) {
                             maxWorkloadDurationInMinutes = static_cast<int64_t>(s->event.dynamicLoadHours * 60L);
                         }
@@ -80,9 +80,7 @@ namespace Domain::Constraints {
                     const score_t strict = -(overtimeDiff < 0);
                     const score_t hard = -((absDiff - 1) / ABS_DIFF_ALLOWANCE); // scale with larger differences
 
-                    if (strict != 0 || hard != 0) {
-                        totalScore.violate(Violation::yw(y, w, {strict, hard}));
-                    }
+                    if (strict != 0 || hard != 0) { totalScore.violate(Violation::yw(y, w, {strict, hard})); }
                 }
             }
 

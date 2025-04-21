@@ -39,7 +39,7 @@ namespace Domain::Constraints {
             ConstraintScore totalScore;
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
-                    // Check same day intersections
+                    // Check same-day intersections
                     for (axis_size_t x1 = 0; x1 < state.sizeX() - 1; ++x1) {
                         if (!state.get(x1, y, z)) continue; // not assigned
                         for (axis_size_t x2 = x1 + 1; x2 < state.sizeX(); ++x2) {

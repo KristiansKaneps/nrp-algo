@@ -91,7 +91,7 @@ namespace Domain::Constraints {
                 }
 
                 for (z = 1; z < state.sizeZ(); ++z) {
-                    // Check same day intersections for z > 0
+                    // Check same-day intersections for z > 0
                     for (axis_size_t x1 = 0; x1 < state.sizeX() - 1; ++x1) {
                         if (!state.get(x1, y, z)) continue; // not assigned
                         for (axis_size_t x2 = x1 + 1; x2 < state.sizeX(); ++x2) {
