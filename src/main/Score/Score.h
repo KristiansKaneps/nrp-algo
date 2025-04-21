@@ -7,6 +7,10 @@
 namespace Score {
     typedef int64_t score_t;
 
+    static constexpr unsigned int SCORE_BITS = sizeof(score_t) * 8;
+    static constexpr unsigned int SCORE_SIGN_BIT_OFFSET = SCORE_BITS - 1;
+    static constexpr score_t SCORE_SIGN = static_cast<score_t>(1) << SCORE_SIGN_BIT_OFFSET;
+
     struct Score {
         score_t strict{};
         score_t hard{};

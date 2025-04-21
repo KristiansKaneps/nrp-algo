@@ -19,7 +19,9 @@ namespace Constraints {
         explicit ConstraintScore(const Score& score, std::vector<Violation>&& violations) : m_Score(score),
             m_Violations(std::move(violations)) { }
 
-        ConstraintScore() = default;
+        ConstraintScore() {
+            m_Violations.shrink_to_fit();
+        }
 
         [[nodiscard]] const Score& score() const { return m_Score; }
 
@@ -59,7 +61,7 @@ namespace Constraints {
         }
 
     protected:
-        Score m_Score;
+        Score m_Score{};
         std::vector<Violation> m_Violations;
 
         template<typename X, typename Y, typename Z, typename W>
