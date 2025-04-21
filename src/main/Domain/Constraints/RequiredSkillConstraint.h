@@ -11,8 +11,7 @@ namespace Domain::Constraints {
         explicit RequiredSkillConstraint(const Axes::Axis<Domain::Shift>& xAxis,
                                          const Axes::Axis<Domain::Employee>& yAxis,
                                          const Axes::Axis<Domain::Skill>& wAxis) : Constraint("REQUIRED_SKILL"),
-            m_AssignableShiftEmployeeSkillMatrix(xAxis.size(), yAxis.size(), wAxis.size()),
-            m_EvaluateCache(wAxis.size()) {
+            m_AssignableShiftEmployeeSkillMatrix(xAxis.size(), yAxis.size(), wAxis.size()) {
             for (axis_size_t x = 0; x < xAxis.size(); ++x) {
                 const auto& shift = xAxis[x];
                 for (axis_size_t y = 0; y < yAxis.size(); ++y) {
@@ -34,12 +33,10 @@ namespace Domain::Constraints {
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
                 for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                     for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
-                        state.getLineXYZ(m_EvaluateCache, x, y, z);
-                        const auto offsetZ = m_AssignableShiftEmployeeSkillMatrix.offsetZ(x, y);
-                        m_AssignableShiftEmployeeSkillMatrix.validateZ(m_EvaluateCache, offsetZ);
-                        const axis_size_t bitCount = m_EvaluateCache.count();
-                        if (bitCount == 0) continue;
-                        totalScore.violate(Violation::xyz(x, y, z, {-static_cast<score_t>(bitCount)}));
+                        for (axis_size_t w = 0; w < state.sizeW(); ++w) {
+                            if (static_cast<int8_t>(m_AssignableShiftEmployeeSkillMatrix.get(x, y, w)) - static_cast<int8_t>(state.get(x, y, z, w)) >= 0) continue;
+                            totalScore.violate(Violation::xyzw(x, y, z, w, {-static_cast<score_t>(1)}));
+                        }
                     }
                 }
             }
@@ -91,8 +88,6 @@ namespace Domain::Constraints {
 
     private:
         BitMatrix::BitMatrix3D m_AssignableShiftEmployeeSkillMatrix;
-
-        BitArray::BitArray m_EvaluateCache;
     };
 }
 
