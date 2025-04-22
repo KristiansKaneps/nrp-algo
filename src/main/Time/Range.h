@@ -106,6 +106,11 @@ namespace Time {
         int32_t getWorkdayCount(TimeZone zone) const { return getDayCount(zone, 0x1f); }
 
         template<typename TimeZone = const std::chrono::time_zone *>
+        int32_t getDayCount(TimeZone zone) const {
+            return getDayCount(zone, 0xff);
+        }
+
+        template<typename TimeZone = const std::chrono::time_zone *>
         int32_t getDayCount(TimeZone zone, const uint8_t weekdayBitMask) const {
             if ((m_End == MIN_INSTANT && m_Start == MAX_INSTANT) || m_End == m_Start) [[unlikely]] return 0;
             auto zonedStart = std::chrono::zoned_time(zone, m_Start);
@@ -162,7 +167,7 @@ namespace Time {
             if (weekdayBitMask >> InstantToWeekday(zonedStart) & 1) {
                 const auto fullDayDuration = std::chrono::duration<float>(
                     nextStartDay.get_sys_time() - startDay.get_sys_time());
-                if (fullDayDuration > fullDayDuration.zero()) {
+                if (fullDayDuration > std::chrono::duration<float>::zero()) {
                     dayCount += (nextStartDay.get_sys_time() - zonedStart.get_sys_time()) / fullDayDuration;
                 }
             }
@@ -181,7 +186,7 @@ namespace Time {
                 const auto fullDayDuration = std::chrono::duration<float>(
                     std::chrono::zoned_time(zone, std::chrono::ceil<std::chrono::days>(zonedEnd.get_local_time())).
                     get_sys_time() - endDay.get_sys_time());
-                if (fullDayDuration > fullDayDuration.zero()) {
+                if (fullDayDuration > std::chrono::duration<float>::zero()) {
                     dayCount += (zonedEnd.get_sys_time() - endDay.get_sys_time()) / fullDayDuration;
                 }
             }
@@ -218,7 +223,7 @@ namespace Time {
 
         [[nodiscard]] bool isFullyContainedBy(const Ray& other) const override {
             if (other.type() == RAY) [[unlikely]] return other.fullyContains(*this);
-            const auto &r = static_cast<const Range&>(other);
+            const auto &r = static_cast<const Range&>(other); // NOLINT(*-pro-type-static-cast-downcast)
             return m_Start >= r.m_Start && m_End <= r.m_End;
         }
 

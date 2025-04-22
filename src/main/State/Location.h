@@ -9,6 +9,11 @@ namespace State {
     struct Location {
         axis_size_t x, y, z, w;
 
+        [[nodiscard]] axis_size_t getX() const { return x; }
+        [[nodiscard]] axis_size_t getY() const { return y; }
+        [[nodiscard]] axis_size_t getZ() const { return z; }
+        [[nodiscard]] axis_size_t getW() const { return w; }
+
         [[nodiscard]] constexpr bool operator==(const Location& other) const {
             return x == other.x && y == other.y && z == other.z && w == other.w;
         }

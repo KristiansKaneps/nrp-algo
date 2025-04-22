@@ -385,10 +385,10 @@ namespace BitArray {
             return count;
         }
 
-        void collectTestIndices(const BitArray& dst, const array_size_t offset,
+        void collectTestIndices(const BitArray& other, const array_size_t offset,
                                 std::vector<array_size_t>& result) const {
-            const size_t iterationCount = dst.m_Size >> 6; // 64 == 2^6
-            if (result.capacity() == 0) [[unlikely]] result.reserve((dst.m_Size >> 2) + 1);
+            const size_t iterationCount = other.m_Size >> 6; // 64 == 2^6
+            if (result.capacity() == 0) [[unlikely]] result.reserve((other.m_Size >> 2) + 1);
             for (size_t i = 0; i < iterationCount; ++i) {
                 uint64_t word = this->word(offset + (i << 6));
                 for (uint8_t j = 0; j < 64; ++j) {
@@ -398,7 +398,7 @@ namespace BitArray {
                     result.push_back(index);
                 }
             }
-            if (const auto remainingBits = static_cast<int8_t>(dst.m_Size & 63); remainingBits > 0) {
+            if (const auto remainingBits = static_cast<int8_t>(other.m_Size & 63); remainingBits > 0) {
                 uint64_t word = this->wordn(iterationCount << 6, remainingBits);
                 for (uint8_t j = 0; j < remainingBits; ++j) {
                     // ReSharper disable once CppRedundantParentheses
