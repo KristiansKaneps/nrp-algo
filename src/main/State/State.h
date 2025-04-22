@@ -114,6 +114,13 @@ namespace State {
             return m_Matrix.test(offset(x, y, z), m_Size.concepts);
         }
 
+        [[nodiscard]] uint8_t getXZ(const axis_size_t x, const axis_size_t z) const {
+            for (axis_size_t y = 0; y < m_Size.height; ++y) {
+                if (m_Matrix.test(offset(x, y, z), m_Size.concepts)) return 1;
+            }
+            return 0;
+        }
+
         char getCharRepresentation(const axis_size_t x, const axis_size_t y, // NOLINT(*-use-nodiscard)
                                    const axis_size_t z, const axis_size_t w) const {
             return BitArray::BIT_CHAR_REPRESENTATIONS[get(x, y, z, w)];

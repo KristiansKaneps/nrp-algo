@@ -11,7 +11,7 @@ namespace Domain::Constraints {
         explicit ValidShiftDayConstraint(const Time::Range& range, const std::chrono::time_zone *timeZone,
                                          const Axes::Axis<Domain::Shift>& xAxis,
                                          const Axes::Axis<Domain::Day>& zAxis) : Constraint("VALID_SHIFT_DAY"),
-            m_AssignableShiftAndDayPairMatrix(BitMatrix::createMatrix(xAxis.size(), zAxis.size())) {
+            m_ShiftAndDayConflictMatrix(BitMatrix::createMatrix(xAxis.size(), zAxis.size())) {
             for (axis_size_t z = 0; z < zAxis.size(); ++z) {
                 const auto& day = zAxis[z];
 
@@ -20,7 +20,10 @@ namespace Domain::Constraints {
                 for (axis_size_t x = 0; x < xAxis.size(); ++x) {
                     const auto& shift = xAxis[x];
                     // TODO: Implement holidays as 8th bit
-                    if ((shift.weekdayBitMask() >> weekday & 0b1) == 0) { m_AssignableShiftAndDayPairMatrix.set(x, z); }
+                    if ((shift.weekdayBitMask() >> weekday & 0b1) == 0) {
+                        m_ShiftAndDayConflictMatrix.set(x, z);
+                        std::cout << "Shift " << x << " on day " << z << " (" << std::to_string(weekday) << ") cannot be assigned" << std::endl;
+                    }
                 }
             }
         }
@@ -32,10 +35,8 @@ namespace Domain::Constraints {
             ConstraintScore totalScore;
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
-                    totalScore.violate(Violation::xz(x, z, {
-                                                              -static_cast<score_t>(m_AssignableShiftAndDayPairMatrix.
-                                                                  get(x, z))
-                                                          }));
+                    if (state.getXZ(x, z) && !m_ShiftAndDayConflictMatrix.get(x, z)) continue;
+                    totalScore.violate(Violation::xz(x, z, {-1}));
                 }
             }
 
@@ -43,7 +44,7 @@ namespace Domain::Constraints {
         }
 
     private:
-        BitMatrix::BitMatrix m_AssignableShiftAndDayPairMatrix;
+        BitMatrix::BitMatrix m_ShiftAndDayConflictMatrix;
     };
 }
 
