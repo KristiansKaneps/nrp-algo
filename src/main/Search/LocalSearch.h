@@ -26,6 +26,11 @@ namespace Search {
 
         ~LocalSearch() = default;
 
+        void reset() {
+            m_Done = false;
+            resetInternalTerminationCriteriaState();
+        }
+
         /**
          * @return `true` if new best state is found, `false` otherwise
          */
@@ -66,10 +71,26 @@ namespace Search {
          * Defines termination criteria.
          * @return `true` if should keep searching for local optima, `false` otherwise
          */
-        [[nodiscard]] bool shouldStep() const {
+        [[nodiscard]] bool shouldStep() {
+            if (m_Task.getOutputScore().isZero()) [[unlikely]] {
+                if (m_IterationCountAtZeroScore >= 2000000) [[unlikely]] return m_Task.m_IdleIterations < 3000000;
+                m_IterationCountAtZeroScore += 1;
+                return true;
+            }
+            if (m_Task.getOutputScore().isFeasible()) [[unlikely]] {
+                if (m_IterationCountAtFeasibleScore >= 4000000) [[unlikely]] return m_Task.m_IdleIterations < 3000000;
+                m_IterationCountAtFeasibleScore += 1;
+                return true;
+            }
             // return m_Task.m_Iterations <= 20000 && (m_Task.m_Iterations <= 2000 || m_Task.m_IdleIterations <= m_Task.m_Iterations * 0.02);
             // return m_Task.m_Iterations <= 2000 || m_Task.m_IdleIterations <= m_Task.m_Iterations * 0.02;
-            return !m_Task.getOutputScore().isZero();
+            return m_Task.m_IdleIterations < 10000000;
+            // return !m_Task.getOutputScore().isZero();
+        }
+
+        void resetInternalTerminationCriteriaState() {
+            m_IterationCountAtZeroScore = 0;
+            m_IterationCountAtFeasibleScore = 0;
         }
 
     private:
@@ -79,8 +100,10 @@ namespace Search {
         // ReSharper disable once CppRedundantQualifier
         const std::vector<::Constraints::Constraint<X, Y, Z, W> *> m_Constraints;
         // ReSharper disable once CppRedundantQualifier
-        const ::Heuristics::HeuristicProvider<X, Y, Z, W> m_HeuristicProvider;
+        ::Heuristics::HeuristicProvider<X, Y, Z, W> m_HeuristicProvider;
         Task::LocalSearchTask<X, Y, Z, W> m_Task;
+
+        uint64_t m_IterationCountAtZeroScore = 0, m_IterationCountAtFeasibleScore = 0;
     };
 }
 
