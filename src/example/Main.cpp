@@ -40,12 +40,18 @@ static void onNewBest(const Search::LocalSearch<Shift, Employee, Day, Skill> &lo
 }
 
 void solve() {
+    using std::chrono::high_resolution_clock;
+    using std::chrono_literals::operator ""s;
+
     Search::LocalSearch localSearch(&gp_AppState->state, gp_AppState->constraints, gp_AppState->heuristicProvider);
 
     bool mutexWasLocked = false;
 
     const auto initialScore = localSearch.evaluateCurrentBestState();
     std::cout << "Initial score: " << initialScore << std::endl;
+
+    const auto start = high_resolution_clock::now();
+
     while (!localSearch.isDone() && !g_LocalSearchShouldStop) {
         if (localSearch.step() || mutexWasLocked) {
             if (g_ConcurrentDataMutex.try_lock()) {
@@ -57,6 +63,11 @@ void solve() {
             }
         }
     }
+
+    const auto end = high_resolution_clock::now();
+    const auto diff = (end - start) / 1s;
+
+    std::cout << "Best solution found in " << (diff / 60) << "min " << (diff % 60) << "s" << std::endl;
 
     if (mutexWasLocked) {
         g_ConcurrentDataMutex.lock();
@@ -107,7 +118,8 @@ int main(int argc, char **argv) {
     //     ray.intersects(range2) ? "true" : "false") << std::endl;
     // std::cout << "Ray intersects range collection: " << (ray.intersects(collection) ? "true" : "false") << std::endl;
 
-    Application app(1280, 720, "Example Application");
+    Application app(1280, 720, "NRP Algo");
+    // Application app(475, 163, "NRP Algo");
     app.start();
 
     solverThread.join();
