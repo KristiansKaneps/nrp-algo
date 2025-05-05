@@ -33,7 +33,7 @@ namespace Evaluation {
     public:
         explicit Evaluator(const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& constraints) :
             m_Constraints(constraints),
-            m_ConstraintScores(constraints.size(), {}) {
+            m_ConstraintScores(constraints.size(), ::Constraints::ConstraintScore{}) {
             #ifdef PRINT_CONSTRAINT_DEBUG_INFO
             m_ConstraintNameLength.reserve(constraints.size());
             for (auto *constraint : constraints) {

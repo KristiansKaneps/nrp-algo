@@ -89,7 +89,7 @@ namespace Domain::Constraints {
                     const int64_t overtimeDiff = diff + maxWorkloadOvertimeDurationInMinutes;
 
                     constexpr int64_t ABS_DIFF_ALLOWANCE = 3 * 60;
-                    const int64_t absDiff = abs(diff);
+                    const int64_t absDiff = std::abs(diff);
 
                     const score_t absHard = (absDiff - 1) * diffScale / ABS_DIFF_ALLOWANCE; // scale with larger differences
 
