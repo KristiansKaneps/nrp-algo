@@ -9,7 +9,8 @@
 namespace Domain::Constraints {
     class NoOverlapConstraint final : public DomainConstraint {
     public:
-        explicit NoOverlapConstraint(const Axes::Axis<Domain::Shift>& xAxis) : Constraint("NO_OVERLAP"),
+        explicit NoOverlapConstraint(const Axes::Axis<Domain::Shift>& xAxis) : Constraint("NO_OVERLAP", {
+                                                                               }),
                                                                                m_IntersectingShiftsInSameDayMatrix(
                                                                                    BitMatrix::createIdentitySymmetricalMatrix(
                                                                                        xAxis.size())),
@@ -35,7 +36,7 @@ namespace Domain::Constraints {
         ~NoOverlapConstraint() override = default;
 
         [[nodiscard]] ConstraintScore evaluate(
-            const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
+            const State::DomainState& state) override {
             ConstraintScore totalScore;
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
@@ -43,7 +44,8 @@ namespace Domain::Constraints {
                     for (axis_size_t x1 = 0; x1 < state.sizeX() - 1; ++x1) {
                         if (!state.get(x1, y, z)) continue; // not assigned
                         for (axis_size_t x2 = x1 + 1; x2 < state.sizeX(); ++x2) {
-                            if (!state.get(x2, y, z) || !m_IntersectingShiftsInSameDayMatrix.get(x1, x2)) continue; // not assigned or not intersecting
+                            if (!state.get(x2, y, z) || !m_IntersectingShiftsInSameDayMatrix.get(x1, x2)) continue
+                                ; // not assigned or not intersecting
                             totalScore.violate(Violation::xyz(x1, y, z, {-1}));
                             totalScore.violate(Violation::xyz(x2, y, z, {-1}));
                         }
@@ -54,7 +56,9 @@ namespace Domain::Constraints {
                         for (axis_size_t x1 = 0; x1 < state.sizeX(); ++x1) {
                             if (!state.get(x1, y, z - 1)) continue; // not assigned
                             for (axis_size_t x2 = 0; x2 < state.sizeX(); ++x2) {
-                                if (!state.get(x2, y, z) || (!m_IntersectingShiftsInAdjacentDaysMatrix.get(x1, x2) && !m_IntersectingShiftsInAdjacentDaysMatrix.get(x2, x1))) continue; // not assigned or not intersecting
+                                if (!state.get(x2, y, z) || (!m_IntersectingShiftsInAdjacentDaysMatrix.get(x1, x2) && !
+                                    m_IntersectingShiftsInAdjacentDaysMatrix.get(x2, x1))) continue
+                                    ; // not assigned or not intersecting
                                 totalScore.violate(Violation::xyz(x1, y, z, {-1}));
                                 totalScore.violate(Violation::xyz(x2, y, z, {-1}));
                             }

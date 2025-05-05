@@ -24,7 +24,7 @@ namespace Search::Task {
             m_CurrentScore(m_InitScore),
             m_OutputState(inputState),
             m_OutputScore(m_InitScore),
-            m_Constraints(constraints) {
+            m_Evaluator(constraints) {
             m_History.fill(m_InitScore);
         }
         // ReSharper restore CppRedundantQualifier
@@ -42,24 +42,23 @@ namespace Search::Task {
         static constexpr size_t Lh = 100;
         std::array<Score::Score, Lh> m_History {};
 
-        uint32_t m_Iterations = 0;
-        uint32_t m_IdleIterations = 0;
+        uint64_t m_Iterations = 0;
+        uint64_t m_IdleIterations = 0;
 
         bool m_NewBestFound = false;
 
         // ReSharper disable CppRedundantQualifier
-        void step(const ::Heuristics::HeuristicProvider<X, Y, Z, W> &heuristicProvider) {
+        void step(::Heuristics::HeuristicProvider<X, Y, Z, W> &heuristicProvider) {
             m_NewBestFound = false;
 
             // Generate new candidate solution
             ::State::State<X, Y, Z, W>& candidateState = m_CurrentState;
-            auto perturbator = heuristicProvider[0];
-            perturbator->reset(candidateState);
-            perturbator->modify(candidateState);
+            auto perturbators = heuristicProvider.generatePerturbators(m_Evaluator, candidateState);
+            perturbators.modify(candidateState);
             // `m_CurrentState` is now the new candidate state.
 
             // Evaluate candidate solution
-            const Score::Score candidateScore = Evaluation::evaluateState(candidateState, m_Constraints);
+            const Score::Score candidateScore = m_Evaluator.evaluateState(candidateState);
             // std::cout << "Init score: " << initScore << ", candidate score: " << candidateScore << ", diff: " << (m_OutputState.getBitArray().getDifferenceBounds(state.getBitArray())) << std::endl;
 
             // Track idle iterations (termination criteria)
@@ -72,22 +71,24 @@ namespace Search::Task {
             // Selector (Acceptance criteria)
             if (candidateScore > fv || candidateScore >= m_CurrentScore) {
                 // `m_CurrentState = candidateState` assignment is not needed, because `candidateState` is a reference
-                // to "working memory" `m_CurrentState`. But we need to update score.
+                // to "working memory" `m_CurrentState`. But we need to update the score.
                 m_CurrentScore = candidateScore;
 
                 if (m_CurrentScore > m_OutputScore) {
-                    // New best state is found. It is already update as the current "working memory" `m_CurrentState`.
+                    // The new best state is found.
+                    // It is already updated as the current "working memory" `m_CurrentState`.
                     m_OutputScore = m_CurrentScore;
                     m_OutputState = m_CurrentState;
                     m_NewBestFound = true;
                     #ifdef LOCALSEARCH_DEBUG
                     std::cout << "New best score: " << m_OutputScore << "; iterations=" << (m_Iterations + 1) << "; delta=" << (m_OutputScore - m_InitScore) << std::endl;
+                    m_Evaluator.printConstraintInfo();
                     #endif
                 }
             } else {
-                // Revert the new candidate state to previous candidate state,
+                // Revert the new candidate state to the previous candidate state,
                 // because the new candidate state references the "working memory" `m_CurrentState`.
-                perturbator->revert(candidateState);
+                perturbators.revert(candidateState);
             }
 
             // Update history
@@ -106,8 +107,7 @@ namespace Search::Task {
         // ReSharper disable once CppRedundantQualifier
         ::State::State<X, Y, Z, W> m_OutputState;
         Score::Score m_OutputScore;
-        // ReSharper disable once CppRedundantQualifier
-        const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& m_Constraints;
+        Evaluation::Evaluator<X, Y, Z, W> m_Evaluator;
     };
 }
 

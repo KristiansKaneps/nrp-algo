@@ -26,6 +26,20 @@ SCENARIO("time range day count") {
                 CHECK(partialWorkdayCount == 5.0f);
             }
         }
+
+        WHEN("getting partitioned range that spans 4 days") {
+            const auto rangePartition = rangeUtc.getRangePartitionByDays(1, 4, utc);
+            const int32_t workdayCount = rangePartition.getWorkdayCount(utc);
+            const float partialWorkdayCount = rangePartition.getPartialWorkdayCount(utc);
+
+            THEN("its workday count is expected to be 4") {
+                CHECK(workdayCount == 4);
+            }
+
+            THEN("its partial workday count is expected to be 4") {
+                CHECK(partialWorkdayCount == 4.0f);
+            }
+        }
     }
 
     GIVEN("a week range") {
@@ -47,6 +61,20 @@ SCENARIO("time range day count") {
 
             THEN("its partial workday count is expected to be 5") {
                 CHECK(partialWorkdayCount == 5.0f);
+            }
+        }
+
+        WHEN("getting partitioned range that spans 5 days") {
+            const auto rangePartition = rangeUtc.getRangePartitionByDays(1, 5, utc);
+            const int32_t workdayCount = rangePartition.getWorkdayCount(utc);
+            const float partialWorkdayCount = rangePartition.getPartialWorkdayCount(utc);
+
+            THEN("its workday count is expected to be 4") {
+                CHECK(workdayCount == 4);
+            }
+
+            THEN("its partial workday count is expected to be 4") {
+                CHECK(partialWorkdayCount == 4.0f);
             }
         }
     }

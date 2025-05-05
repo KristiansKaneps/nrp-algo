@@ -1,6 +1,6 @@
 #include "Example.h"
 
-#if EXAMPLE == 1
+#if EXAMPLE == 3
 
 #include "Domain/Constraints/ValidShiftDayConstraint.h"
 #include "Domain/Constraints/NoOverlapConstraint.h"
@@ -13,11 +13,8 @@
 
 #include "Domain/Heuristics/DomainHeuristicProvider.h"
 #include "Domain/Heuristics/RandomAssignmentTogglePerturbator.h"
-#include "Domain/Heuristics/AddCoverShiftsPerturbator.h"
 
 #include "Search/LocalSearch.h"
-
-#include "Time/RangeCollection.h"
 
 using namespace Domain;
 
@@ -25,18 +22,21 @@ void Example::create() {
     std::tm tm = {};
     std::stringstream ss("2024-12-01T00:00:00Z");
     ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S%z");
-    auto start = std::chrono::system_clock::from_time_t(std::mktime(&tm));
+    const auto start = std::chrono::system_clock::from_time_t(std::mktime(&tm));
     ss = std::stringstream("2025-01-01T00:00:00Z");
     ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S%z");
-    auto end = std::chrono::system_clock::from_time_t(std::mktime(&tm));
+    const auto end = std::chrono::system_clock::from_time_t(std::mktime(&tm));
 
     const std::chrono::time_zone *const timeZone = std::chrono::current_zone();
     const Time::Range range(start, end);
 
-    const uint32_t shiftCount = 4;
-    const uint32_t employeeCount = 30;
-    const uint32_t dayCount = 31;
-    const uint32_t skillCount = 4;
+    const uint32_t shiftCount = 2;
+    const uint32_t employeeCount = 12;
+    const uint32_t dayCount = range.getDayCount(timeZone);
+    const uint32_t skillCount = 1;
+
+    std::cout << "Range workload duration is " << (dayCount * 8) << "h" << std::endl;
+    std::cout << "Max workload duration (workdays * 8h) is " << (range.getWorkdayCount(timeZone) * 8) << "h" << std::endl;
 
     std::allocator<Day> dayAllocator;
     std::allocator<Employee> employeeAllocator;
@@ -50,13 +50,13 @@ void Example::create() {
 
     const Time::DailyInterval interval1("08:00", 480);
     const Time::DailyInterval interval2("16:00", 480);
-    const Time::DailyInterval interval3("08:00", 1440);
-    const Time::DailyInterval interval4("20:00", 1440);
+    // const Time::DailyInterval interval3("08:00", 1440);
+    // const Time::DailyInterval interval4("20:00", 1440);
 
-    new(shifts + 0) Shift(0, Shift::ALL_WEEKDAYS, interval1, "E", 2);
-    new(shifts + 1) Shift(1, Shift::ALL_WEEKDAYS, interval2, "L", 2);
-    new(shifts + 2) Shift(2, Shift::ALL_WEEKDAYS, interval3, "DN", 1, 2 * interval3.durationInMinutes());
-    new(shifts + 3) Shift(3, Shift::ALL_WEEKDAYS, interval4, "ND", 1, 2 * interval4.durationInMinutes());
+    new(shifts + 0) Shift(0, Shift::ALL_WEEKDAYS, interval1, "E", 4);
+    new(shifts + 1) Shift(1, Shift::ALL_WEEKDAYS, interval2, "L", 4);
+    // new(shifts + 2) Shift(2, Shift::ONLY_WEEKENDS, interval3, "DN", 1, static_cast<Time::day_minutes_t>(2 * interval3.durationInMinutes()));
+    // new(shifts + 3) Shift(3, Shift::ONLY_WEEKENDS, interval4, "ND", 1, static_cast<Time::day_minutes_t>(2 * interval4.durationInMinutes()));
 
     for (uint32_t i = 0; i < employeeCount; ++i) { new(employees + i) Employee(i); }
 
@@ -67,35 +67,14 @@ void Example::create() {
 
     for (uint32_t i = 0; i < skillCount; ++i) { new(skills + i) Skill(i, std::to_string(i)); }
 
-    employees[2].addSkill(0, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
-    employees[2].addSkill(3, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
-    employees[2].addSkill(1, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
-
     for (size_t i = 0; i < employeeCount; ++i) {
         auto &employee = employees[i];
         employee.addSkill(0, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
-        employee.addSkill(1, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
     }
 
-    for (size_t i = employeeCount >> 1; i < employeeCount; ++i) {
-        auto &employee = employees[i];
-        employee.addSkill(2, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
-        employee.addSkill(3, {1.0f, Workload::Strategy::STATIC, {0.0f, 1.0f, 0.0f}});
+    for (size_t i = 0; i < shiftCount; ++i) {
+        shifts[i].addRequiredAllSkill(0, 1.0f);
     }
-
-    shifts[0].addRequiredAllSkill(0, 1.0f);
-    shifts[0].addRequiredOneSkill(1, 1.0f);
-    shifts[0].addRequiredOneSkill(2, 1.0f);
-
-    shifts[1].addRequiredAllSkill(1, 1.0f);
-
-    shifts[2].addRequiredAllSkill(2, 1.0f);
-
-    shifts[3].addRequiredAllSkill(3, 1.0f);
-    shifts[3].addRequiredAllSkill(0, 0.5f);
-    shifts[3].addRequiredAllSkill(1, 1.0f);
-    shifts[3].addRequiredOneSkill(0, 1.0f);
-    shifts[3].addRequiredOneSkill(1, 1.0f);
 
     auto *axisX = new Axes::Axis(shifts, shiftCount);
     auto *axisY = new Axes::Axis(employees, employeeCount);
@@ -143,11 +122,9 @@ void Example::create() {
     };
 
     auto heuristic1 = new Domain::Heuristics::RandomAssignmentTogglePerturbator();
-    auto heuristic2 = new Domain::Heuristics::AddCoverShiftsPerturbator();
 
     const auto heuristicProvider = Domain::Heuristics::DomainHeuristicProvider({
         heuristic1,
-        heuristic2,
     });
 
     std::cout << "State 1 score: " << Evaluation::evaluateState(state, constraints) << std::endl;

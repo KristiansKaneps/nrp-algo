@@ -2,6 +2,7 @@
 #define VALIDSHIFTDAYCONSTRAINT_H
 
 #include "DomainConstraint.h"
+#include "Domain/Heuristics/ValidShiftDayPerturbator.h"
 
 #include "Array/BitMatrix.h"
 
@@ -10,7 +11,11 @@ namespace Domain::Constraints {
     public:
         explicit ValidShiftDayConstraint(const Time::Range& range, const std::chrono::time_zone *timeZone,
                                          const Axes::Axis<Domain::Shift>& xAxis,
-                                         const Axes::Axis<Domain::Day>& zAxis) : Constraint("VALID_SHIFT_DAY"),
+                                         const axis_size_t yAxisSize,
+                                         const Axes::Axis<Domain::Day>& zAxis,
+                                         const axis_size_t wAxisSize) : Constraint("VALID_SHIFT_DAY", {
+                new Heuristics::ValidShiftDayPerturbator(yAxisSize, wAxisSize),
+            }),
             m_ShiftAndDayConflictMatrix(BitMatrix::createMatrix(xAxis.size(), zAxis.size())) {
             for (axis_size_t z = 0; z < zAxis.size(); ++z) {
                 const auto& day = zAxis[z];
@@ -22,7 +27,6 @@ namespace Domain::Constraints {
                     // TODO: Implement holidays as 8th bit
                     if ((shift.weekdayBitMask() >> weekday & 0b1) == 0) {
                         m_ShiftAndDayConflictMatrix.set(x, z);
-                        std::cout << "Shift " << x << " on day " << z << " (" << std::to_string(weekday) << ") cannot be assigned" << std::endl;
                     }
                 }
             }
@@ -31,11 +35,11 @@ namespace Domain::Constraints {
         ~ValidShiftDayConstraint() override = default;
 
         [[nodiscard]] ConstraintScore evaluate(
-            const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
+            const State::DomainState& state) override {
             ConstraintScore totalScore;
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
-                    if (state.getXZ(x, z) && !m_ShiftAndDayConflictMatrix.get(x, z)) continue;
+                    if (!state.getXZ(x, z) || !m_ShiftAndDayConflictMatrix.get(x, z)) continue;
                     totalScore.violate(Violation::xz(x, z, {-1}));
                 }
             }

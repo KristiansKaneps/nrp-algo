@@ -11,7 +11,11 @@ namespace Domain::Heuristics {
     public:
         explicit AddCoverShiftsPerturbator() = default;
 
-        void reset(const State::DomainState& state) override {
+        [[nodiscard]] AddCoverShiftsPerturbator *clone() const override {
+            return new AddCoverShiftsPerturbator(*this);
+        }
+
+        void configure(const Constraints::Violation *violation, const State::DomainState& state) override {
             m_X = m_Random.randomInt(0, state.sizeX() - 1);
             m_Y = m_Random.randomInt(0, state.sizeY() - 1);
             m_Z = m_Random.randomInt(0, state.sizeZ() - 1);

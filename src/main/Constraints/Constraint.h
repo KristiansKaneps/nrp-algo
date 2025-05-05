@@ -5,23 +5,45 @@
 #include <utility>
 
 #include "ConstraintScore.h"
+#include "Heuristics/Perturbator.h"
 #include "State/State.h"
 
 namespace Constraints {
     template<typename X, typename Y, typename Z, typename W>
     class Constraint {
     public:
-        explicit Constraint(std::string name) : m_Name(std::move(name)) { }
+        explicit Constraint(std::string name,
+                            const std::vector<Heuristics::Perturbator<X, Y, Z, W> *> repairPerturbators) :
+            m_Name(std::move(name)),
+            m_RepairPerturbators(std::move(repairPerturbators)) { }
 
         virtual ~Constraint() = default;
 
-        virtual ConstraintScore evaluate(const ::State::State<X, Y, Z, W>& state) = 0;
+        Constraint(const Constraint&) = default;
+
+        [[nodiscard]] virtual bool printsInfo() const { return false; }
+        virtual void printInfo() const { }
 
         [[nodiscard]] const std::string& name() const { return m_Name; }
 
+        [[nodiscard]] const std::vector<Heuristics::Perturbator<X, Y, Z, W> *>& getRepairPerturbators() const { return m_RepairPerturbators; }
+
+        virtual ConstraintScore evaluate(const ::State::State<X, Y, Z, W>& state) = 0;
+
     private:
         std::string m_Name;
+        const std::vector<Heuristics::Perturbator<X, Y, Z, W> *> m_RepairPerturbators;
     };
 }
+
+template<typename X, typename Y, typename Z, typename W>
+struct std::hash<Constraints::Constraint<X, Y, Z, W>> { // NOLINT(*-dcl58-cpp)
+    std::size_t operator()(const Constraints::Constraint<X, Y, Z, W>& k) const noexcept {
+        using std::size_t;
+        using std::hash;
+        using std::string;
+        return hash<uint64_t>()(k.name());
+    }
+};
 
 #endif //CONSTRAINT_H

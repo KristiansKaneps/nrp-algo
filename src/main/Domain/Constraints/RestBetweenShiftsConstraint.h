@@ -10,7 +10,8 @@ namespace Domain::Constraints {
     class RestBetweenShiftsConstraint final : public DomainConstraint {
     public:
         explicit RestBetweenShiftsConstraint(const Axes::Axis<Domain::Shift>& xAxis) :
-            Constraint("REST_BETWEEN_SHIFTS"),
+            Constraint("REST_BETWEEN_SHIFTS", {
+                       }),
             m_IntersectingShiftsInSameDayMatrix(BitMatrix::createIdentitySymmetricalMatrix(xAxis.size())) {
             int32_t maxDuration = 0;
             for (axis_size_t i = 0; i < xAxis.size(); ++i) {
@@ -73,18 +74,18 @@ namespace Domain::Constraints {
 
         ~RestBetweenShiftsConstraint() override = default;
 
-        [[nodiscard]] ConstraintScore evaluate(
-            const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
+        [[nodiscard]] ConstraintScore evaluate(const State::DomainState& state) override {
             ConstraintScore totalScore;
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                 axis_size_t z = 0;
 
-                // Check same day intersections for z = 0
+                // Check same-day intersections for z = 0
                 for (axis_size_t x1 = 0; x1 < state.sizeX() - 1; ++x1) {
                     if (!state.get(x1, y, z)) continue; // not assigned
                     for (axis_size_t x2 = x1 + 1; x2 < state.sizeX(); ++x2) {
-                        if (!state.get(x2, y, z) || !m_IntersectingShiftsInSameDayMatrix.get(x1, x2)) continue
-                            ; // not assigned or not intersecting
+                        if (!state.get(x2, y, z) || !m_IntersectingShiftsInSameDayMatrix.get(x1, x2))
+                            continue
+                                ; // not assigned or not intersecting
                         totalScore.violate(Violation::xyz(x1, y, z, {-1}));
                         totalScore.violate(Violation::xyz(x2, y, z, {-1}));
                     }
@@ -95,8 +96,8 @@ namespace Domain::Constraints {
                     for (axis_size_t x1 = 0; x1 < state.sizeX() - 1; ++x1) {
                         if (!state.get(x1, y, z)) continue; // not assigned
                         for (axis_size_t x2 = x1 + 1; x2 < state.sizeX(); ++x2) {
-                            if (!state.get(x2, y, z) || !m_IntersectingShiftsInSameDayMatrix.get(x1, x2)) continue
-                                ; // not assigned or not intersecting
+                            if (!state.get(x2, y, z) || !m_IntersectingShiftsInSameDayMatrix.get(x1, x2))
+                                continue; // not assigned or not intersecting
                             totalScore.violate(Violation::xyz(x1, y, z, {-1}));
                             totalScore.violate(Violation::xyz(x2, y, z, {-1}));
                         }

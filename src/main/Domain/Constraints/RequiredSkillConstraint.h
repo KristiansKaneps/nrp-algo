@@ -10,7 +10,8 @@ namespace Domain::Constraints {
     public:
         explicit RequiredSkillConstraint(const Axes::Axis<Domain::Shift>& xAxis,
                                          const Axes::Axis<Domain::Employee>& yAxis,
-                                         const Axes::Axis<Domain::Skill>& wAxis) : Constraint("REQUIRED_SKILL"),
+                                         const Axes::Axis<Domain::Skill>& wAxis) : Constraint("REQUIRED_SKILL", {
+            }),
             m_AssignableShiftEmployeeSkillMatrix(xAxis.size(), yAxis.size(), wAxis.size()) {
             for (axis_size_t x = 0; x < xAxis.size(); ++x) {
                 const auto& shift = xAxis[x];
@@ -27,14 +28,15 @@ namespace Domain::Constraints {
         ~RequiredSkillConstraint() override = default;
 
         [[nodiscard]] ConstraintScore evaluate(
-            const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
+            const State::DomainState& state) override {
             ConstraintScore totalScore;
 
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
                 for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                     for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
                         for (axis_size_t w = 0; w < state.sizeW(); ++w) {
-                            if (static_cast<int8_t>(m_AssignableShiftEmployeeSkillMatrix.get(x, y, w)) - static_cast<int8_t>(state.get(x, y, z, w)) >= 0) continue;
+                            if (static_cast<int8_t>(m_AssignableShiftEmployeeSkillMatrix.get(x, y, w)) - static_cast<
+                                int8_t>(state.get(x, y, z, w)) >= 0) continue;
                             totalScore.violate(Violation::xyzw(x, y, z, w, {-static_cast<score_t>(1)}));
                         }
                     }
@@ -62,7 +64,8 @@ namespace Domain::Constraints {
                 const auto employeeSkill = employeeSkills.find(skillIndex);
                 if (employeeSkill == employeeSkills.cend()) return false;
 
-                if (const auto employeeSkillWeight = employeeSkill->second.weight; shiftSkillWeight > employeeSkillWeight)
+                if (const auto employeeSkillWeight = employeeSkill->second.weight; shiftSkillWeight >
+                    employeeSkillWeight)
                     return false;
             }
 

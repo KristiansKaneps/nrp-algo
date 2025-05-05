@@ -12,7 +12,8 @@ namespace Domain::Constraints {
                                                 const Axes::Axis<Domain::Shift>& xAxis,
                                                 const Axes::Axis<Domain::Employee>& yAxis,
                                                 const Axes::Axis<Domain::Day>& zAxis) :
-            Constraint("EMPLOYEE_AVAILABILITY"),
+            Constraint("EMPLOYEE_AVAILABILITY", {
+            }),
             m_IntersectingEmployeeUnavailabilitiesAndShifts(
                 BitMatrix::BitMatrix3D(xAxis.size(), yAxis.size(), zAxis.size())),
             m_IntersectingEmployeeDesiredAvailabilitiesAndShifts(
@@ -42,7 +43,7 @@ namespace Domain::Constraints {
         ~EmployeeAvailabilityConstraint() override = default;
 
         [[nodiscard]] ConstraintScore evaluate(
-            const State::State<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>& state) override {
+            const State::DomainState& state) override {
             ConstraintScore totalScore;
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {

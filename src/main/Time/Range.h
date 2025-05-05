@@ -86,6 +86,17 @@ namespace Time {
             return {start < m_Start ? m_Start : start, end > m_End ? m_End : end};
         }
 
+        template<typename TimeZone = const std::chrono::time_zone *>
+        Range getRangePartitionByDays(const size_t offsetDay, const size_t dayCount, TimeZone zone) const {
+            using namespace std::chrono_literals;
+            const auto zonedStart = std::chrono::zoned_time(zone, m_Start);
+            const auto localStartRef = zonedStart.get_local_time() + std::chrono::days(offsetDay);
+            const auto localEndRef = localStartRef + std::chrono::days(dayCount);
+            const auto start = zone->to_sys(localStartRef);
+            const auto end = zone->to_sys(localEndRef);
+            return {start < m_Start ? m_Start : start, end > m_End ? m_End : end};
+        }
+
         template<typename Duration = std::chrono::minutes>
         Duration duration() const {
             if (m_End == MIN_INSTANT && m_Start == MAX_INSTANT) [[unlikely]] return Duration::zero();
@@ -215,7 +226,7 @@ namespace Time {
 
         [[nodiscard]] bool fullyContains(const Ray& other) const override {
             if (other.type() == RAY) [[unlikely]] return false;
-            const auto &r = static_cast<const Range&>(other);
+            const auto &r = static_cast<const Range&>(other); // NOLINT(*-pro-type-static-cast-downcast)
             return m_Start <= r.m_Start && m_End >= r.m_End;
         }
 

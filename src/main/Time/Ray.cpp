@@ -14,5 +14,9 @@ namespace Time {
 
     bool Ray::isFullyContainedBy(const RangeCollection& other) const { return other.fullyContains(*this); }
 
+    bool Ray::intersects(const Ray& other) const {
+        return other.type() == RAY || static_cast<const Range&>(other).intersects(*this); // NOLINT(*-pro-type-static-cast-downcast)
+    }
+
     bool Ray::intersects(const RangeCollection& other) const { return other.intersects(*this); }
 }

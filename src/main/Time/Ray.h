@@ -49,6 +49,13 @@ namespace Time {
             return start1 < start2 ? start2 : start1;
         }
 
+        template<typename TimeZone = const std::chrono::time_zone *>
+        [[nodiscard]] Ray offsetStartByDayCount(const int32_t offsetDayCount, TimeZone zone) const {
+            const auto zonedStart = std::chrono::zoned_time(zone, m_Start);
+            const auto localRef = zonedStart.get_local_time() + std::chrono::days(offsetDayCount);
+            return {std::chrono::time_point_cast<INSTANT_PRECISION>(zone->to_sys(localRef))};
+        }
+
         template<class Duration = std::chrono::system_clock::duration>
         [[nodiscard]] Range rangeTo(const std::chrono::time_point<std::chrono::system_clock, Duration>& end) const;
         template<class Duration = std::chrono::system_clock::duration>
@@ -76,15 +83,12 @@ namespace Time {
 
         [[nodiscard]] virtual bool isFullyContainedBy(const RangeCollection& other) const;
 
-        [[nodiscard]] virtual bool intersects(const Ray& other) const { // NOLINT(*-no-recursion)
-            if (other.type() == RAY) [[unlikely]] return true;
-            return other.intersects(*this);
-        }
+        [[nodiscard]] virtual bool intersects(const Ray& other) const;
 
         [[nodiscard]] virtual bool intersects(const RangeCollection& other) const;
 
         [[nodiscard]] Ray getRayIntersection(const Ray& other) const {
-            return Ray(other.m_Start < m_Start ? m_Start : other.m_Start);
+            return {other.m_Start < m_Start ? m_Start : other.m_Start};
         }
 
     protected:

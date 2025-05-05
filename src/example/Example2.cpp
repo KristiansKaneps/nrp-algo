@@ -9,6 +9,7 @@
 #include "Domain/Constraints/EmploymentMaxDurationConstraint.h"
 #include "Domain/Constraints/RestBetweenShiftsConstraint.h"
 #include "Domain/Constraints/EmployeeAvailabilityConstraint.h"
+#include "Domain/Constraints/CumulativeFatigueConstraint.h"
 
 #include "Domain/Heuristics/DomainHeuristicProvider.h"
 #include "Domain/Heuristics/RandomAssignmentTogglePerturbator.h"
@@ -357,13 +358,14 @@ void Example::create() {
 
     state.printSize();
 
-    auto *validShiftDayConstraint = new Domain::Constraints::ValidShiftDayConstraint(state.range(), state.timeZone(), state.x(), state.z());
+    auto *validShiftDayConstraint = new Domain::Constraints::ValidShiftDayConstraint(state.range(), state.timeZone(), state.x(), state.y().size(), state.z(), state.w().size());
     auto *noOverlapConstraint = new Domain::Constraints::NoOverlapConstraint(state.x());
     auto *requiredSkillConstraint = new Domain::Constraints::RequiredSkillConstraint(state.x(), state.y(), state.w());
     auto *shiftCoverageConstraint = new Domain::Constraints::ShiftCoverageConstraint(state.range(), state.timeZone(), state.x(), state.z());
-    auto *employmentDurationConstraint = new Domain::Constraints::EmploymentMaxDurationConstraint(state.range(), state.timeZone(), state.x(), state.y(), state.z());
+    auto *employmentDurationConstraint = new Domain::Constraints::EmploymentMaxDurationConstraint(state.range(), 7, state.timeZone(), state.x(), state.y(), state.z());
     auto *restBetweenShiftsConstraint = new Domain::Constraints::RestBetweenShiftsConstraint(state.x());
     auto *employeeAvailabilityConstraint = new Domain::Constraints::EmployeeAvailabilityConstraint(state.range(), state.timeZone(), state.x(), state.y(), state.z());
+    auto *cumulativeFatigueConstraint = new Domain::Constraints::CumulativeFatigueConstraint(state.x());
 
     const auto constraints = std::vector<::Constraints::Constraint<Shift, Employee, Day, Skill> *> {
         validShiftDayConstraint,
@@ -373,6 +375,7 @@ void Example::create() {
         employmentDurationConstraint,
         restBetweenShiftsConstraint,
         employeeAvailabilityConstraint,
+        cumulativeFatigueConstraint,
     };
 
     auto heuristic1 = new Domain::Heuristics::RandomAssignmentTogglePerturbator();

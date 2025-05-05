@@ -23,6 +23,19 @@ namespace Domain {
 
         Shift(const axis_size_t index, const uint8_t weekdayBitMask, const Time::DailyInterval& interval,
               const std::string& name, const uint8_t slotCount, const uint8_t requiredSlotCount,
+              const Time::day_minutes_t restMinutesBefore, const Time::day_minutes_t restMinutesAfter,
+              const Time::day_minutes_t consecutiveRestMinutes) : m_Index(index),
+                                                                  m_WeekdayBitMask(weekdayBitMask),
+                                                                  m_Interval(interval),
+                                                                  m_Name(name),
+                                                                  m_SlotCount(slotCount),
+                                                                  m_RequiredSlotCount(requiredSlotCount),
+                                                                  m_RestMinutesBefore(restMinutesBefore),
+                                                                  m_RestMinutesAfter(restMinutesAfter),
+                                                                  m_ConsecutiveRestMinutes(consecutiveRestMinutes) { }
+
+        Shift(const axis_size_t index, const uint8_t weekdayBitMask, const Time::DailyInterval& interval,
+              const std::string& name, const uint8_t slotCount, const uint8_t requiredSlotCount,
               const Time::day_minutes_t restMinutesBefore, const Time::day_minutes_t restMinutesAfter) : m_Index(index),
             m_WeekdayBitMask(weekdayBitMask),
             m_Interval(interval),
@@ -30,7 +43,9 @@ namespace Domain {
             m_SlotCount(slotCount),
             m_RequiredSlotCount(requiredSlotCount),
             m_RestMinutesBefore(restMinutesBefore),
-            m_RestMinutesAfter(restMinutesAfter) { }
+            m_RestMinutesAfter(restMinutesAfter),
+            m_ConsecutiveRestMinutes(calculateDefaultConsecutiveRestMinutes()) { }
+
 
         Shift(const axis_size_t index, const uint8_t weekdayBitMask, const Time::DailyInterval& interval,
               const std::string& name, const uint8_t slotCount, const Time::day_minutes_t restMinutesBefore,
@@ -63,6 +78,7 @@ namespace Domain {
         [[nodiscard]] uint8_t requiredSlotCount() const { return m_RequiredSlotCount; }
         [[nodiscard]] Time::day_minutes_t restMinutesBefore() const { return m_RestMinutesBefore; }
         [[nodiscard]] Time::day_minutes_t restMinutesAfter() const { return m_RestMinutesAfter; }
+        [[nodiscard]] Time::day_minutes_t consecutiveRestMinutes() const { return m_ConsecutiveRestMinutes; }
 
         [[nodiscard]] const std::unordered_map<axis_size_t, float>& requiredAllSkills() const {
             return m_RequiredAllSkills;
@@ -100,7 +116,7 @@ namespace Domain {
             m_RequiredOneSkills[skillIndex] = minWeight;
         }
 
-    private:
+    protected:
         const axis_size_t m_Index;
         const uint8_t m_WeekdayBitMask;
         const Time::DailyInterval m_Interval;
@@ -108,9 +124,15 @@ namespace Domain {
         const uint8_t m_SlotCount;
         const uint8_t m_RequiredSlotCount;
         const Time::day_minutes_t m_RestMinutesBefore, m_RestMinutesAfter;
+        const Time::day_minutes_t m_ConsecutiveRestMinutes;
 
         std::unordered_map<axis_size_t, float> m_RequiredAllSkills {};
         std::unordered_map<axis_size_t, float> m_RequiredOneSkills {};
+
+        [[nodiscard]] Time::day_minutes_t calculateDefaultConsecutiveRestMinutes() const {
+            const Time::day_minutes_t minutesUntilDayEnd = (1 + (m_Interval.endInMinutes() - 1) / (24 * 60)) * 24 * 60 - m_Interval.endInMinutes(); // NOLINT(*-narrowing-conversions)
+            return static_cast<Time::day_minutes_t>(24 * 60 + minutesUntilDayEnd);
+        }
     };
 }
 
