@@ -44,16 +44,37 @@ include(${CMAKE_SOURCE_DIR}/lib/raylib/FindRaylib.cmake)
 #include(${CMAKE_SOURCE_DIR}/lib/postgres/FindPostgres.cmake) # Use project's (not system's) PostgreSQL
 find_package(PostgreSQL)
 
+# Resource files
+set(EMBED_SOURCE_DIR ${CMAKE_SOURCE_DIR}/embed)
+set(EMBEDDED_RESOURCES_HEADER ${CMAKE_SOURCE_DIR}/src/resources/embedded_resources.h)
+add_executable(embed ${EMBED_SOURCE_DIR}/embed.c)
+file(GLOB_RECURSE RESOURCE_FILES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/resources/*)
+set(EMBED_OUTPUT_DIR ${CMAKE_BINARY_DIR}/embedded_resources)
+file(MAKE_DIRECTORY ${EMBED_OUTPUT_DIR})
+set(EMBEDDED_RESOURCES_SOURCE ${EMBED_OUTPUT_DIR}/embedded_resources.c)
+add_custom_command(
+        OUTPUT ${EMBEDDED_RESOURCES_SOURCE}
+        COMMAND $<TARGET_FILE:embed> ${RESOURCE_FILES} > ${EMBEDDED_RESOURCES_SOURCE}
+        DEPENDS embed ${RESOURCE_FILES}
+        COMMENT "Embedding all resources into ${EMBEDDED_RESOURCES_SOURCE}"
+        VERBATIM
+)
+add_custom_target(run_embed ALL DEPENDS ${EMBEDDED_RESOURCES_OUTPUT})
+
 # Example executable
 add_executable(${PROJECT_NAME}_exec
         ${LIBRARY_SOURCE_FILES} ${LIBRARY_HEADER_FILES}
         ${EXAMPLE_SOURCE_FILES} ${EXAMPLE_HEADER_FILES}
         ${LIB_BITARRAY}
+        ${EMBEDDED_RESOURCES_SOURCE} ${EMBEDDED_RESOURCES_HEADER}
 )
+
+add_dependencies(${PROJECT_NAME}_exec run_embed)
 
 target_include_directories(${PROJECT_NAME}_exec
         PUBLIC ${CMAKE_SOURCE_DIR}/src/main
         PUBLIC ${CMAKE_SOURCE_DIR}/src/example
+        PUBLIC ${CMAKE_SOURCE_DIR}/src/resources
 )
 
 target_link_libraries(${PROJECT_NAME}_exec PRIVATE
@@ -64,10 +85,12 @@ target_link_libraries(${PROJECT_NAME}_exec PRIVATE
 # Main library
 add_library(${PROJECT_NAME} STATIC
         ${LIBRARY_SOURCE_FILES} ${LIBRARY_HEADER_FILES}
+        ${EMBEDDED_RESOURCES_SOURCE} ${EMBEDDED_RESOURCES_HEADER}
 )
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC ${CMAKE_SOURCE_DIR}/src/main
+        PUBLIC ${CMAKE_SOURCE_DIR}/src/resources
 )
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
