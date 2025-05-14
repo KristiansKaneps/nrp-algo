@@ -12,8 +12,9 @@ target_include_directories(test_main
         PUBLIC ${CMAKE_SOURCE_DIR}/src/main
 )
 
-add_executable(dummy_test dummy_test.cpp $<TARGET_OBJECTS:test_main>)
-add_test(NAME dummy_test COMMAND dummy_test)
+# Dummy test
+#add_executable(dummy_test dummy_test.cpp $<TARGET_OBJECTS:test_main>)
+#add_test(NAME dummy_test COMMAND dummy_test)
 
 # Function to add tests (syntax: `test(testName)` corresponds to testName.cpp file).
 function(test testName)
