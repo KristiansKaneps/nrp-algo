@@ -18,6 +18,7 @@ namespace Domain::Constraints {
                                          const Axes::Axis<Domain::Day>& zAxis) : Constraint("SHIFT_COVERAGE", {
             }),
             m_CoverageData(xAxis.size() * zAxis.size(), CoverageData {}) {
+            using std::chrono_literals::operator ""min;
             for (axis_size_t x = 0; x < xAxis.size(); ++x) {
                 const auto& s = xAxis[x];
 
@@ -28,7 +29,7 @@ namespace Domain::Constraints {
                     m_CoverageData[x * zAxis.size() + z] = {
                         s.slotCount(z),
                         s.requiredSlotCount(z),
-                        shiftDuration.count(),
+                        shiftDuration / 1min,
                     };
                 }
             }
