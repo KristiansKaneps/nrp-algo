@@ -16,9 +16,8 @@ namespace Domain::Constraints {
         explicit ShiftCoverageConstraint(const Time::Range& range, const std::chrono::time_zone *timeZone,
                                          const Axes::Axis<Domain::Shift>& xAxis,
                                          const Axes::Axis<Domain::Day>& zAxis) : Constraint("SHIFT_COVERAGE", {
-        }) {
-            mp_ShiftDurationInMinutes = new int32_t[xAxis.size() * zAxis.size()];
-
+            }),
+            m_CoverageData(xAxis.size() * zAxis.size(), CoverageData {}) {
             for (axis_size_t x = 0; x < xAxis.size(); ++x) {
                 const auto& s = xAxis[x];
 
@@ -26,23 +25,24 @@ namespace Domain::Constraints {
                     const auto day = range.getDayAt(z, timeZone);
                     const auto shiftRange = s.interval().toRange(day);
                     const auto shiftDuration = shiftRange.duration<std::chrono::minutes>(timeZone);
-                    mp_ShiftDurationInMinutes[x * zAxis.size() + z] = shiftDuration.count();
+                    m_CoverageData[x * zAxis.size() + z] = {
+                        s.slotCount(z),
+                        s.requiredSlotCount(z),
+                        shiftDuration.count(),
+                    };
                 }
             }
         }
 
-        ~ShiftCoverageConstraint() override {
-            delete[] mp_ShiftDurationInMinutes;
-            mp_ShiftDurationInMinutes = nullptr;
-        };
+        ~ShiftCoverageConstraint() override = default;
 
         [[nodiscard]] ConstraintScore evaluate(const State::DomainState& state) override {
             ConstraintScore totalScore;
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
-                const auto& s = state.x()[x];
-                const uint8_t slotCount = s.slotCount();
-                const uint8_t reqSlotCount = s.slotCount();
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
+                    const auto& [slotCount, requiredSlotCount, durationInMinutes] = m_CoverageData[x * state.sizeZ() +
+                        z];
+
                     score_t absDayScore = 0;
 
                     axis_size_t assignedEmployeeCount = 0;
@@ -50,16 +50,16 @@ namespace Domain::Constraints {
                         assignedEmployeeCount += static_cast<axis_size_t>(state.get(x, y, z));
                     }
 
-                    const auto shiftDurationInMinutes = mp_ShiftDurationInMinutes[x * state.sizeZ() + z];
-
                     if (slotCount != 0 && assignedEmployeeCount > slotCount) {
-                        absDayScore += static_cast<score_t>(assignedEmployeeCount - static_cast<axis_size_t>(slotCount)) *
-                            shiftDurationInMinutes;
+                        absDayScore += static_cast<score_t>(assignedEmployeeCount - static_cast<axis_size_t>(slotCount))
+                            *
+                            durationInMinutes;
                     }
 
-                    if (assignedEmployeeCount < reqSlotCount) {
-                        absDayScore += static_cast<score_t>(static_cast<axis_size_t>(reqSlotCount) - assignedEmployeeCount)
-                            * shiftDurationInMinutes;
+                    if (assignedEmployeeCount < requiredSlotCount) {
+                        absDayScore += static_cast<score_t>(static_cast<axis_size_t>(requiredSlotCount) -
+                                assignedEmployeeCount)
+                            * durationInMinutes;
                     }
 
                     const score_t dayScore = -(absDayScore * absDayScore);
@@ -72,7 +72,13 @@ namespace Domain::Constraints {
         }
 
     private:
-        int32_t *mp_ShiftDurationInMinutes {};
+        struct CoverageData {
+            uint8_t slotCount;
+            uint8_t requiredSlotCount;
+            int32_t durationInMinutes;
+        };
+
+        std::vector<CoverageData> m_CoverageData;
     };
 }
 

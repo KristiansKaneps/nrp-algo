@@ -162,8 +162,8 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
             dayCoverageValid[i] = true;
             for (axis_size_t j = 0; j < shiftCount; ++j) {
                 const Shift& s = appState.state.x()[j];
-                const auto reqSlots = s.requiredSlotCount();
-                const auto maxSlots = s.slotCount();
+                const auto reqSlots = s.requiredSlotCount(i);
+                const auto maxSlots = s.slotCount(i);
                 uint8_t assignedSlots = 0;
                 for (axis_size_t k = 0; k < employeeCount; ++k) {
                     if (!appState.state.get(j, k, i)) continue;

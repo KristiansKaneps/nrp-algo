@@ -74,8 +74,14 @@ namespace Domain {
         [[nodiscard]] uint8_t weekdayBitMask() const { return m_WeekdayBitMask; }
         [[nodiscard]] const Time::DailyInterval& interval() const { return m_Interval; }
         [[nodiscard]] const std::string& name() const { return m_Name; }
-        [[nodiscard]] uint8_t slotCount() const { return m_SlotCount; }
-        [[nodiscard]] uint8_t requiredSlotCount() const { return m_RequiredSlotCount; }
+        [[nodiscard]] uint8_t slotCount(const axis_size_t dayIndex) const {
+            return m_SlotCountPerDayIndex.contains(dayIndex) ? m_SlotCountPerDayIndex.at(dayIndex) : m_SlotCount;
+        }
+        [[nodiscard]] uint8_t requiredSlotCount(const axis_size_t dayIndex) const {
+            return m_RequiredSlotCountPerDayIndex.contains(dayIndex)
+                       ? m_RequiredSlotCountPerDayIndex.at(dayIndex)
+                       : m_RequiredSlotCount;
+        }
         [[nodiscard]] Time::day_minutes_t restMinutesBefore() const { return m_RestMinutesBefore; }
         [[nodiscard]] Time::day_minutes_t restMinutesAfter() const { return m_RestMinutesAfter; }
         [[nodiscard]] Time::day_minutes_t consecutiveRestMinutes() const { return m_ConsecutiveRestMinutes; }
@@ -116,6 +122,15 @@ namespace Domain {
             m_RequiredOneSkills[skillIndex] = minWeight;
         }
 
+        void setSlotCountAtDay(const axis_size_t dayIndex, const uint8_t slotCount, const uint8_t requiredSlotCount) {
+            m_SlotCountPerDayIndex.insert({dayIndex, slotCount});
+            m_RequiredSlotCountPerDayIndex.insert({dayIndex, requiredSlotCount});
+        }
+
+        void setSlotCountAtDay(const axis_size_t dayIndex, const uint8_t requiredSlotCount) {
+            setSlotCountAtDay(dayIndex, requiredSlotCount, requiredSlotCount);
+        }
+
     protected:
         const axis_size_t m_Index;
         const uint8_t m_WeekdayBitMask;
@@ -128,6 +143,9 @@ namespace Domain {
 
         std::unordered_map<axis_size_t, float> m_RequiredAllSkills {};
         std::unordered_map<axis_size_t, float> m_RequiredOneSkills {};
+
+        std::unordered_map<axis_size_t, uint8_t> m_SlotCountPerDayIndex {};
+        std::unordered_map<axis_size_t, uint8_t> m_RequiredSlotCountPerDayIndex {};
 
         [[nodiscard]] Time::day_minutes_t calculateDefaultConsecutiveRestMinutes() const {
             const Time::day_minutes_t minutesUntilDayEnd = (1 + (m_Interval.endInMinutes() - 1) / (24 * 60)) * 24 * 60 - m_Interval.endInMinutes(); // NOLINT(*-narrowing-conversions)
