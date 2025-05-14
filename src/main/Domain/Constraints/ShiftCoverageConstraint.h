@@ -29,7 +29,7 @@ namespace Domain::Constraints {
                     m_CoverageData[x * zAxis.size() + z] = {
                         s.slotCount(z),
                         s.requiredSlotCount(z),
-                        shiftDuration / 1min,
+                        static_cast<int32_t>(shiftDuration / 1min),
                     };
                 }
             }
