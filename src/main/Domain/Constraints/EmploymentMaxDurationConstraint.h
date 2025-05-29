@@ -55,6 +55,13 @@ namespace Domain::Constraints {
 
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                 const auto& e = state.y()[y];
+                const auto& totalChangeEvent = e.totalChangeEvent();
+
+                const int64_t maxTotalWorkloadDurationInMinutes = totalChangeEvent.maxLoadHours * 60L;
+                const int64_t maxTotalWorkloadOvertimeDurationInMinutes = totalChangeEvent.maxOvertimeHours * 60L;
+
+                int64_t totalDurationInMinutes {};
+                axis_size_t totalAssignedShiftCount {};
 
                 for (axis_size_t w = 0; w < state.sizeW(); ++w) {
                     const auto& skillIndex = state.w()[w].index();
@@ -71,20 +78,25 @@ namespace Domain::Constraints {
                         } else if (s->strategy == Workload::Strategy::DYNAMIC) {
                             maxWorkloadDurationInMinutes = static_cast<int64_t>(s->event.dynamicLoadHours * 60L);
                         }
-                    }
+                    } else [[unlikely]] continue;
 
-                    int64_t totalDurationInMinutes {};
+                    int64_t durationInMinutes {};
+                    axis_size_t assignedShiftCount {};
 
                     for (axis_size_t x = 0; x < state.sizeX(); ++x) {
                         for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
                             if (!state.get(x, y, z, w)) continue;
+                            assignedShiftCount += 1;
                             // ReSharper disable once CppDFANullDereference
-                            totalDurationInMinutes += static_cast<int64_t>(m_ShiftDurationInMinutes[x * state.sizeZ() +
+                            durationInMinutes += static_cast<int64_t>(m_ShiftDurationInMinutes[x * state.sizeZ() +
                                 z]);
                         }
                     }
 
-                    const int64_t diff = maxWorkloadDurationInMinutes - totalDurationInMinutes;
+                    totalDurationInMinutes += durationInMinutes;
+                    totalAssignedShiftCount += assignedShiftCount;
+
+                    const int64_t diff = maxWorkloadDurationInMinutes - durationInMinutes;
                     const int64_t diffScale = diff > 0 ? 2 : 1; // seems to balance workload between employees
                     const int64_t overtimeDiff = diff + maxWorkloadOvertimeDurationInMinutes;
 
@@ -93,11 +105,30 @@ namespace Domain::Constraints {
 
                     const score_t absHard = (absDiff - 1) * diffScale / ABS_DIFF_ALLOWANCE; // scale with larger differences
 
-                    const score_t strict = -(overtimeDiff < 0);
+                    const score_t strict = -(overtimeDiff < 0 || (s->event.maxShiftCount >= 0 && assignedShiftCount >= s->event.maxShiftCount));
                     const score_t hard = -(absHard * absHard);
 
                     if (strict != 0 || hard != 0) { totalScore.violate(Violation::yw(y, w, {strict, hard})); }
                 }
+
+                score_t strict = -(totalChangeEvent.maxShiftCount >= 0 && totalAssignedShiftCount >= totalChangeEvent.maxShiftCount);
+                score_t hard = 0;
+
+                if (!totalChangeEvent.anyDuration) {
+                    const int64_t diff = maxTotalWorkloadDurationInMinutes - totalDurationInMinutes;
+                    const int64_t diffScale = diff > 0 ? 2 : 1; // seems to balance workload between employees
+                    const int64_t overtimeDiff = diff + maxTotalWorkloadOvertimeDurationInMinutes;
+
+                    constexpr int64_t ABS_DIFF_ALLOWANCE = 3 * 60;
+                    const int64_t absDiff = std::abs(diff);
+
+                    const score_t absHard = (absDiff - 1) * diffScale / ABS_DIFF_ALLOWANCE; // scale with larger differences
+
+                    strict = -(overtimeDiff < 0 || strict == -1);
+                    hard = -(absHard * absHard);
+                }
+
+                if (strict != 0 || hard != 0) { totalScore.violate(Violation::y(y, {strict, hard})); }
             }
 
             return totalScore;

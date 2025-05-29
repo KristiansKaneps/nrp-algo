@@ -19,16 +19,24 @@ namespace Domain {
         };
 
         struct ChangeEvent {
-            float dynamicLoadHours;
-            float staticLoad;
-            float maxOvertimeHours;
+            float dynamicLoadHours{};
+            float staticLoad{};
+            float maxOvertimeHours{};
+            int maxShiftCount = -1;
+        };
+
+        struct TotalChangeEvent {
+            bool anyDuration = true;
+            float maxLoadHours{};
+            float maxOvertimeHours{};
+            int maxShiftCount = -1;
         };
     }
 
     struct EmployeeSkill {
-        float weight;
-        Workload::Strategy strategy;
-        Workload::ChangeEvent event;
+        float weight{};
+        Workload::Strategy strategy{};
+        Workload::ChangeEvent event{};
     };
 
     namespace Availability {
@@ -90,7 +98,10 @@ namespace Domain {
 
         [[nodiscard]] axis_size_t index() const { return m_Index; }
         [[nodiscard]] std::string name() const { return m_Name; }
+        [[nodiscard]] Workload::TotalChangeEvent totalChangeEvent() const { return m_TotalChangeEvent; }
         [[nodiscard]] const std::unordered_map<axis_size_t, EmployeeSkill>& skills() const { return m_Skills; }
+
+        void setTotalChangeEvent(const Workload::TotalChangeEvent& event) { m_TotalChangeEvent = event; }
 
         [[nodiscard]] const EmployeeSkill* skill(const axis_size_t skillIndex) const {
             const auto skill = m_Skills.find(skillIndex);
@@ -128,6 +139,7 @@ namespace Domain {
     private:
         const axis_size_t m_Index;
         const std::string m_Name;
+        Workload::TotalChangeEvent m_TotalChangeEvent {};
         std::unordered_map<axis_size_t, EmployeeSkill> m_Skills {};
 
         Availability::UnpaidUnavailableAvailability m_UnpaidUnavailableAvailability;
