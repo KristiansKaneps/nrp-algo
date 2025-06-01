@@ -3,7 +3,8 @@
 
 // #define EXAMPLE 1
 // #define EXAMPLE 2
-#define EXAMPLE 3
+// #define EXAMPLE 3
+#define EXAMPLE 4
 
 #include <iostream>
 #include "ApplicationState.h"
