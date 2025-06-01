@@ -17,12 +17,13 @@ namespace Domain::Constraints {
             m_IntersectingEmployeeUnavailabilitiesAndShifts(
                 BitMatrix::BitMatrix3D(xAxis.size(), yAxis.size(), zAxis.size())),
             m_IntersectingEmployeeDesiredAvailabilitiesAndShifts(
-                BitMatrix::BitMatrix3D(xAxis.size(), yAxis.size(), zAxis.size())) {
-            for (axis_size_t z = 0; z < zAxis.size(); ++z) {
-                const auto& day = range.getDayAt(z, timeZone);
+                BitMatrix::BitMatrix3D(xAxis.size(), yAxis.size(), zAxis.size())),
+            m_SpecificRequests(std::vector<std::vector<std::vector<int8_t>>>(xAxis.size(), std::vector<std::vector<int8_t>>(yAxis.size(), std::vector<int8_t>(zAxis.size())))) {
+            for (axis_size_t y = 0; y < yAxis.size(); ++y) {
+                const auto& e = yAxis[y];
 
-                for (axis_size_t y = 0; y < yAxis.size(); ++y) {
-                    const auto& e = yAxis[y];
+                for (axis_size_t z = 0; z < zAxis.size(); ++z) {
+                    const auto& day = range.getDayAt(z, timeZone);
 
                     for (axis_size_t x = 0; x < xAxis.size(); ++x) {
                         const auto& s = xAxis[x];
@@ -37,6 +38,16 @@ namespace Domain::Constraints {
                         }
                     }
                 }
+
+                for (const auto& specificRequest : e.desiredAvailability().m_SpecificRequests) {
+                    m_SpecificRequests[specificRequest.shiftIndex][y][specificRequest.dayIndex] = specificRequest.weight;
+                }
+                for (const auto& specificRequest : e.paidUnavailableAvailability().m_SpecificRequests) {
+                    m_SpecificRequests[specificRequest.shiftIndex][y][specificRequest.dayIndex] = -specificRequest.weight; // NOLINT(*-narrowing-conversions)
+                }
+                for (const auto& specificRequest : e.unpaidUnavailableAvailability().m_SpecificRequests) {
+                    m_SpecificRequests[specificRequest.shiftIndex][y][specificRequest.dayIndex] = -specificRequest.weight; // NOLINT(*-narrowing-conversions)
+                }
             }
         }
 
@@ -48,13 +59,17 @@ namespace Domain::Constraints {
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
                     for (axis_size_t y = 0; y < state.sizeY(); ++y) {
-                        if (state.get(x, y, z) & m_IntersectingEmployeeUnavailabilitiesAndShifts.
-                            get(x, y, z)) {
+                        if (!state.get(x, y, z)) continue;
+                        if (m_IntersectingEmployeeUnavailabilitiesAndShifts.get(x, y, z)) {
                             totalScore.violate(Violation::xyz(x, y, z, {-1}));
                         }
-                        if (state.get(x, y, z) & m_IntersectingEmployeeDesiredAvailabilitiesAndShifts.
-                            get(x, y, z)) {
+                        if (m_IntersectingEmployeeDesiredAvailabilitiesAndShifts.get(x, y, z)) {
                             totalScore.addSoftScore(1);
+                        }
+                        if (const int8_t specificRequestWeight = m_SpecificRequests[x][y][z]; specificRequestWeight < 0) {
+                            totalScore.violate(Violation::xyz(x, y, z, {0, 0, static_cast<score_t>(specificRequestWeight)}));
+                        } else if (specificRequestWeight > 0) {
+                            totalScore.addSoftScore(static_cast<score_t>(specificRequestWeight));
                         }
                     }
                 }
@@ -66,6 +81,7 @@ namespace Domain::Constraints {
     private:
         BitMatrix::BitMatrix3D m_IntersectingEmployeeUnavailabilitiesAndShifts;
         BitMatrix::BitMatrix3D m_IntersectingEmployeeDesiredAvailabilitiesAndShifts;
+        std::vector<std::vector<std::vector<int8_t>>> m_SpecificRequests;
     };
 }
 

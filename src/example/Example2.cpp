@@ -2,6 +2,7 @@
 
 #if EXAMPLE == 2
 
+#include "Domain/Constraints/EmployeeGeneralConstraint.h"
 #include "Domain/Constraints/ValidShiftDayConstraint.h"
 #include "Domain/Constraints/NoOverlapConstraint.h"
 #include "Domain/Constraints/RequiredSkillConstraint.h"
@@ -358,6 +359,7 @@ void Example::create() {
 
     state.printSize();
 
+    auto *employeeGeneralConstraint = new Domain::Constraints::EmployeeGeneralConstraint(state.range(), state.timeZone(), state.z());
     auto *validShiftDayConstraint = new Domain::Constraints::ValidShiftDayConstraint(state.range(), state.timeZone(), state.x(), state.y().size(), state.z(), state.w().size());
     auto *noOverlapConstraint = new Domain::Constraints::NoOverlapConstraint(state.x());
     auto *requiredSkillConstraint = new Domain::Constraints::RequiredSkillConstraint(state.x(), state.y(), state.w());
@@ -368,6 +370,7 @@ void Example::create() {
     auto *cumulativeFatigueConstraint = new Domain::Constraints::CumulativeFatigueConstraint(state.x());
 
     const auto constraints = std::vector<::Constraints::Constraint<Shift, Employee, Day, Skill> *> {
+        employeeGeneralConstraint,
         validShiftDayConstraint,
         noOverlapConstraint,
         requiredSkillConstraint,
