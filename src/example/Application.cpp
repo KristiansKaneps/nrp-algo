@@ -2,6 +2,8 @@
 
 using State::state_size_t;
 
+std::vector<bool> weekends;
+
 struct DayAvailability {
     struct Region {
         float start, width;
@@ -18,8 +20,12 @@ void Application::onStart() {
     appState().renderCache.dayCoverageValid = new bool[appState().state.sizeZ()];
     appState().renderCache.xw = new BitArray::BitArray(appState().state.sizeX() * appState().state.sizeW());
 
+    weekends.reserve(appState().state.sizeZ());
     employeeAvailabilityPerDay = new std::vector<DayAvailability>[appState().state.sizeY() * appState().state.sizeZ()];
+
     for (axis_size_t z = 0; z < appState().state.sizeZ(); ++z) {
+        const uint8_t weekday = Time::InstantToWeekday(appState().state.range().getDayAt(z, appState().state.timeZone()));
+        weekends.emplace_back(weekday == 5 || weekday == 6);
         const auto &dayRange = appState().state.range().getDayRangeAt(z, appState().state.timeZone());
         for (axis_size_t y = 0; y < appState().state.sizeY(); ++y) {
             const auto &e = appState().state.y()[y];
@@ -225,6 +231,10 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
         const int x = static_cast<int>(static_cast<axis_size_t>(rowIdWidth) + i * static_cast<axis_size_t>(colWidth));
         const int y = 0;
         DrawLine(x, 0, x, m_WindowHeight, GRAY);
+
+        if (weekends[d.index()]) {
+            DrawRectangle(x, y, colWidth - 1, colIdHeight - 1, Color {85, 85, 85, 63});
+        }
 
         DrawText(std::to_string(d.index() + 1).c_str(), x + 3, y + 5, 10, dayCoverageValid[i] ? GREEN : RED);
     }
