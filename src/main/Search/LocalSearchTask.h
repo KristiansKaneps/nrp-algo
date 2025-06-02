@@ -53,8 +53,10 @@ namespace Search::Task {
 
             // Generate new candidate solution
             ::State::State<X, Y, Z, W>& candidateState = m_CurrentState;
-            auto perturbators = heuristicProvider.generatePerturbators(m_Evaluator, candidateState);
-            perturbators.modify(candidateState);
+            auto repairPerturbators = heuristicProvider.generateRepairPerturbators(m_Evaluator, candidateState);
+            auto searchPerturbators = heuristicProvider.generateSearchPerturbators(m_Evaluator, candidateState);
+            repairPerturbators.modify(candidateState);
+            searchPerturbators.modify(candidateState);
             // `m_CurrentState` is now the new candidate state.
 
             // Evaluate candidate solution
@@ -88,7 +90,8 @@ namespace Search::Task {
             } else {
                 // Revert the new candidate state to the previous candidate state,
                 // because the new candidate state references the "working memory" `m_CurrentState`.
-                perturbators.revert(candidateState);
+                searchPerturbators.revert(candidateState);
+                repairPerturbators.revert(candidateState);
             }
 
             // Update history

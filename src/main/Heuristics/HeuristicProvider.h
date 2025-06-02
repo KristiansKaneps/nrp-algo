@@ -17,7 +17,7 @@ namespace Heuristics {
 
         Perturbator<X, Y, Z, W> *operator[](const size_t index) const { return m_Perturbators[index]; }
 
-        PerturbatorChain<X, Y, Z, W> generatePerturbators(const Evaluation::Evaluator<X, Y, Z, W>& evaluator,
+        PerturbatorChain<X, Y, Z, W> generateRepairPerturbators(const Evaluation::Evaluator<X, Y, Z, W>& evaluator,
                                                           const ::State::State<X, Y, Z, W>& state) {
             m_GeneratedPerturbators.clear();
             m_GeneratedPerturbators.reserve(evaluator.m_ViolatedConstraintCount);
@@ -32,11 +32,19 @@ namespace Heuristics {
                             m_GeneratedPerturbators.emplace_back(perturb);
                         }
                     }
-                } else {
-                    Perturbator<X, Y, Z, W> *perturb = m_Perturbators[i % m_Perturbators.size()]->clone();
-                    perturb->configure(nullptr, state);
-                    m_GeneratedPerturbators.emplace_back(perturb);
                 }
+            }
+            return PerturbatorChain(m_GeneratedPerturbators);
+        }
+
+        PerturbatorChain<X, Y, Z, W> generateSearchPerturbators(const Evaluation::Evaluator<X, Y, Z, W>& evaluator,
+                                                          const ::State::State<X, Y, Z, W>& state) {
+            m_GeneratedPerturbators.clear();
+            m_GeneratedPerturbators.reserve(evaluator.m_ViolatedConstraintCount);
+            for (size_t i = 0; i < 5; ++i) {
+                Perturbator<X, Y, Z, W> *perturb = m_Perturbators[i % m_Perturbators.size()]->clone();
+                perturb->configure(nullptr, state);
+                m_GeneratedPerturbators.emplace_back(perturb);
             }
             // Perturbator<X, Y, Z, W> *perturb = m_Perturbators[0]->clone();
             // perturb->configure(nullptr, state);
