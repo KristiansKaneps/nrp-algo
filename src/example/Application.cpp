@@ -269,7 +269,9 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
                 for (axis_size_t l = 0; l < skillCount; ++l) {
                     if (xw.get(k * skillCount + l)) {
                         const Shift& s = appState.state.x().entities()[k];
+                        const Skill& sk = appState.state.w().entities()[l];
                         DrawText(s.name().c_str(), ox + inlineOffset + 2, oy + 2, 8, BLACK);
+                        DrawText(sk.name().c_str(), ox + inlineOffset + 2, oy + 10, 8, GRAY);
                         inlineOffset += 7;
                         break;
                     }
