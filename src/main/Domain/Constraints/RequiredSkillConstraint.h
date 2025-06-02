@@ -73,10 +73,15 @@ namespace Domain::Constraints {
 
             for (const std::pair<axis_size_t, float> shiftOneSkill : shiftOneSkills) { // NOLINT(*-use-anyofallof)
                 const auto skillIndex = shiftOneSkill.first;
-                const auto shiftSkillWeight = shiftOneSkill.second;
+                if (skillIndex != skill.index()) {
+                    // Employee has a required 'one' skill, but we are checking for parameter `skill`.
+                    continue;
+                }
 
                 const auto employeeSkill = employeeSkills.find(skillIndex);
                 if (employeeSkill == employeeSkills.cend()) continue;
+
+                const auto shiftSkillWeight = shiftOneSkill.second;
 
                 // #if EXAMPLE != 2
                 // if (shiftSkillWeight <= employeeSkill->second.weight)

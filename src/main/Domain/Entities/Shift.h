@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <set>
 
 #include "Time/DailyInterval.h"
 
@@ -85,11 +86,11 @@ namespace Domain {
         [[nodiscard]] Time::day_minutes_t restMinutesBefore() const { return m_RestMinutesBefore; }
         [[nodiscard]] Time::day_minutes_t restMinutesAfter() const { return m_RestMinutesAfter; }
         [[nodiscard]] Time::day_minutes_t consecutiveRestMinutes() const { return m_ConsecutiveRestMinutes; }
+        [[nodiscard]] const std::set<axis_size_t>& blockedNextDayShiftIndices() const { return m_BlockedNextDayShiftIndices; }
 
         [[nodiscard]] const std::unordered_map<axis_size_t, float>& requiredAllSkills() const {
             return m_RequiredAllSkills;
         }
-
         [[nodiscard]] const std::unordered_map<axis_size_t, float>& requiredOneSkills() const {
             return m_RequiredOneSkills;
         }
@@ -97,10 +98,13 @@ namespace Domain {
         [[nodiscard]] bool requiresSkill() const {
             return !m_RequiredAllSkills.empty() || !m_RequiredOneSkills.empty();
         }
-
         [[nodiscard]] bool requiresSkill(const axis_size_t skillIndex) const {
             return m_RequiredAllSkills.contains(skillIndex) || (m_RequiredOneSkills.size() == 1 && m_RequiredOneSkills.
                 contains(skillIndex));
+        }
+
+        [[nodiscard]] bool blocksShiftIndex(const axis_size_t skillIndex) const {
+            return m_BlockedNextDayShiftIndices.contains(skillIndex);
         }
 
         void removeRequiredAllSkill(const axis_size_t skillIndex) { m_RequiredAllSkills.erase(skillIndex); }
@@ -109,7 +113,6 @@ namespace Domain {
         void setRequiredAllSkillMinWeight(const axis_size_t skillIndex, const float minWeight) {
             m_RequiredAllSkills[skillIndex] = minWeight;
         }
-
         void setRequiredOneSkillMinWeight(const axis_size_t skillIndex, const float minWeight) {
             m_RequiredOneSkills[skillIndex] = minWeight;
         }
@@ -117,7 +120,6 @@ namespace Domain {
         void addRequiredAllSkill(const axis_size_t skillIndex, const float minWeight) {
             m_RequiredAllSkills[skillIndex] = minWeight;
         }
-
         void addRequiredOneSkill(const axis_size_t skillIndex, const float minWeight) {
             m_RequiredOneSkills[skillIndex] = minWeight;
         }
@@ -126,9 +128,15 @@ namespace Domain {
             m_SlotCountPerDayIndex.insert({dayIndex, slotCount});
             m_RequiredSlotCountPerDayIndex.insert({dayIndex, requiredSlotCount});
         }
-
         void setSlotCountAtDay(const axis_size_t dayIndex, const uint8_t requiredSlotCount) {
             setSlotCountAtDay(dayIndex, requiredSlotCount, requiredSlotCount);
+        }
+
+        void addBlockedNextDayShiftIndex(const axis_size_t shiftIndex) {
+            m_BlockedNextDayShiftIndices.insert(shiftIndex);
+        }
+        void removeBlockedNextDayShiftIndex(const axis_size_t shiftIndex) {
+            m_BlockedNextDayShiftIndices.erase(shiftIndex);
         }
 
     protected:
@@ -146,6 +154,8 @@ namespace Domain {
 
         std::unordered_map<axis_size_t, uint8_t> m_SlotCountPerDayIndex {};
         std::unordered_map<axis_size_t, uint8_t> m_RequiredSlotCountPerDayIndex {};
+
+        std::set<axis_size_t> m_BlockedNextDayShiftIndices {};
 
         [[nodiscard]] Time::day_minutes_t calculateDefaultConsecutiveRestMinutes() const {
             const Time::day_minutes_t minutesUntilDayEnd = (1 + (m_Interval.endInMinutes() - 1) / (24 * 60)) * 24 * 60 - m_Interval.endInMinutes(); // NOLINT(*-narrowing-conversions)

@@ -48,6 +48,7 @@ namespace NrpProblemInstances {
         };
 
         size_t m_ShiftCounter{};
+        std::unordered_map<size_t, std::string> m_ShiftIndexToBlockedShiftNamesMap{};
         std::unordered_map<std::string, size_t> m_ShiftNameToIndexMap{};
         std::vector<Domain::Shift> m_Shifts{};
 

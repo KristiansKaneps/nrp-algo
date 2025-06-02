@@ -57,20 +57,21 @@ namespace Domain::Constraints {
                 const auto& e = state.y()[y];
                 const auto& totalChangeEvent = e.totalChangeEvent();
 
-                const int64_t maxTotalWorkloadDurationInMinutes = totalChangeEvent.maxLoadHours * 60L;
-                const int64_t maxTotalWorkloadOvertimeDurationInMinutes = totalChangeEvent.maxOvertimeHours * 60L;
+                const auto maxTotalWorkloadDurationInMinutes = static_cast<int64_t>(totalChangeEvent.maxLoadHours * 60L);
+                const auto maxTotalWorkloadOvertimeDurationInMinutes = static_cast<int64_t>(totalChangeEvent.maxOvertimeHours * 60L);
 
                 int64_t totalDurationInMinutes {};
                 axis_size_t totalAssignedShiftCount {};
 
                 for (axis_size_t w = 0; w < state.sizeW(); ++w) {
-                    const auto& skillIndex = state.w()[w].index();
-                    const auto *s = e.skill(skillIndex);
+                    const auto *s = e.skill(w);
 
                     int64_t maxWorkloadDurationInMinutes = 0;
                     int64_t maxWorkloadOvertimeDurationInMinutes = 0;
+                    int32_t maxShiftCount = 0;
 
                     if (s != nullptr && s->strategy != Workload::Strategy::NONE) {
+                        maxShiftCount = s->event.maxShiftCount;
                         maxWorkloadOvertimeDurationInMinutes = static_cast<int64_t>(s->event.maxOvertimeHours * 60L);
                         if (s->strategy == Workload::Strategy::STATIC) {
                             maxWorkloadDurationInMinutes = static_cast<int64_t>(static_cast<double>(
@@ -78,7 +79,7 @@ namespace Domain::Constraints {
                         } else if (s->strategy == Workload::Strategy::DYNAMIC) {
                             maxWorkloadDurationInMinutes = static_cast<int64_t>(s->event.dynamicLoadHours * 60L);
                         }
-                    } else [[unlikely]] continue;
+                    } else continue;
 
                     int64_t durationInMinutes {};
                     axis_size_t assignedShiftCount {};
@@ -105,8 +106,8 @@ namespace Domain::Constraints {
 
                     const score_t absHard = (absDiff - 1) * diffScale / ABS_DIFF_ALLOWANCE; // scale with larger differences
 
-                    const score_t strict = -(overtimeDiff < 0 || (s->event.maxShiftCount >= 0 && assignedShiftCount > s->event.maxShiftCount));
-                    const score_t hard = s->event.maxShiftCount != 0 ? -(absHard * absHard) : 0;
+                    const score_t strict = -(overtimeDiff < 0 || (maxShiftCount >= 0 && assignedShiftCount > maxShiftCount));
+                    const score_t hard = maxShiftCount != 0 ? -(absHard * absHard) : 0;
 
                     if (strict != 0 || hard != 0) { totalScore.violate(Violation::yw(y, w, {strict, hard})); }
                 }

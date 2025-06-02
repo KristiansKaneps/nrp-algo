@@ -39,15 +39,20 @@ namespace NrpProblemInstances {
                 int horizonDays = std::stoi(fields[0]);
                 const auto local = std::chrono::local_time<std::chrono::milliseconds>{m_Range.start().time_since_epoch()};
                 const auto zonedStart = std::chrono::zoned_time(m_TimeZone, local);
-                m_Range = Time::Range(zonedStart.get_sys_time(), zonedStart.get_sys_time() + std::chrono::days(horizonDays - 1));
+                m_Range = Time::Range(zonedStart.get_sys_time(), zonedStart.get_sys_time() + std::chrono::days(horizonDays));
                 std::cout << "Horizon: " << horizonDays << " days; range: " << m_Range << std::endl;
             } else if (currentSection == "SECTION_SHIFTS") {
-                // TODO: Blocked shifts (next day)
-                size_t shiftIndex = m_ShiftCounter++;
-                size_t skillIndex = m_SkillCounter++; // Each shift has one skill due to data input format.
-                std::string shiftID = fields[0];
-                int duration = std::stoi(fields[1]);
-                std::string blocked = (fields.size() > 2) ? fields[2] : "";
+                const size_t shiftIndex = m_ShiftCounter++;
+                const size_t skillIndex = m_SkillCounter++; // Each shift has one skill due to data input format.
+                const std::string& shiftID = fields[0];
+                const int32_t duration = std::stoi(fields[1]);
+                std::cout << "Shift: " << shiftID << ", duration: " << duration;
+                if (fields.size() > 2) {
+                    const std::string& blocked = fields[2];
+                    std::cout << ", blocked: " << blocked;
+                    m_ShiftIndexToBlockedShiftNamesMap.insert({shiftIndex, blocked});
+                }
+                std::cout << "\n";
                 m_ShiftNameToIndexMap.insert({shiftID, shiftIndex});
                 m_SkillNameToIndexMap.insert({shiftID, skillIndex});
                 Domain::Shift shift(
@@ -60,13 +65,12 @@ namespace NrpProblemInstances {
                     0
                 );
                 Domain::Skill skill(skillIndex, shiftID);
-                shift.addRequiredAllSkill(skillIndex, 1.0f);
+                shift.addRequiredOneSkill(skillIndex, 1.0f);
                 m_Shifts.emplace_back(shift);
                 m_Skills.emplace_back(skill);
-                std::cout << "Shift: " << shiftID << ", duration: " << duration << ", blocked: " << blocked << "\n";
             } else if (currentSection == "SECTION_STAFF") {
                 size_t employeeIndex = m_EmployeeCounter++;
-                std::string id = fields[0];
+                const std::string& id = fields[0];
                 const std::string& skillEntriesDelimited = fields[1];
                 const auto maxTotalMinutes = std::stoi(fields[2]);
                 const auto minTotalMinutes = std::stoi(fields[3]);
@@ -87,7 +91,7 @@ namespace NrpProblemInstances {
                     static_cast<uint8_t>(minConsecutiveDaysOffCount),
                     static_cast<uint8_t>(maxWorkingWeekendCount)
                 });
-                for (std::vector<std::string> skillEntries = split(skillEntriesDelimited, '|'); const auto &skillEntry : skillEntries) {
+                for (const std::vector<std::string> skillEntries = split(skillEntriesDelimited, '|'); const auto& skillEntry : skillEntries) {
                     const std::vector<std::string> elements = split(skillEntry, '=');
                     const std::string& skillID = elements[0];
                     const std::string& maxAssignedShiftCount = elements[1];
@@ -155,6 +159,14 @@ namespace NrpProblemInstances {
                 std::cout << "Cover: Day " << day << ", Shift " << shiftID
                     << ", Need " << required << ", UnderWt " << underWeight
                     << ", OverWt " << overWeight << "\n";
+            }
+        }
+
+        for (size_t i = 0; i < m_Shifts.size(); ++i) {
+            if (!m_ShiftIndexToBlockedShiftNamesMap.contains(i)) continue;
+            auto& shift = m_Shifts[i];
+            for (const std::vector<std::string> blockedShiftNames = split(m_ShiftIndexToBlockedShiftNamesMap[i], '|'); const auto& blockedShiftName : blockedShiftNames) {
+                shift.addBlockedNextDayShiftIndex(m_ShiftNameToIndexMap[blockedShiftName]);
             }
         }
 

@@ -19,15 +19,17 @@ namespace Domain::Constraints {
                                                                                        xAxis.size())) {
             if (xAxis.size() == 0) [[unlikely]] return;
             for (axis_size_t x1 = 0; x1 < xAxis.size() - 1; ++x1) {
-                const auto interval1 = xAxis[x1].interval();
+                const auto& s1 = xAxis[x1];
+                const auto& interval1 = s1.interval();
                 for (axis_size_t x2 = x1 + 1; x2 < xAxis.size(); ++x2) {
-                    const auto interval2 = xAxis[x2].interval();
+                    const auto& s2 = xAxis[x2];
+                    const auto& interval2 = s2.interval();
 
                     if (interval1.intersectsInSameDay(interval2))
                         m_IntersectingShiftsInSameDayMatrix.set(x1, x2);
-                    if (interval1.intersectsOtherInNextDay(interval2))
+                    if (interval1.intersectsOtherInNextDay(interval2) || s1.blocksShiftIndex(x2))
                         m_IntersectingShiftsInAdjacentDaysMatrix.set(x1, x2);
-                    if (interval1.intersectsOtherInPrevDay(interval2))
+                    if (interval1.intersectsOtherInPrevDay(interval2) || s2.blocksShiftIndex(x1))
                         m_IntersectingShiftsInAdjacentDaysMatrix.set(x2, x1);
                 }
             }
