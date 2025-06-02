@@ -1,5 +1,12 @@
+# CLion
+.idea/
+
+# Visual Studio
+.vs/
+CMakeSettings.json
+
+# Build
 cmake-*/
 CMakeFiles/
-.idea/
 build/
 Testing/
