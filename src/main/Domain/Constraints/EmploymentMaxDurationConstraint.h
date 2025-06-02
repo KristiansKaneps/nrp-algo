@@ -105,16 +105,16 @@ namespace Domain::Constraints {
 
                     const score_t absHard = (absDiff - 1) * diffScale / ABS_DIFF_ALLOWANCE; // scale with larger differences
 
-                    const score_t strict = -(overtimeDiff < 0 || (s->event.maxShiftCount >= 0 && assignedShiftCount >= s->event.maxShiftCount));
-                    const score_t hard = -(absHard * absHard);
+                    const score_t strict = -(overtimeDiff < 0 || (s->event.maxShiftCount >= 0 && assignedShiftCount > s->event.maxShiftCount));
+                    const score_t hard = s->event.maxShiftCount != 0 ? -(absHard * absHard) : 0;
 
                     if (strict != 0 || hard != 0) { totalScore.violate(Violation::yw(y, w, {strict, hard})); }
                 }
 
-                score_t strict = -(totalChangeEvent.maxShiftCount >= 0 && totalAssignedShiftCount >= totalChangeEvent.maxShiftCount);
+                score_t strict = -(totalChangeEvent.maxShiftCount >= 0 && totalAssignedShiftCount > totalChangeEvent.maxShiftCount);
                 score_t hard = 0;
 
-                if (!totalChangeEvent.anyDuration) {
+                if (!totalChangeEvent.anyDuration && (totalChangeEvent.maxShiftCount == -1 || totalChangeEvent.maxShiftCount > 0)) {
                     const int64_t diff = maxTotalWorkloadDurationInMinutes - totalDurationInMinutes;
                     const int64_t diffScale = diff > 0 ? 2 : 1; // seems to balance workload between employees
                     const int64_t overtimeDiff = diff + maxTotalWorkloadOvertimeDurationInMinutes;
