@@ -52,6 +52,7 @@ void solve() {
 
     const auto start = high_resolution_clock::now();
 
+    localSearch.startStatistics();
     while (!localSearch.isDone() && !g_LocalSearchShouldStop) {
         if (localSearch.step() || mutexWasLocked) {
             if (g_ConcurrentDataMutex.try_lock()) {
@@ -63,6 +64,7 @@ void solve() {
             }
         }
     }
+    localSearch.endStatistics();
 
     const auto end = high_resolution_clock::now();
     const auto diff = (end - start) / 1s;

@@ -5,10 +5,10 @@
 #include "State/State.h"
 #include "Constraints/Constraint.h"
 #include "Score/Score.h"
+#include "Heuristics/HeuristicProvider.h"
+#include "Statistics/ScoreStatistics.h"
 
 #include <array>
-
-#include "Heuristics/HeuristicProvider.h"
 
 namespace Search::Task {
     template<typename X, typename Y, typename Z, typename W>
@@ -18,34 +18,25 @@ namespace Search::Task {
 
         // ReSharper disable CppRedundantQualifier
         explicit LocalSearchTask(const ::State::State<X, Y, Z, W> inputState,
-                                 const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints) :
-            m_InitScore(Evaluation::evaluateState(inputState, constraints)),
-            m_CurrentState(inputState),
-            m_CurrentScore(m_InitScore),
+                                 const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints,
+                                 Statistics::ScoreStatistics &scoreStatistics) :
             m_OutputState(inputState),
-            m_OutputScore(m_InitScore),
-            m_Evaluator(constraints) {
+            m_Evaluator(constraints),
+            m_ScoreStatistics(scoreStatistics),
+            m_InitScore(Evaluation::evaluateState(inputState, constraints)),
+            m_CurrentState(inputState) {
+            m_CurrentScore = m_InitScore;
+            m_OutputScore = m_InitScore;
             m_History.fill(m_InitScore);
         }
         // ReSharper restore CppRedundantQualifier
 
         virtual ~LocalSearchTask() = default;
 
+        [[nodiscard]] bool newBestFound() const { return m_NewBestFound; }
+
         // ReSharper disable once CppRedundantQualifier
         void reset(const ::State::State<X, Y, Z, W> inputState) { m_OutputState = inputState; }
-
-        const Score::Score m_InitScore;
-        // ReSharper disable once CppRedundantQualifier
-        ::State::State<X, Y, Z, W> m_CurrentState;
-        Score::Score m_CurrentScore;
-
-        static constexpr size_t Lh = 100;
-        std::array<Score::Score, Lh> m_History {};
-
-        uint64_t m_Iterations = 0;
-        uint64_t m_IdleIterations = 0;
-
-        bool m_NewBestFound = false;
 
         // ReSharper disable CppRedundantQualifier
         void step(::Heuristics::HeuristicProvider<X, Y, Z, W> &heuristicProvider) {
@@ -99,11 +90,19 @@ namespace Search::Task {
 
             // Increment iterations
             ++m_Iterations;
+
+            // Record score statistics
+            m_ScoreStatistics.record(m_CurrentScore);
         }
         // ReSharper restore CppRedundantQualifier
 
+        [[nodiscard]] Score::Score getInitialScore() const { return m_InitScore; }
+
+        [[nodiscard]] uint64_t getIterationCount() const { return m_Iterations; }
+        [[nodiscard]] uint64_t getIdleIterationCount() const { return m_IdleIterations; }
+
         // ReSharper disable once CppRedundantQualifier
-        ::State::State<X, Y, Z, W> getOutputState() const { return m_OutputState; }
+        [[nodiscard]] ::State::State<X, Y, Z, W> getOutputState() const { return m_OutputState; }
         [[nodiscard]] Score::Score getOutputScore() const { return m_OutputScore; }
 
     private:
@@ -111,6 +110,20 @@ namespace Search::Task {
         ::State::State<X, Y, Z, W> m_OutputState;
         Score::Score m_OutputScore;
         Evaluation::Evaluator<X, Y, Z, W> m_Evaluator;
+        Statistics::ScoreStatistics& m_ScoreStatistics;
+
+        const Score::Score m_InitScore;
+        // ReSharper disable once CppRedundantQualifier
+        ::State::State<X, Y, Z, W> m_CurrentState;
+        Score::Score m_CurrentScore;
+
+        static constexpr size_t Lh = 100;
+        std::array<Score::Score, Lh> m_History {};
+
+        uint64_t m_Iterations = 0;
+        uint64_t m_IdleIterations = 0;
+
+        bool m_NewBestFound = false;
     };
 }
 
