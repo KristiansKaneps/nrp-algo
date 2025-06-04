@@ -1,36 +1,26 @@
 #include "Application.h"
 
+#include "GUI/Scenes/ScoreStatisticsScene.h"
+#include "GUI/Scenes/TimetableScene.h"
+
 using State::state_size_t;
 
-std::vector<bool> weekends;
-
-struct DayAvailability {
-    struct Region {
-        float start, width;
-    };
-
-    Availability::Type type;
-    Region region;
-};
-
-std::vector<DayAvailability>* employeeAvailabilityPerDay;
-
 void Application::onStart() {
-    appState().renderCache.employeeTotalWorkDuration = new uint64_t[appState().state.sizeY()];
-    appState().renderCache.dayCoverageValid = new bool[appState().state.sizeZ()];
-    appState().renderCache.xw = new BitArray::BitArray(appState().state.sizeX() * appState().state.sizeW());
+    state().renderCache.employeeTotalWorkDuration = new uint64_t[state().state.sizeY()];
+    state().renderCache.dayCoverageValid = new bool[state().state.sizeZ()];
+    state().renderCache.xw = new BitArray::BitArray(state().state.sizeX() * state().state.sizeW());
 
-    weekends.reserve(appState().state.sizeZ());
-    employeeAvailabilityPerDay = new std::vector<DayAvailability>[appState().state.sizeY() * appState().state.sizeZ()];
+    state().renderCache.weekends.reserve(state().state.sizeZ());
+    state().renderCache.employeeAvailabilityPerDay = new std::vector<RenderCache::DayAvailability>[state().state.sizeY() * state().state.sizeZ()];
 
-    for (axis_size_t z = 0; z < appState().state.sizeZ(); ++z) {
-        const uint8_t weekday = Time::InstantToWeekday(appState().state.range().getDayAt(z, appState().state.timeZone()));
-        weekends.emplace_back(weekday == 5 || weekday == 6);
-        const auto &dayRange = appState().state.range().getDayRangeAt(z, appState().state.timeZone());
-        for (axis_size_t y = 0; y < appState().state.sizeY(); ++y) {
-            const auto &e = appState().state.y()[y];
+    for (axis_size_t z = 0; z < state().state.sizeZ(); ++z) {
+        const uint8_t weekday = Time::InstantToWeekday(state().state.range().getDayAt(z, state().state.timeZone()));
+        state().renderCache.weekends.emplace_back(weekday == 5 || weekday == 6);
+        const auto &dayRange = state().state.range().getDayRangeAt(z, state().state.timeZone());
+        for (axis_size_t y = 0; y < state().state.sizeY(); ++y) {
+            const auto &e = state().state.y()[y];
 
-            std::vector<DayAvailability> dayAvailabilities;
+            std::vector<RenderCache::DayAvailability> dayAvailabilities;
 
             auto unpaidUnavailabilityRangeCollection = e.unpaidUnavailableAvailability().m_RangeCollection;
             const auto &unpaidUnavailabilityRangeIntersection = unpaidUnavailabilityRangeCollection.getIntersection(dayRange);
@@ -92,7 +82,7 @@ void Application::onStart() {
                 }
             }
 
-            *(employeeAvailabilityPerDay + y * appState().state.sizeZ() + z) = dayAvailabilities;
+            *(state().renderCache.employeeAvailabilityPerDay + y * state().state.sizeZ() + z) = dayAvailabilities;
 
             // if (e.unpaidUnavailableAvailability().m_RangeCollection.intersects(dayRange) || e.paidUnavailableAvailability().m_RangeCollection.intersects(dayRange))
             //     employeeAvailabilityPerDay[y * appState().state.sizeZ() + z] = Availability::Type::UNAVAILABLE;
@@ -106,8 +96,6 @@ void Application::onStart() {
 
 void Application::onClose() {
     g_LocalSearchShouldStop = true;
-
-    delete[] employeeAvailabilityPerDay;
 }
 
 void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
@@ -131,7 +119,7 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
         }
     }
 
-    AppState& appState = Application::appState();
+    AppState& appState = Application::state();
 
     const axis_size_t shiftCount = appState.state.sizeX();
     const axis_size_t employeeCount = appState.state.sizeY();
@@ -184,101 +172,24 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
         }
     }
 
+    // Controls
+    //----------------------------------------------------------------------------------
+
+    if (IsKeyDown(KEY_ONE)) {
+        setScene<GUI::TimetableScene>();
+    } else if (IsKeyDown(KEY_TWO)) {
+        setScene<GUI::ScoreStatisticsScene>();
+    }
+
+    //----------------------------------------------------------------------------------
+
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
 
     ClearBackground(RAYWHITE);
 
-    constexpr int colIdHeight = 20;
-    constexpr int rowIdWidth = 100;
-
-    int rowHeight = static_cast<int>(static_cast<axis_size_t>(m_WindowHeight - colIdHeight) / employeeCount);
-    int colWidth = static_cast<int>(static_cast<axis_size_t>(m_WindowWidth - rowIdWidth) / dayCount);
-
-    for (axis_size_t i = 0; i < employeeCount; ++i) {
-        const Employee& e = appState.state.y()[i];
-
-        const int x = 0;
-        const int y = static_cast<int>(static_cast<axis_size_t>(colIdHeight) + i * static_cast<axis_size_t>(rowHeight));
-        DrawLine(0, y, m_WindowWidth, y, GRAY);
-
-        const auto &name = e.name();
-        DrawText(name.c_str(), x + 5, y + 2, 10, BLACK);
-
-        const uint64_t totalMinutes = employeeTotalWorkDuration[i];
-        std::stringstream stream;
-        stream << std::fixed << std::setprecision(2) << static_cast<double>(totalMinutes) / 60.0 << 'h';
-        std::string durationStr = stream.str();
-
-        constexpr uint8_t baseChannel = 130;
-        constexpr uint8_t channelSpace = std::numeric_limits<uint8_t>::max() - baseChannel;
-        const double interp = static_cast<double>(totalMinutes - minTotalWorkDuration) / static_cast<double>(
-            maxTotalWorkDuration - minTotalWorkDuration);
-        auto durationColor = Color {
-            .r = static_cast<uint8_t>(baseChannel + channelSpace * interp),
-            .g = baseChannel,
-            .b = baseChannel,
-            .a = 255
-        };
-
-        DrawText(durationStr.c_str(), x + 26 + 4 * name.size(), y + 2, 10, durationColor);
-    }
-
-    for (axis_size_t i = 0; i < dayCount; ++i) {
-        const Day& d = appState.state.z().entities()[i];
-
-        const int x = static_cast<int>(static_cast<axis_size_t>(rowIdWidth) + i * static_cast<axis_size_t>(colWidth));
-        const int y = 0;
-        DrawLine(x, 0, x, m_WindowHeight, GRAY);
-
-        if (weekends[d.index()]) {
-            DrawRectangle(x, y, colWidth - 1, colIdHeight - 1, Color {85, 85, 85, 63});
-        }
-
-        DrawText(std::to_string(d.index() + 1).c_str(), x + 3, y + 5, 10, dayCoverageValid[i] ? GREEN : RED);
-    }
-
-    auto xw = *appState.renderCache.xw;
-    for (axis_size_t i = 0; i < dayCount; ++i) {
-        const int ox = static_cast<int>(static_cast<axis_size_t>(rowIdWidth) + i * static_cast<axis_size_t>(colWidth));
-
-        for (axis_size_t j = 0; j < employeeCount; ++j) {
-            const int oy = static_cast<int>(static_cast<axis_size_t>(colIdHeight) + j * static_cast<axis_size_t>(rowHeight));
-
-            const auto &availabilities = employeeAvailabilityPerDay[j * appState.state.sizeZ() + i];
-            for (const auto &availability : availabilities) {
-                if (availability.type != Availability::Type::AVAILABLE) {
-                    const Color color = availability.type == Availability::Type::UNAVAILABLE ? Color {255, 127, 127, 63} : Color {127, 255, 127, 63};
-
-                    const int rectX = ox + static_cast<int>(static_cast<float>(colWidth) * availability.region.start);
-                    int rectW = static_cast<int>(static_cast<float>(colWidth) * availability.region.width);
-
-                    if (availability.region.width == 1.0f) rectW -= 1;
-
-                    DrawRectangle(rectX, oy, rectW, rowHeight - 1, color);
-                }
-            }
-
-
-            appState.state.getPlaneXW(xw, j, i);
-
-            int inlineOffset = 0;
-
-            for (axis_size_t k = 0; k < shiftCount; ++k) {
-                for (axis_size_t l = 0; l < skillCount; ++l) {
-                    if (xw.get(k * skillCount + l)) {
-                        const Shift& s = appState.state.x().entities()[k];
-                        const Skill& sk = appState.state.w().entities()[l];
-                        DrawText(s.name().c_str(), ox + inlineOffset + 2, oy + 2, 8, BLACK);
-                        DrawText(sk.name().c_str(), ox + inlineOffset + 2, oy + 10, 8, GRAY);
-                        inlineOffset += 7;
-                        break;
-                    }
-                }
-            }
-        }
-    }
+    mp_Scene->render(dt, elapsedTicks);
 
     EndDrawing();
     //----------------------------------------------------------------------------------

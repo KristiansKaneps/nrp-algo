@@ -9,20 +9,39 @@
 
 #include "raylib.h"
 
+#include "GUI/Scene.h"
+
 #include "ApplicationState.h"
+
+struct WindowDescriptor {
+    int width;
+    int height;
+    int targetFPS;
+    std::string title;
+};
 
 class Application {
 public:
-    Application(const int width, const int height, std::string title) : m_WindowWidth(width),
-                                                                        m_WindowHeight(height),
-                                                                        m_Title(std::move(title)),
-                                                                        m_TargetFPS(60) {
+    Application(const int width, const int height, std::string title) : m_WindowDescriptor(WindowDescriptor{width, height, 60, std::move(title)}), mp_Scene(new GUI::EmptyScene(this)) {
         assert(gp_AppState != nullptr && "Application state should be initialized prior.");
     }
 
-    ~Application() { close(); }
+    ~Application() {
+        close();
+        delete mp_Scene;
+    }
 
-    static AppState &appState() { return *gp_AppState; }
+    [[nodiscard]] const WindowDescriptor& windowDescriptor() const { return m_WindowDescriptor; }
+
+    [[nodiscard]] static AppState &state() { return *gp_AppState; }
+
+    template<typename SceneType, typename... Args>
+    void setScene(Args&&... args) {
+        static_assert(std::is_base_of_v<GUI::Scene, SceneType>, "SceneType must derive from GUI::Scene");
+        const GUI::Scene *oldScene = mp_Scene;
+        mp_Scene = new SceneType(this, std::forward<Args>(args)...);
+        delete oldScene;
+    }
 
     void start() {
         m_WindowIsAlreadyClosed = false;
@@ -32,7 +51,7 @@ public:
         #endif
 
         SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-        InitWindow(m_WindowWidth, m_WindowHeight, m_Title.c_str());
+        InitWindow(m_WindowDescriptor.width, m_WindowDescriptor.height, m_WindowDescriptor.title.c_str());
         const int targetMonitor = getCurrentlyActiveMonitorByCursorPosition();
         // ReSharper disable once CppUseStructuredBinding
         const Vector2 monitorPosition = GetMonitorPosition(targetMonitor);
@@ -42,8 +61,8 @@ public:
         // ReSharper restore CppTooWideScopeInitStatement
         if (monitorWidth != 0 && monitorHeight != 0) {
             SetWindowPosition(
-                static_cast<int>(monitorPosition.x) + ((monitorWidth - m_WindowWidth) >> 1),
-                static_cast<int>(monitorPosition.y) + ((monitorHeight - m_WindowHeight) >> 1)
+                static_cast<int>(monitorPosition.x) + ((monitorWidth - m_WindowDescriptor.width) >> 1),
+                static_cast<int>(monitorPosition.y) + ((monitorHeight - m_WindowDescriptor.height) >> 1)
             );
         }
         SetTargetFPS(getPreferableTargetFPS());
@@ -62,9 +81,9 @@ public:
             mainLoop(dt, elapsedTicks++);
 
             if (IsWindowResized()) [[unlikely]] {
-                m_WindowWidth = GetScreenWidth();
-                m_WindowHeight = GetScreenHeight();
-                m_TargetFPS = getPreferableTargetFPS();
+                m_WindowDescriptor.width = GetScreenWidth();
+                m_WindowDescriptor.height = GetScreenHeight();
+                m_WindowDescriptor.targetFPS = getPreferableTargetFPS();
             }
         }
 
@@ -81,12 +100,11 @@ public:
     }
 
 private:
-    int m_WindowWidth;
-    int m_WindowHeight;
-    const std::string m_Title;
-    int m_TargetFPS;
+    WindowDescriptor m_WindowDescriptor;
 
     bool m_WindowIsAlreadyClosed = true;
+
+    GUI::Scene* mp_Scene;
 
     void mainLoop(double dt, uint64_t elapsedTicks);
 
