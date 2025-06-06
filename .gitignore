@@ -10,3 +10,6 @@ cmake-*/
 CMakeFiles/
 build/
 Testing/
+
+# Notebook related
+debug_outputs/

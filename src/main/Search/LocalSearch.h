@@ -27,16 +27,20 @@ namespace Search {
 
         ~LocalSearch() = default;
 
+        [[nodiscard]] Statistics::ScoreStatistics scoreStatistics() const { return m_ScoreStatistics; }
+
         void reset() {
             m_Done = false;
             resetInternalTerminationCriteriaState();
         }
 
         void startStatistics() {
-            m_ScoreStatistics.recordFirstPoint(m_Task.getInitialScore());
+            m_ScoreStatistics.startRecording(m_Task.getInitialScore());
         }
 
-        void endStatistics() {}
+        void endStatistics() {
+            m_ScoreStatistics.finishRecording();
+        }
 
         /**
          * @return `true` if new best state is found, `false` otherwise

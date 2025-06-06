@@ -51,6 +51,8 @@ struct AppState {
     Heuristics::HeuristicProvider<Shift, Employee, Day, Skill> heuristicProvider;
 
     RenderCache renderCache;
+
+    Statistics::ScoreStatistics scoreStatistics {};
 };
 
 inline AppState *gp_AppState = nullptr;

@@ -73,6 +73,10 @@ namespace Search::Task {
                     m_OutputScore = m_CurrentScore;
                     m_OutputState = m_CurrentState;
                     m_NewBestFound = true;
+
+                    // Record score statistics
+                    m_ScoreStatistics.record(m_CurrentScore);
+
                     #ifdef LOCALSEARCH_DEBUG
                     std::cout << "New best score: " << m_OutputScore << "; iterations=" << (m_Iterations + 1) << "; delta=" << (m_OutputScore - m_InitScore) << std::endl;
                     m_Evaluator.printConstraintInfo();
@@ -90,9 +94,6 @@ namespace Search::Task {
 
             // Increment iterations
             ++m_Iterations;
-
-            // Record score statistics
-            m_ScoreStatistics.record(m_CurrentScore);
         }
         // ReSharper restore CppRedundantQualifier
 

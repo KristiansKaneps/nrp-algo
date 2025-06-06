@@ -1,4 +1,5 @@
 #define ENABLE_SCORE_STATISTICS
+#define ENABLE_SCORE_STATISTICS_SCENE
 #define LOCALSEARCH_DEBUG
 // #define MEMORY_USAGE_DEBUG
 
@@ -28,12 +29,13 @@
 
 using namespace Domain;
 
-static void onNewBest(const Search::LocalSearch<Shift, Employee, Day, Skill> &localSearch) {
-    gp_Update = new(gp_Update) LocalSearchUpdate {
-        .state = localSearch.getBestState(),
-        .score = localSearch.getBestScore(),
-    };
-    g_UpdateFlag = LocalSearchUpdateFlag::NEW_BEST_AVAILABLE;
+static void updateConcurrentData(const Search::LocalSearch<Shift, Employee, Day, Skill> &localSearch) {
+    gp_Update->state = localSearch.getBestState();
+    gp_Update->score = localSearch.getBestScore();
+    #ifdef ENABLE_SCORE_STATISTICS_SCENE
+    gp_Update->scoreStatistics = localSearch.scoreStatistics();
+    #endif
+    g_UpdateFlag = LocalSearchUpdateFlag::PENDING;
 
     #ifdef MEMORY_USAGE_DEBUG
     Memory::printMemoryUsage();
@@ -57,7 +59,7 @@ void solve() {
     while (!localSearch.isDone() && !g_LocalSearchShouldStop) {
         if ((!IsKeyDown(KEY_ESCAPE) && localSearch.step()) || mutexWasLocked) {
             if (g_ConcurrentDataMutex.try_lock()) {
-                onNewBest(localSearch);
+                updateConcurrentData(localSearch);
                 g_ConcurrentDataMutex.unlock();
                 mutexWasLocked = false;
             } else {
@@ -72,14 +74,17 @@ void solve() {
 
     std::cout << "Best solution found in " << (diff / 60) << "min " << (diff % 60) << "s" << std::endl;
 
-    if (mutexWasLocked) {
-        g_ConcurrentDataMutex.lock();
-        onNewBest(localSearch);
-        g_ConcurrentDataMutex.unlock();
-    }
+    g_ConcurrentDataMutex.lock();
+    updateConcurrentData(localSearch);
+    g_ConcurrentDataMutex.unlock();
 
     const auto bestScore = localSearch.evaluateCurrentBestState();
     std::cout << "Best score: " << bestScore << "  Delta: " << (bestScore - initialScore) << std::endl;
+
+    {
+        IO::StatisticsFile scoreStatisticsFile("score_statistics.csv");
+        localSearch.scoreStatistics().write(scoreStatisticsFile);
+    }
 }
 
 // ReSharper disable once CppDFAConstantFunctionResult

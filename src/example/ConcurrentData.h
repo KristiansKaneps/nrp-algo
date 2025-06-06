@@ -11,16 +11,19 @@
 #include "State/State.h"
 #include "Score/Score.h"
 
+#include "Statistics/ScoreStatistics.h"
+
 using namespace Domain;
 
 enum class LocalSearchUpdateFlag : uint8_t {
     NONE = 0,
-    NEW_BEST_AVAILABLE = 1,
+    PENDING = 1,
 };
 
 struct LocalSearchUpdate {
     State::State<Shift, Employee, Day, Skill> state;
     Score::Score score;
+    Statistics::ScoreStatistics scoreStatistics;
 };
 
 inline volatile bool g_LocalSearchShouldStop = false; // single bool should be atomic on most architectures

@@ -1,7 +1,7 @@
 #include "Application.h"
 
-#include "GUI/Scenes/ScoreStatisticsScene.h"
 #include "GUI/Scenes/TimetableScene.h"
+#include "GUI/Scenes/ScoreStatisticsScene.h"
 
 using State::state_size_t;
 
@@ -105,12 +105,13 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
     bool stateUpdated = false;
 
     if (elapsedTicks % 30 == 0) {
-        if (g_UpdateFlag == LocalSearchUpdateFlag::NEW_BEST_AVAILABLE) {
+        if (g_UpdateFlag == LocalSearchUpdateFlag::PENDING) {
             if (g_ConcurrentDataMutex.try_lock()) {
                 g_UpdateFlag = LocalSearchUpdateFlag::NONE;
                 // ReSharper disable CppDFANullDereference
                 gp_AppState->state = gp_Update->state;
                 gp_AppState->score = gp_Update->score;
+                gp_AppState->scoreStatistics = gp_Update->scoreStatistics;
                 // ReSharper restore CppDFANullDereference
                 g_ConcurrentDataMutex.unlock();
 
