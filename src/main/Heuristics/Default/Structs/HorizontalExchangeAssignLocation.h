@@ -1,0 +1,30 @@
+#ifndef HORIZONTALEXCHANGEASSIGNLOCATION_H
+#define HORIZONTALEXCHANGEASSIGNLOCATION_H
+
+#include <xhash>
+
+#include "State/Size.h"
+
+namespace Heuristics::Structs {
+    using axis_size_t = ::State::axis_size_t;
+
+    struct HorizontalExchangeAssignLocation {
+        axis_size_t x, z, w;
+
+        bool operator==(const HorizontalExchangeAssignLocation& other) const {
+            return x == other.x && z == other.z && w == other.w;
+        }
+    };
+}
+
+template <>
+struct std::hash<Heuristics::Structs::HorizontalExchangeAssignLocation> { // NOLINT(*-dcl58-cpp)
+    std::size_t operator()(const Heuristics::Structs::HorizontalExchangeAssignLocation& loc) const noexcept {
+        const std::size_t h1 = std::hash<::State::axis_size_t>()(loc.x);
+        const std::size_t h2 = std::hash<::State::axis_size_t>()(loc.z);
+        const std::size_t h3 = std::hash<::State::axis_size_t>()(loc.w);
+        return h1 * 73856093 ^ h2 * 19349663 ^ h3 * 83492791;
+    }
+};
+
+#endif //HORIZONTALEXCHANGEASSIGNLOCATION_H

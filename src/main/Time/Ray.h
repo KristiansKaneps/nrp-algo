@@ -105,7 +105,7 @@ namespace Time {
 }
 
 template<>
-struct std::hash<Time::Ray> {
+struct std::hash<Time::Ray> { // NOLINT(*-dcl58-cpp)
     std::size_t operator()(const Time::Ray& k) const noexcept {
         using std::size_t;
         using std::hash;

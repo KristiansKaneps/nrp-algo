@@ -15,8 +15,7 @@ namespace Domain::Constraints {
     public:
         explicit ShiftCoverageConstraint(const Time::Range& range, const std::chrono::time_zone *timeZone,
                                          const Axes::Axis<Domain::Shift>& xAxis,
-                                         const Axes::Axis<Domain::Day>& zAxis) : Constraint("SHIFT_COVERAGE", {
-            }),
+                                         const Axes::Axis<Domain::Day>& zAxis) : Constraint("SHIFT_COVERAGE", {}),
             m_CoverageData(xAxis.size() * zAxis.size(), CoverageData {}) {
             using std::chrono_literals::operator ""min;
             for (axis_size_t x = 0; x < xAxis.size(); ++x) {

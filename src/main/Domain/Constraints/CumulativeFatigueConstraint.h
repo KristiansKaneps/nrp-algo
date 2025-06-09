@@ -13,7 +13,8 @@ namespace Domain::Constraints {
         explicit CumulativeFatigueConstraint(const int32_t maxCumulativeMinutes,
                                              const Axes::Axis<Domain::Shift>& xAxis) :
             Constraint("CUMULATIVE_FATIGUE_CONSTRAINT", {
-                       }),
+                new Heuristics::DomainUnassignRepairPerturbator(),
+            }),
             m_MaxCumulativeMinutes(maxCumulativeMinutes) {
             m_SortedShiftIndices.reserve(xAxis.size());
             for (axis_size_t i = 0; i < xAxis.size(); ++i)

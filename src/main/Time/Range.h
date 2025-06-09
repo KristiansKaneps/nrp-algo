@@ -300,7 +300,7 @@ namespace Time {
 }
 
 template<>
-struct std::hash<Time::Range> {
+struct std::hash<Time::Range> { // NOLINT(*-dcl58-cpp)
     std::size_t operator()(const Time::Range& k) const noexcept {
         using std::size_t;
         using std::hash;

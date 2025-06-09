@@ -8,7 +8,9 @@ namespace Domain::Constraints {
     class EmployeeGeneralConstraint final : public DomainConstraint {
     public:
         explicit EmployeeGeneralConstraint(const Time::Range& range, const std::chrono::time_zone *timeZone,
-                                         const Axes::Axis<Domain::Day>& zAxis) : Constraint("EMPLOYEE_GENERAL_CONSTRAINT", {}), m_Weekends(zAxis.size()) {
+                                           const Axes::Axis<Domain::Day>& zAxis) : Constraint(
+                "EMPLOYEE_GENERAL_CONSTRAINT", {}),
+            m_Weekends(zAxis.size()) {
             for (axis_size_t z = 0; z < zAxis.size(); ++z) {
                 const auto& d = zAxis[z];
                 const auto weekday = Time::InstantToWeekday(range.getDayAt(z, timeZone));
@@ -60,10 +62,10 @@ namespace Domain::Constraints {
                             workingWeekendCount += m_Weekends[z1];
                             // Check max working days
                             if (g.maxConsecutiveShiftCount > 0 && consecutiveShiftCount > g.maxConsecutiveShiftCount) {
-                                totalScore.violate(Violation::yz(y, z, {-1}));
+                                totalScore.violate(Violation::yz(y, z1, {-1}));
                             }
                             if (workingWeekendCount > g.maxWorkingWeekendCount) {
-                                totalScore.violate(Violation::yz(y, z, {-1}));
+                                totalScore.violate(Violation::yz(y, z1, {-1}));
                             }
                         } else if (wasWorking) {
                             z = z1 - 1;
@@ -79,7 +81,7 @@ namespace Domain::Constraints {
                             z = z1 - 1;
                             // Check min days off
                             if (consecutiveDaysOffCount < g.minConsecutiveDaysOffCount) {
-                                totalScore.violate(Violation::yz(y, z, {-1}));
+                                totalScore.violate(Violation::yz(y, z1, {-1}));
                             }
                             break;
                         }

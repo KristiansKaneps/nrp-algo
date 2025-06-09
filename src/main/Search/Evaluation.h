@@ -50,6 +50,7 @@ namespace Evaluation {
         Evaluator(const Evaluator&) = default;
 
         const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& constraints() const { return m_Constraints; }
+        [[nodiscard]] size_t constraintCount() const { return m_Constraints.size(); }
 
         void printConstraintInfo() const {
             #ifdef PRINT_CONSTRAINT_DEBUG_INFO

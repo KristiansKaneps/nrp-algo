@@ -206,7 +206,7 @@ namespace Time {
 }
 
 template<>
-struct std::hash<Time::DailyInterval> {
+struct std::hash<Time::DailyInterval> { // NOLINT(*-dcl58-cpp)
     std::size_t operator()(const Time::DailyInterval& k) const noexcept {
         using std::size_t;
         using std::hash;

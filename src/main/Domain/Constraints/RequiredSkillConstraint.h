@@ -11,6 +11,7 @@ namespace Domain::Constraints {
         explicit RequiredSkillConstraint(const Axes::Axis<Domain::Shift>& xAxis,
                                          const Axes::Axis<Domain::Employee>& yAxis,
                                          const Axes::Axis<Domain::Skill>& wAxis) : Constraint("REQUIRED_SKILL", {
+                new Heuristics::DomainUnassignRepairPerturbator(),
             }),
             m_AssignableShiftEmployeeSkillMatrix(xAxis.size(), yAxis.size(), wAxis.size()) {
             for (axis_size_t x = 0; x < xAxis.size(); ++x) {
@@ -36,7 +37,8 @@ namespace Domain::Constraints {
                     for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
                         for (axis_size_t w = 0; w < state.sizeW(); ++w) {
                             if (static_cast<int8_t>(m_AssignableShiftEmployeeSkillMatrix.get(x, y, w)) - static_cast<
-                                int8_t>(state.get(x, y, z, w)) >= 0) continue;
+                                int8_t>(state.get(x, y, z, w)) >= 0)
+                                continue;
                             totalScore.violate(Violation::xyzw(x, y, z, w, {-static_cast<score_t>(1)}));
                         }
                     }

@@ -11,7 +11,8 @@ namespace Domain::Constraints {
     public:
         explicit RestBetweenShiftsConstraint(const Axes::Axis<Domain::Shift>& xAxis) :
             Constraint("REST_BETWEEN_SHIFTS", {
-                       }),
+                new Heuristics::DomainUnassignRepairPerturbator(),
+            }),
             m_IntersectingShiftsInSameDayMatrix(BitMatrix::createIdentitySymmetricalMatrix(xAxis.size())) {
             int32_t maxDuration = 0;
             for (axis_size_t i = 0; i < xAxis.size(); ++i) {
@@ -84,8 +85,7 @@ namespace Domain::Constraints {
                     if (!state.get(x1, y, z)) continue; // not assigned
                     for (axis_size_t x2 = x1 + 1; x2 < state.sizeX(); ++x2) {
                         if (!state.get(x2, y, z) || !m_IntersectingShiftsInSameDayMatrix.get(x1, x2))
-                            continue
-                                ; // not assigned or not intersecting
+                            continue; // not assigned or not intersecting
                         totalScore.violate(Violation::xyz(x1, y, z, {-1}));
                         totalScore.violate(Violation::xyz(x2, y, z, {-1}));
                     }

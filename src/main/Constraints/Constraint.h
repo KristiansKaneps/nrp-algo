@@ -17,7 +17,10 @@ namespace Constraints {
             m_Name(std::move(name)),
             m_RepairPerturbators(std::move(repairPerturbators)) { }
 
-        virtual ~Constraint() = default;
+        virtual ~Constraint() {
+            for (const Heuristics::Perturbator<X, Y, Z, W> *repairPerturbator : m_RepairPerturbators)
+                delete repairPerturbator;
+        }
 
         Constraint(const Constraint&) = default;
 

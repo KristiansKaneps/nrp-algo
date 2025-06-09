@@ -1,16 +1,16 @@
-#ifndef VALIDSHIFTDAYPERTURBATOR_H
-#define VALIDSHIFTDAYPERTURBATOR_H
+#ifndef VALIDSHIFTDAYREPAIRPERTURBATOR_H
+#define VALIDSHIFTDAYREPAIRPERTURBATOR_H
 
 #include "DomainPerturbator.h"
 #include "Domain/State/DomainState.h"
 
 namespace Domain::Heuristics {
-    class ValidShiftDayPerturbator final : public DomainPerturbator {
+    class ValidShiftDayRepairPerturbator final : public DomainPerturbator {
     public:
-        explicit ValidShiftDayPerturbator(const axis_size_t yAxisSize, const axis_size_t wAxisSize) : m_PrevValue(BitArray::BitArray(yAxisSize * wAxisSize)) {}
+        explicit ValidShiftDayRepairPerturbator(const axis_size_t yAxisSize, const axis_size_t wAxisSize) : m_PrevValue(BitArray::BitArray(yAxisSize * wAxisSize)) {}
 
-        [[nodiscard]] ValidShiftDayPerturbator *clone() const override {
-            return new ValidShiftDayPerturbator(*this);
+        [[nodiscard]] ValidShiftDayRepairPerturbator *clone() const override {
+            return new ValidShiftDayRepairPerturbator(*this);
         }
 
         void configure(const Constraints::Violation *violation, const State::DomainState& state) override {
@@ -44,4 +44,4 @@ namespace Domain::Heuristics {
     };
 }
 
-#endif //VALIDSHIFTDAYPERTURBATOR_H
+#endif //VALIDSHIFTDAYREPAIRPERTURBATOR_H

@@ -3,8 +3,11 @@
 
 #include "State/State.h"
 #include "Constraints/Violation.h"
+#include "Domain/Entities/Employee.h"
 
 namespace Heuristics {
+    using axis_size_t = ::State::axis_size_t;
+
     template<typename X, typename Y, typename Z, typename W>
     class HeuristicProvider;
 
@@ -35,6 +38,12 @@ namespace Heuristics {
          * @param state State to modify afterward.
          */
         virtual void configure(const Constraints::Violation *violation, const ::State::State<X, Y, Z, W>& state) = 0;
+
+        /**
+         * Checks whether this perturbator (with current configuration) is effectively an identity perturbator.
+         * @return `true` if this perturbator won't make any changes (with current configuration), `false` otherwise.
+         */
+        [[nodiscard]] virtual bool isIdentity() const { return false; }
 
         virtual void modify(::State::State<X, Y, Z, W>& state) = 0;
         virtual void revert(::State::State<X, Y, Z, W>& state) const = 0;
@@ -72,6 +81,8 @@ namespace Heuristics {
         }
 
         void configure(const Constraints::Violation *, const ::State::State<X, Y, Z, W>&) noexcept override { }
+
+        bool isIdentity() const override { return true; }
 
         void modify(::State::State<X, Y, Z, W>&) noexcept override { }
         void revert(::State::State<X, Y, Z, W>&) const noexcept override { }

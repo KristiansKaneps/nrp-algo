@@ -2,7 +2,7 @@
 #define VALIDSHIFTDAYCONSTRAINT_H
 
 #include "DomainConstraint.h"
-#include "Domain/Heuristics/ValidShiftDayPerturbator.h"
+#include "Domain/Heuristics/ValidShiftDayRepairPerturbator.h"
 
 #include "Array/BitMatrix.h"
 
@@ -14,7 +14,7 @@ namespace Domain::Constraints {
                                          const axis_size_t yAxisSize,
                                          const Axes::Axis<Domain::Day>& zAxis,
                                          const axis_size_t wAxisSize) : Constraint("VALID_SHIFT_DAY", {
-                new Heuristics::ValidShiftDayPerturbator(yAxisSize, wAxisSize),
+                new Heuristics::ValidShiftDayRepairPerturbator(yAxisSize, wAxisSize),
             }),
             m_ShiftAndDayConflictMatrix(BitMatrix::createMatrix(xAxis.size(), zAxis.size())) {
             for (axis_size_t z = 0; z < zAxis.size(); ++z) {

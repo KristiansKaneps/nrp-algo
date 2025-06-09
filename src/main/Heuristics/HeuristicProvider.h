@@ -6,6 +6,8 @@
 #include "Search/Evaluation.h"
 #include "State/State.h"
 
+#include "Utils/Random.h"
+
 namespace Heuristics {
     template<typename X, typename Y, typename Z, typename W>
     class HeuristicProvider {
@@ -29,6 +31,10 @@ namespace Heuristics {
                         for (const auto& violation : constraintScore.violations()) {
                             Perturbator<X, Y, Z, W> *perturb = repairPerturbator->clone();
                             perturb->configure(&violation, state);
+                            if (perturb->isIdentity()) {
+                                delete perturb;
+                                continue;
+                            }
                             m_GeneratedPerturbators.emplace_back(perturb);
                         }
                     }
@@ -40,10 +46,16 @@ namespace Heuristics {
         PerturbatorChain<X, Y, Z, W> generateSearchPerturbators(const Evaluation::Evaluator<X, Y, Z, W>& evaluator,
                                                           const ::State::State<X, Y, Z, W>& state) {
             m_GeneratedPerturbators.clear();
-            m_GeneratedPerturbators.reserve(evaluator.m_ViolatedConstraintCount);
-            for (size_t i = 0; i < 5; ++i) {
+            size_t count = m_Random.randomInt(1, 5);
+            m_GeneratedPerturbators.reserve(count);
+            for (size_t i = 0; m_GeneratedPerturbators.size() < count && count < 1000; ++i) {
+                // const size_t perturbatorIndex = m_Random.randomInt(0, m_Perturbators.size() - 1);
                 Perturbator<X, Y, Z, W> *perturb = m_Perturbators[i % m_Perturbators.size()]->clone();
                 perturb->configure(nullptr, state);
+                if (perturb->isIdentity()) {
+                    delete perturb;
+                    continue;
+                }
                 m_GeneratedPerturbators.emplace_back(perturb);
             }
             // Perturbator<X, Y, Z, W> *perturb = m_Perturbators[0]->clone();
@@ -54,6 +66,8 @@ namespace Heuristics {
         }
 
     private:
+        inline static thread_local Random::RandomGenerator m_Random {};
+
         const std::vector<Perturbator<X, Y, Z, W> *> m_Perturbators;
         std::vector<Perturbator<X, Y, Z, W> *> m_GeneratedPerturbators {};
     };

@@ -13,6 +13,7 @@ namespace Domain::Constraints {
                                                 const Axes::Axis<Domain::Employee>& yAxis,
                                                 const Axes::Axis<Domain::Day>& zAxis) :
             Constraint("EMPLOYEE_AVAILABILITY", {
+                new Heuristics::DomainUnassignRepairPerturbator(),
             }),
             m_IntersectingEmployeeUnavailabilitiesAndShifts(
                 BitMatrix::BitMatrix3D(xAxis.size(), yAxis.size(), zAxis.size())),
