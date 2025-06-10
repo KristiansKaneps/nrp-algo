@@ -1,7 +1,7 @@
 #ifndef HORIZONTALEXCHANGEASSIGNLOCATION_H
 #define HORIZONTALEXCHANGEASSIGNLOCATION_H
 
-#include <xhash>
+#include <functional>
 
 #include "State/Size.h"
 

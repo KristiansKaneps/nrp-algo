@@ -1,7 +1,7 @@
 #ifndef VERTICALEXCHANGEASSIGNLOCATION_H
 #define VERTICALEXCHANGEASSIGNLOCATION_H
 
-#include <xhash>
+#include <functional>
 
 #include "State/Size.h"
 
