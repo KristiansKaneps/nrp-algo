@@ -6,6 +6,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 project(nrp C CXX)
+#project(nrp C CXX CUDA)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wno-shift-op-parentheses)
@@ -43,6 +44,9 @@ file(GLOB_RECURSE EXAMPLE_HEADER_FILES
 include(${CMAKE_SOURCE_DIR}/lib/raylib/FindRaylib.cmake)
 #include(${CMAKE_SOURCE_DIR}/lib/postgres/FindPostgres.cmake) # Use project's (not system's) PostgreSQL
 find_package(PostgreSQL)
+include(${CMAKE_SOURCE_DIR}/lib/libtorch/FindTorch.cmake)
+set(CMAKE_PREFIX_PATH "${Torch_PATH}/share/cmake/Torch")
+find_package(Torch REQUIRED)
 
 # Resource files
 set(EMBED_SOURCE_DIR ${CMAKE_SOURCE_DIR}/embed)
@@ -92,6 +96,19 @@ target_include_directories(${PROJECT_NAME}
         PUBLIC ${CMAKE_SOURCE_DIR}/src/main
         PUBLIC ${CMAKE_SOURCE_DIR}/src/resources
 )
+
+target_link_libraries(${PROJECT_NAME} PUBLIC torch)
+target_link_options(${PROJECT_NAME} PUBLIC ${TORCH_CXX_FLAGS})
+
+if (MSVC)
+    add_compile_options(/wd4267)
+    file(GLOB TORCH_DLLS "${Torch_PATH}/lib/*.dll")
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${TORCH_DLLS}
+            $<TARGET_FILE_DIR:${PROJECT_NAME}>
+    )
+endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     message(STATUS "CXX Release Flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")

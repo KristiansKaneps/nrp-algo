@@ -5,6 +5,9 @@
 .vs/
 CMakeSettings.json
 
+# Python Virtual Environment
+.venv/
+
 # Build
 cmake-*/
 CMakeFiles/
