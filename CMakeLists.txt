@@ -45,7 +45,7 @@ include(${CMAKE_SOURCE_DIR}/lib/raylib/FindRaylib.cmake)
 #include(${CMAKE_SOURCE_DIR}/lib/postgres/FindPostgres.cmake) # Use project's (not system's) PostgreSQL
 find_package(PostgreSQL)
 include(${CMAKE_SOURCE_DIR}/lib/libtorch/FindTorch.cmake)
-set(CMAKE_PREFIX_PATH "${Torch_PATH}/share/cmake/Torch")
+list(APPEND CMAKE_PREFIX_PATH "${Torch_PATH}/share/cmake/Torch")
 find_package(Torch REQUIRED)
 
 # Resource files
@@ -79,12 +79,15 @@ target_include_directories(${PROJECT_NAME}_exec
         PUBLIC ${CMAKE_SOURCE_DIR}/src/main
         PUBLIC ${CMAKE_SOURCE_DIR}/src/example
         PUBLIC ${CMAKE_SOURCE_DIR}/src/resources
+        PUBLIC ${TORCH_INCLUDE_DIRS}
 )
 
 target_link_libraries(${PROJECT_NAME}_exec PRIVATE
         raylib
         PostgreSQL::PostgreSQL
+        torch
 )
+target_link_options(${PROJECT_NAME}_exec PRIVATE ${TORCH_CXX_FLAGS})
 
 # Main library
 add_library(${PROJECT_NAME} STATIC
@@ -95,10 +98,13 @@ add_library(${PROJECT_NAME} STATIC
 target_include_directories(${PROJECT_NAME}
         PUBLIC ${CMAKE_SOURCE_DIR}/src/main
         PUBLIC ${CMAKE_SOURCE_DIR}/src/resources
+        PUBLIC ${TORCH_INCLUDE_DIRS}
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC torch)
-target_link_options(${PROJECT_NAME} PUBLIC ${TORCH_CXX_FLAGS})
+target_link_libraries(${PROJECT_NAME} PRIVATE
+        torch
+)
+target_link_options(${PROJECT_NAME} PRIVATE ${TORCH_CXX_FLAGS})
 
 if (MSVC)
     add_compile_options(/wd4267)
@@ -107,6 +113,11 @@ if (MSVC)
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             ${TORCH_DLLS}
             $<TARGET_FILE_DIR:${PROJECT_NAME}>
+    )
+    add_custom_command(TARGET ${PROJECT_NAME}_exec POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${TORCH_DLLS}
+            $<TARGET_FILE_DIR:${PROJECT_NAME}_exec>
     )
 endif()
 
