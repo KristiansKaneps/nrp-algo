@@ -18,29 +18,24 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 endif()
 enable_testing()
 
-# Add all Source Files
+# Source files
 file(GLOB_RECURSE LIBRARY_SOURCE_FILES
         ${CMAKE_SOURCE_DIR}/src/main/*.cpp
 )
-
-# Add all Header Files
 file(GLOB_RECURSE LIBRARY_HEADER_FILES
         ${CMAKE_SOURCE_DIR}/src/main/*.h
         ${CMAKE_SOURCE_DIR}/src/main/*.hpp
 )
 
-# Add all Source Files
 file(GLOB_RECURSE EXAMPLE_SOURCE_FILES
         ${CMAKE_SOURCE_DIR}/src/example/*.cpp
 )
-
-# Add all Header Files
 file(GLOB_RECURSE EXAMPLE_HEADER_FILES
         ${CMAKE_SOURCE_DIR}/src/example/*.h
         ${CMAKE_SOURCE_DIR}/src/example/*.hpp
 )
 
-# Libraries
+# Dependencies
 include(${CMAKE_SOURCE_DIR}/lib/raylib/FindRaylib.cmake)
 #include(${CMAKE_SOURCE_DIR}/lib/postgres/FindPostgres.cmake) # Use project's (not system's) PostgreSQL
 find_package(PostgreSQL)
@@ -48,7 +43,23 @@ include(${CMAKE_SOURCE_DIR}/lib/libtorch/FindTorch.cmake)
 list(APPEND CMAKE_PREFIX_PATH "${Torch_PATH}/share/cmake/Torch")
 find_package(Torch REQUIRED)
 
-# Resource files
+# Main library target
+add_library(${PROJECT_NAME} STATIC
+        ${LIBRARY_SOURCE_FILES} ${LIBRARY_HEADER_FILES}
+)
+
+target_include_directories(${PROJECT_NAME}
+        PUBLIC ${CMAKE_SOURCE_DIR}/src/main
+        PUBLIC ${CMAKE_SOURCE_DIR}/src/resources
+        PUBLIC ${TORCH_INCLUDE_DIRS}
+)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
+        torch
+)
+target_link_options(${PROJECT_NAME} PRIVATE ${TORCH_CXX_FLAGS})
+
+# Embedded resource file generation (for example target)
 set(EMBED_SOURCE_DIR ${CMAKE_SOURCE_DIR}/embed)
 set(EMBEDDED_RESOURCES_HEADER ${CMAKE_SOURCE_DIR}/src/resources/embedded_resources.h)
 add_executable(embed ${EMBED_SOURCE_DIR}/embed.c)
@@ -63,48 +74,30 @@ add_custom_command(
         COMMENT "Embedding all resources into ${EMBEDDED_RESOURCES_SOURCE}"
         VERBATIM
 )
-add_custom_target(run_embed ALL DEPENDS ${EMBEDDED_RESOURCES_OUTPUT})
+add_custom_target(run_embed ALL DEPENDS ${EMBEDDED_RESOURCES_SOURCE})
 
-# Example executable
+# Example executable target
 add_executable(${PROJECT_NAME}_exec
-        ${LIBRARY_SOURCE_FILES} ${LIBRARY_HEADER_FILES}
         ${EXAMPLE_SOURCE_FILES} ${EXAMPLE_HEADER_FILES}
-        ${LIB_BITARRAY}
-        ${EMBEDDED_RESOURCES_SOURCE} ${EMBEDDED_RESOURCES_HEADER}
+        ${EMBEDDED_RESOURCES_SOURCE}
 )
 
-add_dependencies(${PROJECT_NAME}_exec run_embed)
+add_dependencies(${PROJECT_NAME}_exec
+        ${PROJECT_NAME}
+        run_embed
+)
 
 target_include_directories(${PROJECT_NAME}_exec
         PUBLIC ${CMAKE_SOURCE_DIR}/src/main
         PUBLIC ${CMAKE_SOURCE_DIR}/src/example
         PUBLIC ${CMAKE_SOURCE_DIR}/src/resources
-        PUBLIC ${TORCH_INCLUDE_DIRS}
 )
 
 target_link_libraries(${PROJECT_NAME}_exec PRIVATE
+        ${PROJECT_NAME}
         raylib
         PostgreSQL::PostgreSQL
-        torch
 )
-target_link_options(${PROJECT_NAME}_exec PRIVATE ${TORCH_CXX_FLAGS})
-
-# Main library
-add_library(${PROJECT_NAME} STATIC
-        ${LIBRARY_SOURCE_FILES} ${LIBRARY_HEADER_FILES}
-        ${EMBEDDED_RESOURCES_SOURCE} ${EMBEDDED_RESOURCES_HEADER}
-)
-
-target_include_directories(${PROJECT_NAME}
-        PUBLIC ${CMAKE_SOURCE_DIR}/src/main
-        PUBLIC ${CMAKE_SOURCE_DIR}/src/resources
-        PUBLIC ${TORCH_INCLUDE_DIRS}
-)
-
-target_link_libraries(${PROJECT_NAME} PRIVATE
-        torch
-)
-target_link_options(${PROJECT_NAME} PRIVATE ${TORCH_CXX_FLAGS})
 
 if (MSVC)
     add_compile_options(/wd4267)
@@ -114,11 +107,11 @@ if (MSVC)
             ${TORCH_DLLS}
             $<TARGET_FILE_DIR:${PROJECT_NAME}>
     )
-    add_custom_command(TARGET ${PROJECT_NAME}_exec POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${TORCH_DLLS}
-            $<TARGET_FILE_DIR:${PROJECT_NAME}_exec>
-    )
+#    add_custom_command(TARGET ${PROJECT_NAME}_exec POST_BUILD
+#            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#            ${TORCH_DLLS}
+#            $<TARGET_FILE_DIR:${PROJECT_NAME}_exec>
+#    )
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")

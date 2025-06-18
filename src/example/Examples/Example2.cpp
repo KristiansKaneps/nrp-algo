@@ -384,7 +384,7 @@ void Example::create() {
     auto heuristic1 = new Domain::Heuristics::RandomAssignmentTogglePerturbator();
     auto heuristic2 = new Domain::Heuristics::AddCoverShiftsPerturbator();
 
-    const auto heuristicProvider = Domain::Heuristics::DomainHeuristicProvider({
+    const auto heuristicProvider = Domain::Heuristics::DomainHeuristicProvider(constraints.size(), {
         heuristic1,
         heuristic2,
     });

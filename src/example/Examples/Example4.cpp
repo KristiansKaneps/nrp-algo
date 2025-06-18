@@ -100,9 +100,13 @@ void Example::create() {
     };
 
     auto heuristic1 = new Domain::Heuristics::RandomAssignmentTogglePerturbator();
+    auto heuristic2 = new Domain::Heuristics::DomainHorizontalExchangePerturbator();
+    auto heuristic3 = new Domain::Heuristics::DomainVerticalExchangePerturbator();
 
-    const auto heuristicProvider = Domain::Heuristics::DomainHeuristicProvider({
+    const auto heuristicProvider = Domain::Heuristics::DomainHeuristicProvider(constraints.size(), {
         heuristic1,
+        // heuristic2,
+        // heuristic3,
     });
 
     std::cout << "State 1 score: " << Evaluation::evaluateState(state, constraints) << std::endl;

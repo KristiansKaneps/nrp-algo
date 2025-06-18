@@ -8,11 +8,13 @@
 
 #include "Utils/Random.h"
 
+#include <torch/torch.h>
+
 namespace Heuristics {
     template<typename X, typename Y, typename Z, typename W>
     class HeuristicProvider {
     public:
-        explicit HeuristicProvider(const std::vector<Perturbator<X, Y, Z, W> *>&& perturbators) : m_Perturbators(
+        explicit HeuristicProvider(const size_t constraintCount, const std::vector<Perturbator<X, Y, Z, W> *>&& perturbators) : m_ConstraintCount(constraintCount), m_Perturbators(
             std::move(perturbators)) { m_GeneratedPerturbators.shrink_to_fit(); }
 
         ~HeuristicProvider() = default;
@@ -68,6 +70,7 @@ namespace Heuristics {
     private:
         inline static thread_local Random::RandomGenerator m_Random {};
 
+        const size_t m_ConstraintCount;
         const std::vector<Perturbator<X, Y, Z, W> *> m_Perturbators;
         std::vector<Perturbator<X, Y, Z, W> *> m_GeneratedPerturbators {};
     };
