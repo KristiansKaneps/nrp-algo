@@ -68,7 +68,7 @@ namespace Heuristics {
         }
 
     private:
-        inline static thread_local Random::RandomGenerator m_Random {};
+        inline static Random::RandomGenerator& m_Random = Random::generator();
 
         const size_t m_ConstraintCount;
         const std::vector<Perturbator<X, Y, Z, W> *> m_Perturbators;

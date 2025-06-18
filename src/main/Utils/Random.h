@@ -6,9 +6,13 @@
 namespace Random {
     class RandomGenerator {
     public:
-        RandomGenerator() : m_Rng(std::mt19937(std::random_device{}())) {
+        [[nodiscard]] static RandomGenerator& instance() {
+            thread_local RandomGenerator instance;
+            return instance;
         }
-        ~RandomGenerator() = default;
+
+        RandomGenerator(const RandomGenerator&) = delete;
+        RandomGenerator& operator=(const RandomGenerator&) = delete;
 
         [[nodiscard]] uint32_t randomInt(const uint32_t min, const uint32_t max) {
             std::uniform_int_distribution<std::mt19937::result_type> dist(min, max);
@@ -29,8 +33,14 @@ namespace Random {
         }
 
     private:
+        RandomGenerator() : m_Rng(std::mt19937(std::random_device{}())) { }
+
         std::mt19937 m_Rng;
     };
+
+    [[nodiscard]] inline RandomGenerator& generator() {
+        return RandomGenerator::instance();
+    }
 }
 
 #endif //RANDOM_H

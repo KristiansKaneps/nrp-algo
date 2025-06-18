@@ -94,7 +94,7 @@ namespace Heuristics {
         }
 
     protected:
-        inline static thread_local Random::RandomGenerator m_Random {};
+        inline static Random::RandomGenerator& m_Random = Random::generator();
 
         axis_size_t m_Y1 {}, m_Y2 {};
         std::unordered_map<HorizontalExchangeAssignLocation, uint8_t> m_LocationXors {};

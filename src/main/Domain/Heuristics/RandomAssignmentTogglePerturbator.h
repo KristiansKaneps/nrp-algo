@@ -33,7 +33,7 @@ namespace Domain::Heuristics {
             state.assign(m_X, m_Y, m_Z, m_W, m_PrevValue);
         }
     private:
-        inline static thread_local Random::RandomGenerator m_Random {};
+        inline static Random::RandomGenerator& m_Random = Random::generator();
         uint8_t m_PrevValue{};
         axis_size_t m_X{}, m_Y{}, m_Z{}, m_W{};
     };
