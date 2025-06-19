@@ -1,7 +1,7 @@
 #ifndef HORIZONTALEXCHANGEPERTURBATOR_H
 #define HORIZONTALEXCHANGEPERTURBATOR_H
 
-#include "Heuristics/Perturbator.h"
+#include "Heuristics/AutonomousPerturbator.h"
 #include "Structs/HorizontalExchangeAssignLocation.h"
 
 #include "Utils/Random.h"
@@ -12,7 +12,7 @@ namespace Heuristics {
     using namespace Structs;
 
     template<typename X, typename Y, typename Z, typename W>
-    class HorizontalExchangePerturbator : public Perturbator<X, Y, Z, W> {
+    class HorizontalExchangePerturbator : public AutonomousPerturbator<X, Y, Z, W> {
     public:
         explicit HorizontalExchangePerturbator() = default;
         ~HorizontalExchangePerturbator() override = default;
@@ -21,7 +21,7 @@ namespace Heuristics {
             return new HorizontalExchangePerturbator(*this);
         }
 
-        void configure(const Constraints::Violation *violation, const ::State::State<X, Y, Z, W>& state) override {
+        void configure(const ::State::State<X, Y, Z, W>& state) override {
             if (state.sizeY() < 2 || state.sizeZ() < 1) return;
 
             const axis_size_t y1 = m_Random.randomInt(state.sizeY() - 1);

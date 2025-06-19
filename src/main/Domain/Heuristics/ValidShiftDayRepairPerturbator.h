@@ -5,7 +5,7 @@
 #include "Domain/State/DomainState.h"
 
 namespace Domain::Heuristics {
-    class ValidShiftDayRepairPerturbator final : public DomainPerturbator {
+    class ValidShiftDayRepairPerturbator final : public DomainAutonomousPerturbator {
     public:
         explicit ValidShiftDayRepairPerturbator(const axis_size_t yAxisSize, const axis_size_t wAxisSize) : m_PrevValue(BitArray::BitArray(yAxisSize * wAxisSize)) {}
 

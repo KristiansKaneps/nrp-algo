@@ -2,27 +2,82 @@
 #define HEURISTICPROVIDER_H
 
 #include "Perturbator.h"
+#include "AutonomousPerturbator.h"
 #include "PerturbatorChain.h"
 #include "Search/Evaluation.h"
 #include "State/State.h"
 
 #include "Utils/Random.h"
 
-#include <torch/torch.h>
+#include "HyperHeuristics/TransformerModel.h"
+
+#include "HyperHeuristics/Heuristics/AssignPerturbator.h"
+#include "HyperHeuristics/Heuristics/UnassignPerturbator.h"
+
+#define HYPERHEURISTICS_HEURISTIC_COUNT 2
+#define HYPERHEURISTICS_INPUT_DIM 9
+#define HYPERHEURISTICS_BATCH_SIZE 1
+#define HYPERHEURISTICS_SEQ_LENGTH 5
+#define HYPERHEURISTICS_D_MODEL 32
+#define HYPERHEURISTICS_N_HEAD 4
+#define HYPERHEURISTICS_NUM_LAYERS 2
+
+#define encodeViolationIntoTensor(i, violation) \
+    tensor[0][i][0] = i; \
+    tensor[0][i][1] = violation.score.strict; \
+    tensor[0][i][2] = violation.score.hard; \
+    tensor[0][i][3] = violation.score.soft; \
+    tensor[0][i][4] = violation.getX(); \
+    tensor[0][i][5] = violation.getY(); \
+    tensor[0][i][6] = violation.getZ(); \
+    tensor[0][i][7] = violation.getW(); \
+    tensor[0][i][8] = violation.flags;
 
 namespace Heuristics {
     template<typename X, typename Y, typename Z, typename W>
     class HeuristicProvider {
     public:
-        explicit HeuristicProvider(const size_t constraintCount, const std::vector<Perturbator<X, Y, Z, W> *>&& perturbators) : m_ConstraintCount(constraintCount), m_Perturbators(
-            std::move(perturbators)) { m_GeneratedPerturbators.shrink_to_fit(); }
+        explicit HeuristicProvider(const size_t constraintCount,
+                                   const std::vector<AutonomousPerturbator<X, Y, Z, W> *>&& perturbators) :
+            m_ConstraintCount(constraintCount),
+            m_AvailablePerturbators(
+                std::move(perturbators)),
+            m_TransformerModel(HYPERHEURISTICS_INPUT_DIM, HYPERHEURISTICS_D_MODEL, HYPERHEURISTICS_N_HEAD,
+                               HYPERHEURISTICS_NUM_LAYERS, HYPERHEURISTICS_HEURISTIC_COUNT) {
+            m_GeneratedPerturbators.shrink_to_fit();
+
+            torch::manual_seed(42);
+        }
 
         ~HeuristicProvider() = default;
 
-        Perturbator<X, Y, Z, W> *operator[](const size_t index) const { return m_Perturbators[index]; }
+        Perturbator<X, Y, Z, W> *operator[](const size_t index) const { return m_AvailablePerturbators[index]; }
 
-        PerturbatorChain<X, Y, Z, W> generateRepairPerturbators(const Evaluation::Evaluator<X, Y, Z, W>& evaluator,
-                                                          const ::State::State<X, Y, Z, W>& state) {
+        PerturbatorChain<X, Y, Z, W> predictPerturbators(const Evaluation::Evaluator<X, Y, Z, W>& evaluator,
+                                                         const ::State::State<X, Y, Z, W>& state) {
+            m_GeneratedPerturbators.clear();
+            if (evaluator.m_TotalConstraintViolationCount == 0) return PerturbatorChain(m_GeneratedPerturbators);
+
+            auto tensor = createInputTensor(evaluator);
+            tensor = m_TransformerModel->forward(tensor);
+            auto perturb = createHeuristicFromTensor(tensor, state.size());
+            if (perturb == nullptr) return PerturbatorChain(m_GeneratedPerturbators);
+
+            perturb->configure(state);
+            if (perturb->isIdentity()) {
+                delete perturb;
+                return PerturbatorChain(m_GeneratedPerturbators);
+            }
+
+            m_GeneratedPerturbators.reserve(1);
+            m_GeneratedPerturbators.emplace_back(perturb);
+
+            return PerturbatorChain(m_GeneratedPerturbators);
+        }
+
+        [[nodiscard]] PerturbatorChain<X, Y, Z, W> generateRepairPerturbators(
+            const Evaluation::Evaluator<X, Y, Z, W>& evaluator,
+            const ::State::State<X, Y, Z, W>& state) {
             m_GeneratedPerturbators.clear();
             m_GeneratedPerturbators.reserve(evaluator.m_ViolatedConstraintCount);
             for (size_t i = 0; i < evaluator.m_ConstraintScores.size(); ++i) {
@@ -31,7 +86,7 @@ namespace Heuristics {
                 if (constraint->getRepairPerturbators().size() > 0) [[likely]] {
                     for (const auto& repairPerturbator : constraint->getRepairPerturbators()) {
                         for (const auto& violation : constraintScore.violations()) {
-                            Perturbator<X, Y, Z, W> *perturb = repairPerturbator->clone();
+                            AutonomousPerturbator<X, Y, Z, W> *perturb = repairPerturbator->clone();
                             perturb->configure(&violation, state);
                             if (perturb->isIdentity()) {
                                 delete perturb;
@@ -45,14 +100,16 @@ namespace Heuristics {
             return PerturbatorChain(m_GeneratedPerturbators);
         }
 
-        PerturbatorChain<X, Y, Z, W> generateSearchPerturbators(const Evaluation::Evaluator<X, Y, Z, W>& evaluator,
-                                                          const ::State::State<X, Y, Z, W>& state) {
+        [[nodiscard]] PerturbatorChain<X, Y, Z, W> generateSearchPerturbators(
+            const Evaluation::Evaluator<X, Y, Z, W>& evaluator,
+            const ::State::State<X, Y, Z, W>& state) {
             m_GeneratedPerturbators.clear();
             size_t count = m_Random.randomInt(1, 5);
             m_GeneratedPerturbators.reserve(count);
             for (size_t i = 0; m_GeneratedPerturbators.size() < count && count < 1000; ++i) {
                 // const size_t perturbatorIndex = m_Random.randomInt(0, m_Perturbators.size() - 1);
-                Perturbator<X, Y, Z, W> *perturb = m_Perturbators[i % m_Perturbators.size()]->clone();
+                AutonomousPerturbator<X, Y, Z, W> *perturb = m_AvailablePerturbators[i % m_AvailablePerturbators.size()]
+                    ->clone();
                 perturb->configure(nullptr, state);
                 if (perturb->isIdentity()) {
                     delete perturb;
@@ -60,7 +117,7 @@ namespace Heuristics {
                 }
                 m_GeneratedPerturbators.emplace_back(perturb);
             }
-            // Perturbator<X, Y, Z, W> *perturb = m_Perturbators[0]->clone();
+            // AutonomousPerturbator<X, Y, Z, W> *perturb = m_AvailablePerturbators[0]->clone();
             // perturb->configure(nullptr, state);
             // m_GeneratedPerturbators.emplace_back(perturb);
             // std::cout << "Generated perturbator count: " << m_GeneratedPerturbators.size() << std::endl;
@@ -71,8 +128,47 @@ namespace Heuristics {
         inline static Random::RandomGenerator& m_Random = Random::generator();
 
         const size_t m_ConstraintCount;
-        const std::vector<Perturbator<X, Y, Z, W> *> m_Perturbators;
+        const std::vector<AutonomousPerturbator<X, Y, Z, W> *> m_AvailablePerturbators;
+        HyperHeuristics::TransformerModel m_TransformerModel;
+
         std::vector<Perturbator<X, Y, Z, W> *> m_GeneratedPerturbators {};
+
+        [[nodiscard]] torch::Tensor createInputTensor(const Evaluation::Evaluator<X, Y, Z, W>& evaluator) {
+            constexpr int batchSize = 1;
+            const int seqLength = evaluator.m_TotalConstraintViolationCount;
+            constexpr int featureSize = 9;
+
+            torch::Tensor tensor = torch::zeros({batchSize, seqLength, featureSize}, torch::kFloat32);
+
+            for (size_t i = 0; i < evaluator.m_ConstraintScores.size(); ++i) {
+                for (const auto& constraintScore = evaluator.m_ConstraintScores[i]; auto& violation : constraintScore.violations()) {
+                    encodeViolationIntoTensor(i, violation);
+                }
+            }
+
+            return tensor;
+        }
+
+        [[nodiscard]] static Perturbator<X, Y, Z, W>* createHeuristicFromTensor(const torch::Tensor& tensor, const ::State::Size& stateSize) {
+            const size_t heuristicIndex = static_cast<size_t>(tensor[0].argmax().item<int>()); // The first few entries are scores per heuristic
+            const axis_size_t x = static_cast<axis_size_t>(tensor[1].item<float>());
+            const axis_size_t y = static_cast<axis_size_t>(tensor[2].item<float>());
+            const axis_size_t z = static_cast<axis_size_t>(tensor[3].item<float>());
+            const axis_size_t w = static_cast<axis_size_t>(tensor[4].item<float>());
+
+            if (heuristicIndex >= HYPERHEURISTICS_HEURISTIC_COUNT || x >= stateSize.width || y >= stateSize.height || z >= stateSize.depth || w >= stateSize.concepts) {
+                return nullptr;
+            }
+
+            switch (heuristicIndex) {
+                case 0:
+                    return new UnassignPerturbator<X, Y, Z, W>(::State::Location{x, y, z, w});
+                case 1:
+                    return new AssignPerturbator<X, Y, Z, W>(::State::Location{x, y, z, w});
+                default:
+                    return nullptr;
+            }
+        }
     };
 }
 

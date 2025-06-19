@@ -7,7 +7,7 @@
 #include "Utils/Random.h"
 
 namespace Domain::Heuristics {
-    class AddCoverShiftsPerturbator final : public DomainPerturbator {
+    class AddCoverShiftsPerturbator final : public DomainAutonomousPerturbator {
     public:
         explicit AddCoverShiftsPerturbator() = default;
 

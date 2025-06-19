@@ -1,13 +1,13 @@
 #ifndef UNASSIGNREPAIRPERTURBATOR_H
 #define UNASSIGNREPAIRPERTURBATOR_H
 
-#include "Heuristics/Perturbator.h"
+#include "Heuristics/AutonomousPerturbator.h"
 
 #include <vector>
 
 namespace Heuristics {
     template<typename X, typename Y, typename Z, typename W>
-    class UnassignRepairPerturbator : public Perturbator<X, Y, Z, W> {
+    class UnassignRepairPerturbator : public AutonomousPerturbator<X, Y, Z, W> {
     public:
         explicit UnassignRepairPerturbator() = default;
         ~UnassignRepairPerturbator() override = default;

@@ -2,6 +2,7 @@
 #define DOMAINPERTURBATOR_H
 
 #include "Heuristics/Perturbator.h"
+#include "Heuristics/AutonomousPerturbator.h"
 
 #include "Domain/Entities/Shift.h"
 #include "Domain/Entities/Employee.h"
@@ -14,6 +15,7 @@
 
 namespace Domain::Heuristics {
     using DomainPerturbator = ::Heuristics::Perturbator<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>;
+    using DomainAutonomousPerturbator = ::Heuristics::AutonomousPerturbator<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>;
     using DomainIdentityPerturbator = ::Heuristics::IdentityPerturbator<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>;
 
     // Default

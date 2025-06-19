@@ -1,7 +1,7 @@
 #ifndef VERTICALEXCHANGEPERTURBATOR_H
 #define VERTICALEXCHANGEPERTURBATOR_H
 
-#include "Heuristics/Perturbator.h"
+#include "Heuristics/AutonomousPerturbator.h"
 #include "Structs/VerticalExchangeAssignLocation.h"
 
 #include "Utils/Random.h"
@@ -10,7 +10,7 @@
 
 namespace Heuristics {
     template<typename X, typename Y, typename Z, typename W>
-    class VerticalExchangePerturbator : public Perturbator<X, Y, Z, W> {
+    class VerticalExchangePerturbator : public AutonomousPerturbator<X, Y, Z, W> {
     public:
         explicit VerticalExchangePerturbator() = default;
         ~VerticalExchangePerturbator() override = default;
@@ -19,7 +19,7 @@ namespace Heuristics {
             return new VerticalExchangePerturbator(*this);
         }
 
-        void configure(const Constraints::Violation *violation, const ::State::State<X, Y, Z, W>& state) override {
+        void configure(const ::State::State<X, Y, Z, W>& state) override {
             if (state.sizeZ() < 2 || state.sizeY() < 1) return;
 
             const axis_size_t z1 = m_Random.randomInt(state.sizeZ() - 1);

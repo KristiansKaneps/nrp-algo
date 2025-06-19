@@ -7,7 +7,7 @@
 #include "Utils/Random.h"
 
 namespace Domain::Heuristics {
-    class RandomAssignmentTogglePerturbator final : public DomainPerturbator {
+    class RandomAssignmentTogglePerturbator final : public DomainAutonomousPerturbator {
     public:
         explicit RandomAssignmentTogglePerturbator() = default;
 
@@ -15,7 +15,7 @@ namespace Domain::Heuristics {
             return new RandomAssignmentTogglePerturbator(*this);
         }
 
-        void configure(const Constraints::Violation *violation, const State::DomainState& state) override {
+        void configure(const State::DomainState& state) override {
             m_X = m_Random.randomInt(0, state.sizeX() - 1);
             m_Y = m_Random.randomInt(0, state.sizeY() - 1);
             m_Z = m_Random.randomInt(0, state.sizeZ() - 1);

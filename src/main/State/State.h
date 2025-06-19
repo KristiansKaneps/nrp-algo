@@ -7,6 +7,7 @@
 #include "Time/Range.h"
 #include "State/Axes.h"
 #include "State/Size.h"
+#include "State/Location.h"
 
 #include "Array/BitArray.h"
 
@@ -73,10 +74,30 @@ namespace State {
         [[nodiscard]] const Axes::AxisEntity& z(const axis_size_t zIndex) const { return (*m_Z)[zIndex]; }
         [[nodiscard]] const Axes::AxisEntity& w(const axis_size_t wIndex) const { return (*m_W)[wIndex]; }
 
+        uint8_t toggle(const Location& location) {
+            return toggle(location.getX(), location.getY(), location.getZ(), location.getW());
+        }
+
         uint8_t toggle(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w) {
             const uint8_t newValue = m_Matrix.get(index(x, y, z, w) ^ 1) & 1;
             m_Matrix.assign(index(x, y, z, w), newValue);
             return newValue;
+        }
+
+        void assign(const Location& location, const bool value) {
+            assign(location.getX(), location.getY(), location.getZ(), location.getW(), value);
+        }
+
+        void assign(const Location& location, const uint8_t value) {
+            assign(location.getX(), location.getY(), location.getZ(), location.getW(), value);
+        }
+
+        void assign(const Location& location, const uint32_t value) {
+            assign(location.getX(), location.getY(), location.getZ(), location.getW(), value);
+        }
+
+        void assign(const Location& location, const int32_t value) {
+            assign(location.getX(), location.getY(), location.getZ(), location.getW(), value);
         }
 
         void assign(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w,
@@ -91,8 +112,16 @@ namespace State {
         void assign(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w,
                     const int32_t value) { m_Matrix.assign(index(x, y, z, w), value & 1); }
 
+        void set(const Location& location) {
+            set(location.getX(), location.getY(), location.getZ(), location.getW());
+        }
+
         void set(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w) {
             m_Matrix.set(index(x, y, z, w));
+        }
+
+        void clear(const Location& location) {
+            clear(location.getX(), location.getY(), location.getZ(), location.getW());
         }
 
         void clear(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w) {
@@ -105,6 +134,10 @@ namespace State {
 
         void clearAll() {
             m_Matrix.clearAll();
+        }
+
+        [[nodiscard]] uint8_t get(const Location& location) const {
+            return get(location.getX(), location.getY(), location.getZ(), location.getW());
         }
 
         [[nodiscard]] uint8_t get(const axis_size_t x, const axis_size_t y, const axis_size_t z,
@@ -121,7 +154,11 @@ namespace State {
             return 0;
         }
 
-        char getCharRepresentation(const axis_size_t x, const axis_size_t y, // NOLINT(*-use-nodiscard)
+        [[nodiscard]] char getCharRepresentation(const Location& location) const {
+            return get(location.getX(), location.getY(), location.getZ(), location.getW());
+        }
+
+        [[nodiscard]] char getCharRepresentation(const axis_size_t x, const axis_size_t y,
                                    const axis_size_t z, const axis_size_t w) const {
             return BitArray::BIT_CHAR_REPRESENTATIONS[get(x, y, z, w)];
         }
