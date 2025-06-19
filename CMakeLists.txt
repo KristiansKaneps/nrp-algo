@@ -8,10 +8,6 @@ endif()
 project(nrp C CXX)
 #project(nrp C CXX CUDA)
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options(-Wno-shift-op-parentheses)
-endif()
-
 # Enable testing
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     include(CTest)
@@ -40,8 +36,11 @@ include(${CMAKE_SOURCE_DIR}/lib/raylib/FindRaylib.cmake)
 #include(${CMAKE_SOURCE_DIR}/lib/postgres/FindPostgres.cmake) # Use project's (not system's) PostgreSQL
 find_package(PostgreSQL)
 include(${CMAKE_SOURCE_DIR}/lib/libtorch/FindTorch.cmake)
-list(APPEND CMAKE_PREFIX_PATH "${Torch_PATH}/share/cmake/Torch")
-find_package(Torch REQUIRED)
+
+# Verify libtorch dependency
+message(STATUS "LibTorch version: ${TORCH_VERSION}")
+message(STATUS "LibTorch libraries: ${TORCH_LIBRARIES}")
+message(STATUS "LibTorch include dirs: ${TORCH_INCLUDE_DIRS}")
 
 # Main library target
 add_library(${PROJECT_NAME} STATIC
@@ -55,9 +54,9 @@ target_include_directories(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-        torch
+        ${TORCH_LIBRARIES}
 )
-target_link_options(${PROJECT_NAME} PRIVATE ${TORCH_CXX_FLAGS})
+#target_link_options(${PROJECT_NAME} PRIVATE ${TORCH_CXX_FLAGS})
 
 # Embedded resource file generation (for example target)
 set(EMBED_SOURCE_DIR ${CMAKE_SOURCE_DIR}/embed)
@@ -99,28 +98,33 @@ target_link_libraries(${PROJECT_NAME}_exec PRIVATE
         PostgreSQL::PostgreSQL
 )
 
-if (MSVC)
-    add_compile_options(/wd4267)
-    file(GLOB TORCH_DLLS "${Torch_PATH}/lib/*.dll")
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${TORCH_DLLS}
-            $<TARGET_FILE_DIR:${PROJECT_NAME}>
-    )
-#    add_custom_command(TARGET ${PROJECT_NAME}_exec POST_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#            ${TORCH_DLLS}
-#            $<TARGET_FILE_DIR:${PROJECT_NAME}_exec>
-#    )
+# Compiler options
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(${PROJECT_NAME} PRIVATE -Wno-shift-op-parentheses)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+elseif(MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE /wd4267)
 endif()
 
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-    message(STATUS "CXX Release Flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
-else()
-    message(STATUS "CXX Debug Flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
+# Copy DLLs on Windows
+if(MSVC)
+    foreach(lib ${TORCH_LIBRARIES})
+        get_filename_component(lib_dir ${lib} DIRECTORY)
+        file(GLOB TORCH_DLLS "${lib_dir}/*.dll")
+        if(TORCH_DLLS)
+            add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    ${TORCH_DLLS}
+                    $<TARGET_FILE_DIR:${PROJECT_NAME}>
+            )
+        endif()
+    endforeach()
 endif()
 
-# Tests
+# Print build flags
+message(STATUS "CXX Flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}")
+
+# Add tests
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     add_subdirectory(${CMAKE_SOURCE_DIR}/src/tests)
 endif()

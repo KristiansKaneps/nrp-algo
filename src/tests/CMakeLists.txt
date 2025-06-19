@@ -19,7 +19,6 @@ function(test testName)
     add_executable(${testName} ${testName}.cpp $<TARGET_OBJECTS:test_main>)
     target_include_directories(${testName} PRIVATE ${DOCTEST_INCLUDE_DIR})
     target_link_libraries(${testName} PRIVATE nrp)
-    target_link_options(${testName} PRIVATE ${TORCH_CXX_FLAGS})
     add_test(NAME ${testName} COMMAND ${testName})
 endfunction()
 
