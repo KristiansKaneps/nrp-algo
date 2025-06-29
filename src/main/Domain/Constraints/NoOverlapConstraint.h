@@ -10,7 +10,7 @@ namespace Domain::Constraints {
     class NoOverlapConstraint final : public DomainConstraint {
     public:
         explicit NoOverlapConstraint(const Axes::Axis<Domain::Shift>& xAxis) : Constraint("NO_OVERLAP", {
-                                                                                   new Heuristics::DomainUnassignRepairPerturbator(),
+                                                                                   new Moves::DomainUnassignRepairPerturbator(),
                                                                                }),
                                                                                m_IntersectingShiftsInSameDayMatrix(
                                                                                    BitMatrix::createIdentitySymmetricalMatrix(

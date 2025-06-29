@@ -1,11 +1,11 @@
 #ifndef UNASSIGNREPAIRPERTURBATOR_H
 #define UNASSIGNREPAIRPERTURBATOR_H
 
-#include "Heuristics/AutonomousPerturbator.h"
+#include "AutonomousPerturbator.h"
 
 #include <vector>
 
-namespace Heuristics {
+namespace Moves {
     template<typename X, typename Y, typename Z, typename W>
     class UnassignRepairPerturbator : public AutonomousPerturbator<X, Y, Z, W> {
     public:

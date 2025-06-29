@@ -1,21 +1,21 @@
-#ifndef ADDCOVERSHIFTSPERTURBATOR_H
-#define ADDCOVERSHIFTSPERTURBATOR_H
+#ifndef RANDOMASSIGNMENTTOGGLEPERTURBATOR_H
+#define RANDOMASSIGNMENTTOGGLEPERTURBATOR_H
 
 #include "DomainPerturbator.h"
 #include "Domain/State/DomainState.h"
 
 #include "Utils/Random.h"
 
-namespace Domain::Heuristics {
-    class AddCoverShiftsPerturbator final : public DomainAutonomousPerturbator {
+namespace Domain::Moves {
+    class RandomAssignmentTogglePerturbator final : public DomainAutonomousPerturbator {
     public:
-        explicit AddCoverShiftsPerturbator() = default;
+        explicit RandomAssignmentTogglePerturbator() = default;
 
-        [[nodiscard]] AddCoverShiftsPerturbator *clone() const override {
-            return new AddCoverShiftsPerturbator(*this);
+        [[nodiscard]] RandomAssignmentTogglePerturbator *clone() const override {
+            return new RandomAssignmentTogglePerturbator(*this);
         }
 
-        void configure(const Constraints::Violation *violation, const State::DomainState& state) override {
+        void configure(const State::DomainState& state) override {
             m_X = m_Random.randomInt(0, state.sizeX() - 1);
             m_Y = m_Random.randomInt(0, state.sizeY() - 1);
             m_Z = m_Random.randomInt(0, state.sizeZ() - 1);
@@ -23,7 +23,7 @@ namespace Domain::Heuristics {
             m_PrevValue = state.get(m_X, m_Y, m_Z, m_W);
         }
 
-        bool isIdentity() const override { return false; }
+        [[nodiscard]] bool isIdentity() const override { return false; }
 
         void modify(State::DomainState& state) override {
             state.assign(m_X, m_Y, m_Z, m_W, static_cast<uint8_t>(static_cast<uint8_t>(m_PrevValue ^ 1) & 1));
@@ -39,4 +39,4 @@ namespace Domain::Heuristics {
     };
 }
 
-#endif //ADDCOVERSHIFTSPERTURBATOR_H
+#endif //RANDOMASSIGNMENTTOGGLEPERTURBATOR_H

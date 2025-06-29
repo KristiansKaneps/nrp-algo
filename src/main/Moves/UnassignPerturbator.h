@@ -1,11 +1,11 @@
 #ifndef UNASSIGNPERTURBATOR_H
 #define UNASSIGNPERTURBATOR_H
 
-#include "Heuristics/Perturbator.h"
+#include "Perturbator.h"
 
 #include "State/Location.h"
 
-namespace Heuristics {
+namespace Moves {
     template<typename X, typename Y, typename Z, typename W>
     class UnassignPerturbator : public Perturbator<X, Y, Z, W> {
     public:

@@ -11,7 +11,7 @@ namespace Domain::Constraints {
     public:
         explicit RestBetweenShiftsConstraint(const Axes::Axis<Domain::Shift>& xAxis) :
             Constraint("REST_BETWEEN_SHIFTS", {
-                new Heuristics::DomainUnassignRepairPerturbator(),
+                new Moves::DomainUnassignRepairPerturbator(),
             }),
             m_IntersectingShiftsInSameDayMatrix(BitMatrix::createIdentitySymmetricalMatrix(xAxis.size())) {
             int32_t maxDuration = 0;

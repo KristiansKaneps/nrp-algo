@@ -13,7 +13,6 @@
 #include "Domain/Constraints/CumulativeFatigueConstraint.h"
 
 #include "Domain/Heuristics/DomainHeuristicProvider.h"
-#include "Domain/Heuristics/RandomAssignmentTogglePerturbator.h"
 
 #include "Search/LocalSearch.h"
 
@@ -124,11 +123,7 @@ void Example::create() {
         cumulativeFatigueConstraint,
     };
 
-    auto heuristic1 = new Domain::Heuristics::RandomAssignmentTogglePerturbator();
-
-    const auto heuristicProvider = Domain::Heuristics::DomainHeuristicProvider(constraints.size(), {
-        heuristic1,
-    });
+    const auto heuristicProvider = Domain::Heuristics::DomainHeuristicProvider(constraints.size());
 
     std::cout << "State 1 score: " << Evaluation::evaluateState(state, constraints) << std::endl;
     state.clearAll();

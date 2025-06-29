@@ -3,7 +3,7 @@
 
 #include "State/State.h"
 
-namespace Heuristics {
+namespace Moves {
     using axis_size_t = ::State::axis_size_t;
 
     template<typename X, typename Y, typename Z, typename W>

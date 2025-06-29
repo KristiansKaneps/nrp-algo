@@ -1,14 +1,14 @@
 #ifndef HORIZONTALEXCHANGEPERTURBATOR_H
 #define HORIZONTALEXCHANGEPERTURBATOR_H
 
-#include "Heuristics/AutonomousPerturbator.h"
+#include "AutonomousPerturbator.h"
 #include "Structs/HorizontalExchangeAssignLocation.h"
 
 #include "Utils/Random.h"
 
 #include <unordered_map>
 
-namespace Heuristics {
+namespace Moves {
     using namespace Structs;
 
     template<typename X, typename Y, typename Z, typename W>

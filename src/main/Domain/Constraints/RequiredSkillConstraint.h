@@ -11,7 +11,7 @@ namespace Domain::Constraints {
         explicit RequiredSkillConstraint(const Axes::Axis<Domain::Shift>& xAxis,
                                          const Axes::Axis<Domain::Employee>& yAxis,
                                          const Axes::Axis<Domain::Skill>& wAxis) : Constraint("REQUIRED_SKILL", {
-                new Heuristics::DomainUnassignRepairPerturbator(),
+                new Moves::DomainUnassignRepairPerturbator(),
             }),
             m_AssignableShiftEmployeeSkillMatrix(xAxis.size(), yAxis.size(), wAxis.size()) {
             for (axis_size_t x = 0; x < xAxis.size(); ++x) {

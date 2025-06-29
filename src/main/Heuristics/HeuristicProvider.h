@@ -1,9 +1,9 @@
 #ifndef HEURISTICPROVIDER_H
 #define HEURISTICPROVIDER_H
 
-#include "Perturbator.h"
-#include "AutonomousPerturbator.h"
-#include "PerturbatorChain.h"
+#include "Moves/Perturbator.h"
+#include "Moves/AutonomousPerturbator.h"
+#include "Moves/PerturbatorChain.h"
 #include "Search/Evaluation.h"
 #include "State/State.h"
 
@@ -11,8 +11,8 @@
 
 #include "HyperHeuristics/TransformerModel.h"
 
-#include "HyperHeuristics/Heuristics/AssignPerturbator.h"
-#include "HyperHeuristics/Heuristics/UnassignPerturbator.h"
+#include "Moves/AssignPerturbator.h"
+#include "Moves/UnassignPerturbator.h"
 
 #define HYPERHEURISTICS_HEURISTIC_COUNT 2
 #define HYPERHEURISTICS_INPUT_DIM 9
@@ -34,17 +34,18 @@
     tensor[0][i][8] = violation.flags;
 
 namespace Heuristics {
+    using namespace ::Moves;
+
     template<typename X, typename Y, typename Z, typename W>
     class HeuristicProvider {
     public:
-        explicit HeuristicProvider(const size_t constraintCount,
-                                   const std::vector<AutonomousPerturbator<X, Y, Z, W> *>&& perturbators) :
+        explicit HeuristicProvider(const size_t constraintCount) :
             m_ConstraintCount(constraintCount),
-            m_AvailablePerturbators(
-                std::move(perturbators)),
             m_TransformerModel(HYPERHEURISTICS_INPUT_DIM, HYPERHEURISTICS_D_MODEL, HYPERHEURISTICS_N_HEAD,
                                HYPERHEURISTICS_NUM_LAYERS, HYPERHEURISTICS_HEURISTIC_COUNT) {
             m_GeneratedPerturbators.shrink_to_fit();
+
+            m_AvailablePerturbators = {};
 
             torch::manual_seed(42);
         }
@@ -128,7 +129,7 @@ namespace Heuristics {
         inline static Random::RandomGenerator& m_Random = Random::generator();
 
         const size_t m_ConstraintCount;
-        const std::vector<AutonomousPerturbator<X, Y, Z, W> *> m_AvailablePerturbators;
+        std::vector<AutonomousPerturbator<X, Y, Z, W> *> m_AvailablePerturbators;
         HyperHeuristics::TransformerModel m_TransformerModel;
 
         std::vector<Perturbator<X, Y, Z, W> *> m_GeneratedPerturbators {};

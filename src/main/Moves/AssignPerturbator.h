@@ -1,9 +1,9 @@
 #ifndef ASSIGNPERTURBATOR_H
 #define ASSIGNPERTURBATOR_H
 
-#include "Heuristics/Perturbator.h"
+#include "Moves/Perturbator.h"
 
-namespace Heuristics {
+namespace Moves {
     template<typename X, typename Y, typename Z, typename W>
     class AssignPerturbator : public Perturbator<X, Y, Z, W> {
     public:

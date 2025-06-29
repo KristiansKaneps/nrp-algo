@@ -5,7 +5,7 @@
 
 #include "State/Size.h"
 
-namespace Heuristics::Structs {
+namespace Moves::Structs {
     using axis_size_t = ::State::axis_size_t;
 
     struct VerticalExchangeAssignLocation {
@@ -18,8 +18,8 @@ namespace Heuristics::Structs {
 }
 
 template <>
-struct std::hash<Heuristics::Structs::VerticalExchangeAssignLocation> { // NOLINT(*-dcl58-cpp)
-    std::size_t operator()(const Heuristics::Structs::VerticalExchangeAssignLocation& loc) const noexcept {
+struct std::hash<Moves::Structs::VerticalExchangeAssignLocation> { // NOLINT(*-dcl58-cpp)
+    std::size_t operator()(const Moves::Structs::VerticalExchangeAssignLocation& loc) const noexcept {
         const std::size_t h1 = std::hash<::State::axis_size_t>()(loc.x);
         const std::size_t h2 = std::hash<::State::axis_size_t>()(loc.y);
         const std::size_t h3 = std::hash<::State::axis_size_t>()(loc.w);

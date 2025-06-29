@@ -8,7 +8,7 @@
 #include "Domain/Entities/Day.h"
 #include "Domain/Entities/Skill.h"
 
-#include "Domain/Heuristics/DomainPerturbator.h"
+#include "Domain/Moves/DomainPerturbator.h"
 
 namespace Domain::Constraints {
     using DomainConstraint = ::Constraints::Constraint<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>;

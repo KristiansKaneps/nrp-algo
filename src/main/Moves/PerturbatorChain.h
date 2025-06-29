@@ -5,7 +5,7 @@
 
 #include "Perturbator.h"
 
-namespace Heuristics {
+namespace Moves {
     template<typename X, typename Y, typename Z, typename W>
     class PerturbatorChain {
     public:

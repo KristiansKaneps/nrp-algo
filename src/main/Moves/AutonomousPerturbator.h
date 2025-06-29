@@ -6,7 +6,7 @@
 #include "State/State.h"
 #include "Constraints/Violation.h"
 
-namespace Heuristics {
+namespace Moves {
     /**
      * A perturbator is a low-level heuristic (LLH) that modifies a candidate solution resulting in another candidate
      * solution.
