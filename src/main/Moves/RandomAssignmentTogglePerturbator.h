@@ -9,7 +9,11 @@ namespace Moves {
     template<typename X, typename Y, typename Z, typename W>
     class RandomAssignmentTogglePerturbator final : public AutonomousPerturbator<X, Y, Z, W> {
     public:
-        explicit RandomAssignmentTogglePerturbator() = default;
+        explicit RandomAssignmentTogglePerturbator() {
+            // TODO: determine min Z width to assign at once (for now it is 2).
+            //   There must always be a probability that only 1 z will be assigned (for later on in the search process).
+            m_MaxZWidth = 2;
+        }
 
         [[nodiscard]] RandomAssignmentTogglePerturbator *clone() const override {
             return new RandomAssignmentTogglePerturbator(*this);
@@ -22,22 +26,33 @@ namespace Moves {
                 m_Random.randomInt(0, state.sizeZ() - 1),
                 m_Random.randomInt(0, state.sizeW() - 1)
             };
-            m_PrevValue = state.get(m_Location);
+            m_ZSideIncrement = m_Random.randomInt(0, state.sizeZ() >= m_MaxZWidth ? m_MaxZWidth - 1 : state.sizeZ());
+            if (m_Location.z + m_ZSideIncrement >= state.sizeZ()) {
+                m_ZSideIncrement = 0;
+            }
         }
 
         [[nodiscard]] bool isIdentity() const override { return false; }
 
         void modify(::State::State<X, Y, Z, W>& state) override {
-            state.assign(m_Location, static_cast<uint8_t>(m_PrevValue ^ 1));
+            apply(state);
         }
 
         void revert(::State::State<X, Y, Z, W>& state) const override {
-            state.assign(m_Location, m_PrevValue);
+            apply(state);
         }
     private:
         inline static Random::RandomGenerator& m_Random = Random::generator();
+        axis_size_t m_MaxZWidth = 1;
+        int32_t m_ZSideIncrement = 1;
         ::State::Location m_Location{};
-        uint8_t m_PrevValue{};
+
+        void apply(::State::State<X, Y, Z, W>& state) const {
+            state.assign(m_Location, state.get(m_Location) ^ 1);
+            for (int32_t i = 0; i < m_ZSideIncrement; ++i) {
+                state.assign(m_Location.x, m_Location.y, m_Location.z + i, m_Location.w, state.get(m_Location.x, m_Location.y, m_Location.z + i, m_Location.w) ^ 1);
+            }
+        }
     };
 }
 

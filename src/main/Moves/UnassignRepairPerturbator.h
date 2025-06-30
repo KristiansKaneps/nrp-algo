@@ -43,14 +43,14 @@ namespace Moves {
         }
 
         void modify(::State::State<X, Y, Z, W>& state) override {
-            for (const auto& [x, y, z, w] : m_Locations) {
-                state.clear(x, y, z, w);
+            for (const auto& loc : m_Locations) {
+                state.clear(loc);
             }
         }
 
         void revert(::State::State<X, Y, Z, W>& state) const override {
-            for (const auto& [x, y, z, w] : m_Locations) {
-                state.set(x, y, z, w);
+            for (const auto& loc : m_Locations) {
+                state.set(loc);
             }
         }
 

@@ -32,6 +32,12 @@ namespace Random {
             return randomFloat(0, max);
         }
 
+        template<typename T>
+        [[nodiscard]] T choice(const std::vector<T>& choices) {
+            assert(!choices.empty() && "Empty choices vector");
+            return choices[randomInt(0, choices.size() - 1)];
+        }
+
     private:
         RandomGenerator() : m_Rng(std::mt19937(std::random_device{}())) { }
 

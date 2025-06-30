@@ -6,6 +6,11 @@
 #include "State/State.h"
 #include "Constraints/Violation.h"
 
+namespace Evaluation {
+    template<typename X, typename Y, typename Z, typename W>
+    class Evaluator;
+}
+
 namespace Moves {
     /**
      * A perturbator is a low-level heuristic (LLH) that modifies a candidate solution resulting in another candidate
@@ -26,9 +31,20 @@ namespace Moves {
         [[nodiscard]] virtual AutonomousPerturbator *clone() const = 0;
 
         /**
+         * Check if this perturbator is applicable for current evaluated candidate state and configure it.
+         * @param evaluator Evaluator
+         * @param state Current candidate state
+         * @return `true` if configuration is done; `false` otherwise
+         */
+        [[nodiscard]] virtual bool configureIfApplicable(const ::Evaluation::Evaluator<X, Y, Z, W>& evaluator, const ::State::State<X, Y, Z, W>& state) {
+            return false;
+        }
+
+        /**
          * Prepares this perturbator for modifying a given state.
          * @param violation Violation to repair.
          * @param state State to modify afterward.
+         * @see configureIfApplicable
          */
         virtual void configure(const Constraints::Violation *violation, const ::State::State<X, Y, Z, W>& state) {
             configure(state);

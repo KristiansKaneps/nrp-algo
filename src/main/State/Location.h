@@ -14,6 +14,11 @@ namespace State {
         [[nodiscard]] axis_size_t getZ() const { return z; }
         [[nodiscard]] axis_size_t getW() const { return w; }
 
+        [[nodiscard]] Location withX(const axis_size_t x) const { return Location {x, y, z, w}; }
+        [[nodiscard]] Location withY(const axis_size_t y) const { return Location {x, y, z, w}; }
+        [[nodiscard]] Location withZ(const axis_size_t z) const { return Location {x, y, z, w}; }
+        [[nodiscard]] Location withW(const axis_size_t w) const { return Location {x, y, z, w}; }
+
         [[nodiscard]] constexpr bool operator==(const Location& other) const {
             return x == other.x && y == other.y && z == other.z && w == other.w;
         }
@@ -82,5 +87,16 @@ namespace State {
         static Area xyzw(const Location& location) { return {location.x, location.y, location.z, location.w, XYZW}; }
     };
 }
+
+template <>
+struct std::hash<::State::Location> { // NOLINT(*-dcl58-cpp)
+    std::size_t operator()(const ::State::Location& loc) const noexcept {
+        const std::size_t h1 = std::hash<::State::axis_size_t>()(loc.x);
+        const std::size_t h2 = std::hash<::State::axis_size_t>()(loc.y);
+        const std::size_t h3 = std::hash<::State::axis_size_t>()(loc.z);
+        const std::size_t h4 = std::hash<::State::axis_size_t>()(loc.w);
+        return  h1 * 73856093u ^ h2 * 19349663u ^ h3 * 83492791u ^ h4 * 61552411u;
+    }
+};
 
 #endif //LOCATION_H

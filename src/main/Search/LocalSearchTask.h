@@ -91,7 +91,7 @@ namespace Search::Task {
                 }
 
                 m_AppliedPerturbators.append(perturbators);
-                std::cout << "Applied perturbators size: " << m_AppliedPerturbators.size() << ", best score achieved before " << m_BestScoreAchievedBeforePerturbationCount << " perturbations" << std::endl;
+                std::cout << "Applied perturbators size: " << m_AppliedPerturbators.size() << ", best score achieved before " << m_BestScoreAchievedBeforePerturbationCount << " perturbations; idle iteration count: " << m_IdleIterations << std::endl;
             } else {
                 // Revert the new candidate state to the previous candidate state,
                 // because the new candidate state references the "working memory" `m_CurrentState`.
