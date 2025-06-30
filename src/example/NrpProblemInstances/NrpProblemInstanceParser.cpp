@@ -4,8 +4,10 @@
 #include <sstream>
 #include <vector>
 
+#include <tinyxml2.h>
+
 namespace NrpProblemInstances {
-    void NrpProblemInstanceParser::parse() {
+    void NrpProblemInstanceParser::parseTxt() {
         std::istringstream input(m_Data);
         std::string line;
         std::string currentSection;
@@ -36,10 +38,24 @@ namespace NrpProblemInstances {
 
             // Section-based parsing
             if (currentSection == "SECTION_HORIZON") {
-                int horizonDays = std::stoi(fields[0]);
-                const auto local = std::chrono::local_time<std::chrono::milliseconds>{m_Range.start().time_since_epoch()};
-                const auto zonedStart = std::chrono::zoned_time(m_TimeZone, local);
-                m_Range = Time::Range(zonedStart.get_sys_time(), zonedStart.get_sys_time() + std::chrono::days(horizonDays));
+                const int horizonDays = std::stoi(fields[0]);
+                if (fields.size() > 2) {
+                    const auto localStart = std::chrono::local_time<std::chrono::milliseconds>(Time::ParseIsoUtc(fields[1]).time_since_epoch());
+                    const auto zonedStart = std::chrono::zoned_time(m_TimeZone, localStart);
+                    const auto localEnd = std::chrono::local_time<std::chrono::milliseconds>((Time::ParseIsoUtc(fields[2]) + std::chrono::days(1)).time_since_epoch());
+                    const auto zonedEnd = std::chrono::zoned_time(m_TimeZone, localEnd);
+                    m_Range = Time::Range(zonedStart.get_sys_time(), zonedEnd.get_sys_time());
+                } else if (fields.size() > 1) {
+                    const auto local = std::chrono::local_time<std::chrono::milliseconds>(Time::ParseIsoUtc(fields[1]).time_since_epoch());
+                    const auto zonedStart = std::chrono::zoned_time(m_TimeZone, local);
+                    const auto end = zonedStart.get_sys_time() + std::chrono::days(horizonDays);
+                    m_Range = Time::Range(zonedStart.get_sys_time(), end);
+                } else {
+                    const auto local = std::chrono::local_time<std::chrono::milliseconds>{m_Range.start().time_since_epoch()};
+                    const auto zonedStart = std::chrono::zoned_time(m_TimeZone, local);
+                    m_Range = Time::Range(zonedStart.get_sys_time(), zonedStart.get_sys_time() + std::chrono::days(horizonDays));
+                }
+                assert(m_Range.getDayCount(m_TimeZone) == horizonDays && "Horizon days do not match with range.");
                 std::cout << "Horizon: " << horizonDays << " days; range: " << m_Range << std::endl;
             } else if (currentSection == "SECTION_SHIFTS") {
                 const size_t shiftIndex = m_ShiftCounter++;
@@ -178,6 +194,36 @@ namespace NrpProblemInstances {
                 emp.addDesiredAvailability(Domain::Availability::DesiredAvailability::SpecificRequest{request.shiftIndex, request.dayIndex, weight});
             } else if (request.type == "Off") {
                 emp.addUnpaidUnavailableAvailability(Domain::Availability::UnpaidUnavailableAvailability::SpecificRequest{request.shiftIndex, request.dayIndex, weight});
+            }
+        }
+    }
+
+
+    // TODO: Implement `parseXml`.
+    void NrpProblemInstanceParser::parseXml() {
+        tinyxml2::XMLDocument doc;
+        if (auto status = doc.Parse(m_Data); status != tinyxml2::XML_SUCCESS) [[unlikely]]
+            throw std::runtime_error("Failed to parse XML: " + std::string(doc.ErrorStr()));
+
+        const auto* root = doc.FirstChildElement("SchedulingPeriod");
+        if (!root) throw std::runtime_error("<SchedulePeriod> missing");
+
+        const auto* start = root->FirstChildElement("StartDate");
+        const auto* end = root->FirstChildElement("EndDate");
+        if (!start || !end) throw std::runtime_error("Missing dates");
+
+        const auto range = Time::Range { Time::StringToInstant(start->GetText()), Time::StringToInstant(end->GetText()) + std::chrono::days(1) };
+
+        std::cout << "Horizon: " << m_Range << std::endl;
+
+        {
+            const auto* xmlShifts = root->FirstChildElement("ShiftTypes");
+            for (auto* s = xmlShifts ? xmlShifts->FirstChildElement("Shift") : nullptr; s; s = s->NextSiblingElement("Shift")) {
+                const size_t shiftIndex = m_ShiftCounter++;
+                const size_t skillIndex = m_SkillCounter++; // Each shift has one skill due to data input format.
+                const std::string& shiftID = s->Attribute("ID");
+                const int32_t duration = std::stoi(s->FirstChildElement("Duration")->GetText());
+
             }
         }
     }

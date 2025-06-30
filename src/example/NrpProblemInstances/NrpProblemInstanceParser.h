@@ -15,15 +15,23 @@
 namespace NrpProblemInstances {
     class NrpProblemInstanceParser {
     public:
-        explicit NrpProblemInstanceParser(const std::string& resourceName, const std::chrono::time_zone *const timeZone) : m_TimeZone(timeZone) {
+        enum Type : uint8_t {
+            TXT = 0,
+            XML,
+        };
+
+        explicit NrpProblemInstanceParser(const std::string& resourceName, const std::chrono::time_zone *const timeZone, const Type type = TXT) : m_Type(type), m_TimeZone(timeZone) {
             m_Data = find_embedded_file(("NrpProblemInstances/" + resourceName).c_str(), &m_DataSize);
         }
 
-        explicit NrpProblemInstanceParser(const std::string& resourceName) : NrpProblemInstanceParser(resourceName, std::chrono::current_zone()) { }
+        explicit NrpProblemInstanceParser(const std::string& resourceName, const Type type = TXT) : NrpProblemInstanceParser(resourceName, std::chrono::current_zone(), type) { }
 
         ~NrpProblemInstanceParser() = default;
 
-        void parse();
+        void parse() {
+            if (m_Type == TXT) parseTxt();
+            else if (m_Type == XML) parseXml();
+        }
 
         [[nodiscard]] const std::chrono::time_zone *timeZone() const { return m_TimeZone; }
         [[nodiscard]] Time::Range range() const { return m_Range; }
@@ -38,6 +46,7 @@ namespace NrpProblemInstances {
         [[nodiscard]] std::vector<Domain::Employee> employees() const { return m_Employees; }
 
     protected:
+        const Type m_Type;
         const char *m_Data {};
         size_t m_DataSize {};
 
@@ -59,6 +68,9 @@ namespace NrpProblemInstances {
         size_t m_EmployeeCounter{};
         std::unordered_map<std::string, size_t> m_EmployeeNameToIndexMap{};
         std::vector<Domain::Employee> m_Employees{};
+
+        void parseTxt();
+        void parseXml();
 
     private:
         struct RawAvailabilitySpecificRequest {

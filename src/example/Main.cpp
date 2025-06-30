@@ -23,6 +23,9 @@
 
 #include "Example.h"
 
+#include "IO/StateFile.h"
+#include "NrpProblemInstances/NrpProblemSerializer.h"
+
 #ifdef MEMORY_USAGE_DEBUG
 #include "Memory/AllocationMetrics.h"
 #endif
@@ -84,6 +87,9 @@ void solve() {
     {
         IO::StatisticsFile scoreStatisticsFile("score_statistics.csv");
         localSearch.scoreStatistics().write(scoreStatisticsFile);
+        IO::StateFile stateFile("solution.txt");
+        auto serializer = NrpProblemInstances::NrpProblemSerializer();
+        serializer.serialize(stateFile, localSearch.getBestState());
     }
 }
 

@@ -95,6 +95,18 @@ namespace Time {
         return std::chrono::time_point_cast<INSTANT_PRECISION>(timePoint + std::chrono::nanoseconds(nanoseconds));
     }
 
+    static std::chrono::sys_days ParseIsoDate(const std::string& iso) {
+        std::chrono::sys_days dayPoint;
+        std::istringstream iss {iso};
+        std::chrono::from_stream(iss, "%F", dayPoint);
+        if (iss.fail()) throw std::runtime_error("Bad date: " + iso);
+        return dayPoint;
+    }
+
+    static Instant ParseIsoUtc(const std::string& iso) {
+        return std::chrono::time_point_cast<INSTANT_PRECISION>(ParseIsoDate(iso));
+    }
+
     /**
      * @return weekday as an unsigned 8-bit int (0 - Monday, ..., 6 - Sunday)
      */

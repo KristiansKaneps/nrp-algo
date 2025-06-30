@@ -36,6 +36,7 @@ include(${CMAKE_SOURCE_DIR}/lib/raylib/FindRaylib.cmake)
 #include(${CMAKE_SOURCE_DIR}/lib/postgres/FindPostgres.cmake) # Use project's (not system's) PostgreSQL
 find_package(PostgreSQL)
 include(${CMAKE_SOURCE_DIR}/lib/libtorch/FindTorch.cmake)
+include(${CMAKE_SOURCE_DIR}/lib/tinyxml/FindTinyxml.cmake)
 
 # Verify libtorch dependency
 message(STATUS "LibTorch version: ${TORCH_VERSION}")
@@ -95,6 +96,7 @@ target_include_directories(${PROJECT_NAME}_exec
 target_link_libraries(${PROJECT_NAME}_exec PRIVATE
         ${PROJECT_NAME}
         raylib
+        tinyxml2::tinyxml2
         PostgreSQL::PostgreSQL
 )
 

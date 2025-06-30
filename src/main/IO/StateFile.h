@@ -1,5 +1,5 @@
-#ifndef STATISTICSFILE_H
-#define STATISTICSFILE_H
+#ifndef STATEFILE_H
+#define STATEFILE_H
 
 #include <filesystem>
 #include <fstream>
@@ -8,18 +8,18 @@
 
 #include "Utils/StringUtils.h"
 
-#define STATISTICS_FILE_OUTPUT_DIRECTORY "notebooks/statistics_output/"
+#define STATE_FILE_OUTPUT_DIRECTORY "notebooks/state_output/"
 
 namespace IO {
-    class StatisticsFile {
+    class StateFile {
     public:
-        StatisticsFile(std::string filename, const bool prependTimestamp = true) {
+        StateFile(std::string filename, const bool prependTimestamp = true) {
             if (prependTimestamp) {
                 filename = String::getTimestampPrefix() + filename;
             }
 
             const std::filesystem::path parentDir = std::filesystem::current_path().parent_path();
-            const std::filesystem::path fullPath = parentDir / STATISTICS_FILE_OUTPUT_DIRECTORY;
+            const std::filesystem::path fullPath = parentDir / STATE_FILE_OUTPUT_DIRECTORY;
 
             std::filesystem::create_directories(fullPath);
 
@@ -30,43 +30,43 @@ namespace IO {
             }
         }
 
-        ~StatisticsFile() {
+        ~StateFile() {
             m_Out.close();
         }
 
         std::ofstream& stream() { return m_Out; }
 
-        StatisticsFile& operator<<(const char c) {
+        StateFile& operator<<(const char c) {
             m_Out << c;
             return *this;
         }
 
-        StatisticsFile& operator<<(const int32_t integer) {
+        StateFile& operator<<(const int32_t integer) {
             m_Out << integer;
             return *this;
         }
 
-        StatisticsFile& operator<<(const uint32_t integer) {
+        StateFile& operator<<(const uint32_t integer) {
             m_Out << integer;
             return *this;
         }
 
-        StatisticsFile& operator<<(const int64_t integer) {
+        StateFile& operator<<(const int64_t integer) {
             m_Out << integer;
             return *this;
         }
 
-        StatisticsFile& operator<<(const uint64_t integer) {
+        StateFile& operator<<(const uint64_t integer) {
             m_Out << integer;
             return *this;
         }
 
-        StatisticsFile& operator<<(const char* cStr) {
+        StateFile& operator<<(const char* cStr) {
             m_Out << cStr;
             return *this;
         }
 
-        StatisticsFile& operator<<(const std::string& str) {
+        StateFile& operator<<(const std::string& str) {
             m_Out << str;
             return *this;
         }
@@ -76,4 +76,4 @@ namespace IO {
     };
 }
 
-#endif //STATISTICSFILE_H
+#endif //STATEFILE_H
