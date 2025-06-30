@@ -178,7 +178,7 @@ namespace Domain {
             uint8_t minConsecutiveShiftCount = 0;
             uint8_t maxConsecutiveShiftCount = 0;
             uint8_t minConsecutiveDaysOffCount = 0;
-            uint8_t maxWorkingWeekendCount = 2;
+            int16_t maxWorkingWeekendCount = -1;
         };
 
     private:

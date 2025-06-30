@@ -27,7 +27,7 @@ namespace Domain::Constraints {
                 const auto& g = state.y()[y].generalConstraints();
                 uint8_t consecutiveShiftCount = 0;
                 uint8_t consecutiveDaysOffCount = 0;
-                uint8_t workingWeekendCount = 0;
+                int16_t workingWeekendCount = 0;
 
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
                     bool wasWorking = false;
@@ -41,11 +41,22 @@ namespace Domain::Constraints {
                     if (wasWorking) {
                         consecutiveDaysOffCount = 0;
                         consecutiveShiftCount = 1;
-                        workingWeekendCount = static_cast<uint8_t>(m_Weekends[z]);
+                        // Comment out the next first line and uncomment the next second line
+                        // if working weekends corresponds to planning horizon:
+                        // workingWeekendCount = static_cast<int16_t>(m_Weekends[z]);
+                        workingWeekendCount += m_Weekends[z];
                     } else {
                         consecutiveDaysOffCount = 1;
                         consecutiveShiftCount = 0;
-                        workingWeekendCount = 0;
+                        // Comment out the next line
+                        // if working weekends corresponds to planning horizon:
+                        // workingWeekendCount = 0;
+                    }
+
+                    if (z + 1 >= state.sizeZ()) {
+                        if (g.maxWorkingWeekendCount >= 0 && workingWeekendCount > g.maxWorkingWeekendCount) {
+                            totalScore.violate(Violation::yz(y, z, {-1}));
+                        }
                     }
 
                     for (axis_size_t z1 = z + 1; z1 < state.sizeZ(); ++z1) {
@@ -64,7 +75,7 @@ namespace Domain::Constraints {
                             if (g.maxConsecutiveShiftCount > 0 && consecutiveShiftCount > g.maxConsecutiveShiftCount) {
                                 totalScore.violate(Violation::yz(y, z1, {-1}));
                             }
-                            if (workingWeekendCount > g.maxWorkingWeekendCount) {
+                            if (g.maxWorkingWeekendCount >= 0 && workingWeekendCount > g.maxWorkingWeekendCount) {
                                 totalScore.violate(Violation::yz(y, z1, {-1}));
                             }
                         } else if (wasWorking) {

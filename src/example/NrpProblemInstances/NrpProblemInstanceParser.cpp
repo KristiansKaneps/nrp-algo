@@ -74,7 +74,7 @@ namespace NrpProblemInstances {
                 Domain::Shift shift(
                     shiftIndex,
                     Domain::Shift::ALL_WEEKDAYS,
-                    Time::DailyInterval("00:00", static_cast<Time::day_minutes_t>(duration)),
+                    Time::DailyInterval("09:00", static_cast<Time::day_minutes_t>(duration)),
                     shiftID,
                     1, 1,
                     0, 0,
