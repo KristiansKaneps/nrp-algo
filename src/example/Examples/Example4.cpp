@@ -20,7 +20,7 @@ using namespace Domain;
 
 void Example::create() {
 
-    NrpProblemInstances::NrpProblemInstanceParser parser("Instance1.txt");
+    NrpProblemInstances::NrpProblemInstanceParser parser("Instance2.txt");
     parser.parse();
 
     const std::chrono::time_zone *const timeZone = parser.timeZone();
@@ -74,7 +74,7 @@ void Example::create() {
 
     state.printSize();
 
-    auto *employeeGeneralConstraint = new Domain::Constraints::EmployeeGeneralConstraint(state.range(), state.timeZone(), state.z());
+    auto *employeeGeneralConstraint = new Domain::Constraints::EmployeeGeneralConstraint(state.range(), state.timeZone(), state.x(), state.z());
     auto *validShiftDayConstraint = new Domain::Constraints::ValidShiftDayConstraint(state.range(), state.timeZone(), state.x(), state.y().size(), state.z(), state.w().size());
     auto *noOverlapConstraint = new Domain::Constraints::NoOverlapConstraint(state.x());
     auto *requiredSkillConstraint = new Domain::Constraints::RequiredSkillConstraint(state.x(), state.y(), state.w());

@@ -18,7 +18,7 @@ namespace Search {
                              const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints) :
             mp_InitialState(initialState),
             m_Constraints(constraints),
-            m_HeuristicProvider(::Heuristics::HeuristicProvider<X, Y, Z, W>(constraints.size())),
+            m_HeuristicProvider(::Heuristics::HeuristicProvider<X, Y, Z, W>(initialState, constraints)),
             m_Task(*initialState, m_Constraints, m_ScoreStatistics) { }
         // ReSharper restore CppRedundantQualifier
 
@@ -77,24 +77,29 @@ namespace Search {
         }
 
     protected:
+        static constexpr int ITERATION_COUNT_AT_ZERO_SCORE_THRESHOLD = 2000;
+        static constexpr int ITERATION_COUNT_AT_FEASIBLE_SCORE_THRESHOLD = 4000;
+        static constexpr int MAX_FEASIBLE_IDLE_ITERATION_COUNT = 3000;
+        static constexpr int MAX_IDLE_ITERATION_COUNT = 500000;
+
         /**
          * Defines termination criteria.
          * @return `true` if should keep searching for local optima, `false` otherwise
          */
         [[nodiscard]] bool shouldStep() {
             if (m_Task.getOutputScore().isZero()) [[unlikely]] {
-                if (m_IterationCountAtZeroScore >= 2000000) [[unlikely]] return m_Task.getIdleIterationCount() < 3000000;
+                if (m_IterationCountAtZeroScore >= ITERATION_COUNT_AT_ZERO_SCORE_THRESHOLD) [[unlikely]] return m_Task.getIdleIterationCount() < MAX_FEASIBLE_IDLE_ITERATION_COUNT >> 1;
                 m_IterationCountAtZeroScore += 1;
                 return true;
             }
             if (m_Task.getOutputScore().isFeasible()) [[unlikely]] {
-                if (m_IterationCountAtFeasibleScore >= 4000000) [[unlikely]] return m_Task.getIdleIterationCount() < 3000000;
+                if (m_IterationCountAtFeasibleScore >= ITERATION_COUNT_AT_FEASIBLE_SCORE_THRESHOLD) [[unlikely]] return m_Task.getIdleIterationCount() < MAX_FEASIBLE_IDLE_ITERATION_COUNT;
                 m_IterationCountAtFeasibleScore += 1;
                 return true;
             }
             // return m_Task.getIterationCount() <= 20000 && (m_Task.getIterationCount() <= 2000 || m_Task.getIdleIterationCount() <= m_Task.getIterationCount() * 0.02);
             // return m_Task.getIterationCount() <= 2000 || m_Task.getIdleIterationCount() <= m_Task.getIterationCount() * 0.02;
-            return m_Task.getIdleIterationCount() < 10000000;
+            return m_Task.getIdleIterationCount() < MAX_IDLE_ITERATION_COUNT;
             // return !m_Task.getOutputScore().isZero();
         }
 

@@ -14,8 +14,7 @@ namespace Domain::Constraints {
                                                  const Axes::Axis<Domain::Shift>& xAxis,
                                                  const Axes::Axis<Domain::Employee>& yAxis,
                                                  const Axes::Axis<Domain::Day>& zAxis) : Constraint(
-                "EMPLOYMENT_MAX_DURATION", {
-                }),
+                "EMPLOYMENT_MAX_DURATION", {}),
             m_WorkdayCount(range.getWorkdayCount(timeZone)),
             m_PartialWorkdayCount(range.getPartialWorkdayCount(timeZone)),
             m_PartitionSize(zAxis.size() < partitionSize ? zAxis.size() : partitionSize),
@@ -62,6 +61,7 @@ namespace Domain::Constraints {
 
                 int64_t totalDurationInMinutes {};
                 axis_size_t totalAssignedShiftCount {};
+                Violation::info_t info = 0;
 
                 for (axis_size_t w = 0; w < state.sizeW(); ++w) {
                     const auto *s = e.skill(w);
@@ -97,39 +97,73 @@ namespace Domain::Constraints {
                     totalDurationInMinutes += durationInMinutes;
                     totalAssignedShiftCount += assignedShiftCount;
 
-                    const int64_t diff = maxWorkloadDurationInMinutes - durationInMinutes;
-                    const int64_t diffScale = diff > 0 ? 2 : 1; // seems to balance workload between employees
-                    const int64_t overtimeDiff = diff + maxWorkloadOvertimeDurationInMinutes;
+                    // const int64_t diff = maxWorkloadDurationInMinutes - durationInMinutes; // available minutes
+                    // const int64_t diffScale = diff > 0 ? 2 : 1; // seems to balance workload between employees
+                    // info = diffScale;
+                    // const int64_t overtimeDiff = diff + maxWorkloadOvertimeDurationInMinutes;
+                    //
+                    // constexpr int64_t ABS_DIFF_ALLOWANCE = 3 * 60;
+                    // const int64_t absDiff = std::abs(diff);
+                    //
+                    // const score_t absHard = (absDiff - 1) * diffScale / ABS_DIFF_ALLOWANCE; // scale with larger differences
+                    //
+                    // const score_t strict = -(overtimeDiff < 0 || (maxShiftCount >= 0 && assignedShiftCount > maxShiftCount));
+                    // const score_t hard = maxShiftCount != 0 ? -(absHard * absHard) : 0;
+                    // // const score_t hard = -(maxShiftCount != 0 && absHard > 0) * 100 * diffScale;
 
-                    constexpr int64_t ABS_DIFF_ALLOWANCE = 3 * 60;
-                    const int64_t absDiff = std::abs(diff);
+                    const int64_t overloadMinutes = durationInMinutes - maxWorkloadDurationInMinutes;
+                    const int64_t overtimeAvailable = maxWorkloadOvertimeDurationInMinutes;
 
-                    const score_t absHard = (absDiff - 1) * diffScale / ABS_DIFF_ALLOWANCE; // scale with larger differences
+                    const bool shiftLimitExceeded = (maxShiftCount >= 0 && assignedShiftCount > maxShiftCount);
+                    const bool durationExceeded = (overloadMinutes > overtimeAvailable);
+                    info = 2 - (overloadMinutes >= overtimeAvailable);
 
-                    const score_t strict = -(overtimeDiff < 0 || (maxShiftCount >= 0 && assignedShiftCount > maxShiftCount));
-                    const score_t hard = maxShiftCount != 0 ? -(absHard * absHard) : 0;
+                    const score_t strict = -(shiftLimitExceeded || durationExceeded);
 
-                    if (strict != 0 || hard != 0) { totalScore.violate(Violation::yw(y, w, {strict, hard})); }
+                    // Sigmoid penalty: increases smoothly from 0 to -100
+                    const double overload = std::max<double>(0, overloadMinutes - overtimeAvailable);
+                    const score_t hard = durationExceeded
+                        ? static_cast<score_t>(-100.0 / (1.0 + std::exp(-0.01 * (overload - 60)))) // 60 mins is midpoint
+                        : 0;
+
+                    if (strict != 0 || hard != 0) { totalScore.violate(Violation::yw(y, w, {strict, hard}, info)); }
                 }
 
                 score_t strict = -(totalChangeEvent.maxShiftCount >= 0 && totalAssignedShiftCount > totalChangeEvent.maxShiftCount);
                 score_t hard = 0;
 
                 if (!totalChangeEvent.anyDuration && (totalChangeEvent.maxShiftCount == -1 || totalChangeEvent.maxShiftCount > 0)) {
-                    const int64_t diff = maxTotalWorkloadDurationInMinutes - totalDurationInMinutes;
-                    const int64_t diffScale = diff > 0 ? 2 : 1; // seems to balance workload between employees
-                    const int64_t overtimeDiff = diff + maxTotalWorkloadOvertimeDurationInMinutes;
+                    // const int64_t diff = maxTotalWorkloadDurationInMinutes - totalDurationInMinutes;
+                    // const int64_t diffScale = diff > 0 ? 2 : 1; // seems to balance workload between employees
+                    // info = diffScale;
+                    // const int64_t overtimeDiff = diff + maxTotalWorkloadOvertimeDurationInMinutes;
+                    //
+                    // constexpr int64_t ABS_DIFF_ALLOWANCE = 3 * 60;
+                    // const int64_t absDiff = std::abs(diff);
+                    //
+                    // const score_t absHard = (absDiff - 1) * diffScale / ABS_DIFF_ALLOWANCE; // scale with larger differences
+                    //
+                    // strict = -(overtimeDiff < 0 || strict == -1);
+                    // hard = -(absHard * absHard);
+                    // // hard = -(absHard > 0) * 100 * diffScale;
 
-                    constexpr int64_t ABS_DIFF_ALLOWANCE = 3 * 60;
-                    const int64_t absDiff = std::abs(diff);
+                    const int64_t overloadMinutes = totalDurationInMinutes - maxTotalWorkloadDurationInMinutes;
+                    const int64_t overtimeAvailable = maxTotalWorkloadOvertimeDurationInMinutes;
 
-                    const score_t absHard = (absDiff - 1) * diffScale / ABS_DIFF_ALLOWANCE; // scale with larger differences
+                    const bool shiftLimitExceeded = (totalChangeEvent.maxShiftCount >= 0 && totalAssignedShiftCount > totalChangeEvent.maxShiftCount);
+                    const bool durationExceeded = (overloadMinutes > overtimeAvailable);
+                    info = 2 - (overloadMinutes >= overtimeAvailable);
 
-                    strict = -(overtimeDiff < 0 || strict == -1);
-                    hard = -(absHard * absHard);
+                    strict = -(shiftLimitExceeded || durationExceeded);
+
+                    // Sigmoid penalty: increases smoothly from 0 to -100
+                    const double overload = std::max<double>(0, overloadMinutes - overtimeAvailable);
+                    hard = durationExceeded
+                        ? static_cast<score_t>(-100.0 / (1.0 + std::exp(-0.01 * (overload - 60)))) // 60 mins is midpoint
+                        : 0;
                 }
 
-                if (strict != 0 || hard != 0) { totalScore.violate(Violation::y(y, {strict, hard})); }
+                if (strict != 0 || hard != 0) { totalScore.violate(Violation::y(y, {strict, hard}, info)); }
             }
 
             return totalScore;

@@ -8,13 +8,24 @@ namespace Domain::Constraints {
     class EmployeeGeneralConstraint final : public DomainConstraint {
     public:
         explicit EmployeeGeneralConstraint(const Time::Range& range, const std::chrono::time_zone *timeZone,
+                                           const Axes::Axis<Domain::Shift>& xAxis,
                                            const Axes::Axis<Domain::Day>& zAxis) : Constraint(
                 "EMPLOYEE_GENERAL_CONSTRAINT", {}),
-            m_Weekends(zAxis.size()) {
+            m_Weekends(zAxis.size()),
+            m_ShiftDurationInMinutes(xAxis.size() * zAxis.size(), 0) {
             for (axis_size_t z = 0; z < zAxis.size(); ++z) {
                 const auto& d = zAxis[z];
                 const auto weekday = Time::InstantToWeekday(range.getDayAt(z, timeZone));
                 m_Weekends.assign(z, weekday == 5 || weekday == 6);
+
+                const auto day = range.getDayAt(z, timeZone);
+
+                for (axis_size_t x = 0; x < xAxis.size(); ++x) {
+                    const auto& s = xAxis[x];
+                    const auto shiftRange = s.interval().toRange(day);
+                    const auto shiftDuration = shiftRange.duration<std::chrono::minutes>(timeZone);
+                    m_ShiftDurationInMinutes[x * zAxis.size() + z] = shiftDuration.count();
+                }
             }
         }
 
@@ -31,9 +42,11 @@ namespace Domain::Constraints {
 
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
                     bool wasWorking = false;
+                    int32_t minutes = 0;
                     for (axis_size_t x = 0; x < state.sizeX(); ++x) {
                         if (state.get(x, y, z)) {
                             wasWorking = true;
+                            minutes = m_ShiftDurationInMinutes[x];
                             break;
                         }
                     }
@@ -55,7 +68,7 @@ namespace Domain::Constraints {
 
                     if (z + 1 >= state.sizeZ()) {
                         if (g.maxWorkingWeekendCount >= 0 && workingWeekendCount > g.maxWorkingWeekendCount) {
-                            totalScore.violate(Violation::yz(y, z, {-1}));
+                            totalScore.violate(Violation::yz(y, z, {0, -minutes / 2}));
                         }
                     }
 
@@ -76,7 +89,7 @@ namespace Domain::Constraints {
                                 totalScore.violate(Violation::yz(y, z1, {-1}));
                             }
                             if (g.maxWorkingWeekendCount >= 0 && workingWeekendCount > g.maxWorkingWeekendCount) {
-                                totalScore.violate(Violation::yz(y, z1, {-1}));
+                                totalScore.violate(Violation::yz(y, z1, {0, -minutes / 2}));
                             }
                         } else if (wasWorking) {
                             z = z1 - 1;
@@ -105,6 +118,8 @@ namespace Domain::Constraints {
 
     private:
         BitArray::BitArray m_Weekends;
+
+        std::vector<int32_t> m_ShiftDurationInMinutes;
     };
 }
 

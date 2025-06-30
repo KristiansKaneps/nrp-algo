@@ -12,8 +12,10 @@
 #include "HyperHeuristics/TransformerModel.h"
 
 #include "Moves/AssignPerturbator.h"
-#include "Moves/RandomAssignmentTogglePerturbator.h"
 #include "Moves/UnassignPerturbator.h"
+#include "Moves/RandomAssignmentTogglePerturbator.h"
+#include "Moves/RankedIntersectionTogglePerturbator.h"
+#include "Moves/ShiftByZPerturbator.h"
 
 #define HYPERHEURISTICS_HEURISTIC_COUNT 2
 #define HYPERHEURISTICS_INPUT_DIM 9
@@ -40,14 +42,16 @@ namespace Heuristics {
     template<typename X, typename Y, typename Z, typename W>
     class HeuristicProvider {
     public:
-        explicit HeuristicProvider(const size_t constraintCount) :
-            m_ConstraintCount(constraintCount),
+        explicit HeuristicProvider(const ::State::State<X, Y, Z, W> *initialState, const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& constraints) :
+            m_ConstraintCount(constraints.size()),
             m_TransformerModel(HYPERHEURISTICS_INPUT_DIM, HYPERHEURISTICS_D_MODEL, HYPERHEURISTICS_N_HEAD,
                                HYPERHEURISTICS_NUM_LAYERS, HYPERHEURISTICS_HEURISTIC_COUNT) {
             m_GeneratedPerturbators.shrink_to_fit();
 
             m_AvailablePerturbators = {
                 new RandomAssignmentTogglePerturbator<X, Y, Z, W>(),
+                new RankedIntersectionTogglePerturbator<X, Y, Z, W>(constraints),
+                new ShiftByZPerturbator<X, Y, Z, W>(),
             };
 
             torch::manual_seed(42);
@@ -113,9 +117,36 @@ namespace Heuristics {
             m_GeneratedPerturbators.clear();
             size_t count = m_Random.randomInt(1, 5);
             m_GeneratedPerturbators.reserve(count);
+
+            // Smarter heuristics
+            if (m_Random.randomInt(0, 10) > 5) {
+                for (const auto* perturbTemplate : m_AvailablePerturbators) {
+                    auto* perturb = perturbTemplate->clone();
+                    if (perturb->configureIfApplicable(evaluator, state) && !perturb->isIdentity()) {
+                        m_GeneratedPerturbators.emplace_back(perturb);
+                        if (count > 0) --count;
+                    } else {
+                        delete perturb;
+                    }
+                }
+            }
+
+            // // Shift heuristics
+            // if (m_Random.randomInt(0, 10) > 9) {
+            //     const AutonomousPerturbator<X, Y, Z, W> *perturbTemplate = m_AvailablePerturbators[2];
+            //     AutonomousPerturbator<X, Y, Z, W> *perturb = perturbTemplate->clone();
+            //     perturb->configure(nullptr, state);
+            //     if (perturb->isIdentity()) {
+            //         delete perturb;
+            //     } else {
+            //         m_GeneratedPerturbators.emplace_back(perturb);
+            //     }
+            // }
+
+            // Brute heuristics
             for (size_t i = 0; m_GeneratedPerturbators.size() < count && count < 1000; ++i) {
-                // const size_t perturbatorIndex = m_Random.randomInt(0, m_Perturbators.size() - 1);
-                const AutonomousPerturbator<X, Y, Z, W> *perturbTemplate = m_AvailablePerturbators[i % m_AvailablePerturbators.size()];
+                // const size_t perturbatorIndex = m_Random.randomInt(0, m_AvailablePerturbators.size() - 1);
+                const AutonomousPerturbator<X, Y, Z, W> *perturbTemplate = m_AvailablePerturbators[0];
                 AutonomousPerturbator<X, Y, Z, W> *perturb = perturbTemplate->clone();
                 perturb->configure(nullptr, state);
                 if (perturb->isIdentity()) {

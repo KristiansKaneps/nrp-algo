@@ -46,7 +46,7 @@ namespace Search::Task {
             // Generate new candidate solution
             ::State::State<X, Y, Z, W>& candidateState = m_CurrentState;
             auto perturbators = heuristicProvider.generateSearchPerturbators(m_Evaluator, candidateState);
-            if (!m_RepairPerturbatorsApplied && m_BestScoreAchievedBeforePerturbationCount > 500) {
+            if (!m_RepairPerturbatorsApplied && m_BestScoreAchievedBeforePerturbationCount > 100000) {
                 m_RepairPerturbatorsApplied = true;
                 auto repairPerturbators = heuristicProvider.generateRepairPerturbators(m_Evaluator, candidateState);
                 repairPerturbators.modify(candidateState);
