@@ -38,7 +38,7 @@ namespace Moves {
             }
         }
 
-        bool isIdentity() const override {
+        [[nodiscard]] bool isIdentity() const override {
             return m_Locations.size() == 0;
         }
 

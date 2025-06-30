@@ -15,11 +15,10 @@ namespace Search {
     public:
         // ReSharper disable CppRedundantQualifier
         explicit LocalSearch(const ::State::State<X, Y, Z, W> *initialState,
-                             const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints,
-                             const ::Heuristics::HeuristicProvider<X, Y, Z, W> &heuristicProvider) :
+                             const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints) :
             mp_InitialState(initialState),
             m_Constraints(constraints),
-            m_HeuristicProvider(heuristicProvider),
+            m_HeuristicProvider(::Heuristics::HeuristicProvider<X, Y, Z, W>(constraints.size())),
             m_Task(*initialState, m_Constraints, m_ScoreStatistics) { }
         // ReSharper restore CppRedundantQualifier
 

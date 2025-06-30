@@ -14,7 +14,7 @@ namespace Moves {
             m_PrevValue = state.get(m_Location);
         }
 
-        bool isIdentity() const override {
+        [[nodiscard]] bool isIdentity() const override {
             return m_PrevValue == 1;
         }
 

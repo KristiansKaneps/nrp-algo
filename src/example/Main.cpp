@@ -46,7 +46,7 @@ void solve() {
     using std::chrono::high_resolution_clock;
     using std::chrono_literals::operator ""s;
 
-    Search::LocalSearch localSearch(&gp_AppState->state, gp_AppState->constraints, gp_AppState->heuristicProvider);
+    Search::LocalSearch localSearch(&gp_AppState->state, gp_AppState->constraints);
 
     bool mutexWasLocked = false;
 

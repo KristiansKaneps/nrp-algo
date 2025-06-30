@@ -12,7 +12,6 @@
 #include "Domain/Entities/Skill.h"
 
 #include "Constraints/Constraint.h"
-#include "Heuristics/HeuristicProvider.h"
 
 struct RenderCache {
     uint64_t maxTotalWorkDuration = 0;
@@ -48,7 +47,6 @@ struct AppState {
     Score::Score score;
     State::State<Shift, Employee, Day, Skill> state;
     std::vector<Constraints::Constraint<Shift, Employee, Day, Skill> *> constraints;
-    Heuristics::HeuristicProvider<Shift, Employee, Day, Skill> heuristicProvider;
 
     RenderCache renderCache;
 

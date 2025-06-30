@@ -12,8 +12,6 @@
 #include "Domain/Constraints/EmployeeAvailabilityConstraint.h"
 #include "Domain/Constraints/CumulativeFatigueConstraint.h"
 
-#include "Domain/Heuristics/DomainHeuristicProvider.h"
-
 #include "Search/LocalSearch.h"
 
 #include "Time/RangeCollection.h"
@@ -379,8 +377,6 @@ void Example::create() {
         cumulativeFatigueConstraint,
     };
 
-    const auto heuristicProvider = Domain::Heuristics::DomainHeuristicProvider(constraints.size());
-
     std::cout << "State 1 score: " << Evaluation::evaluateState(state, constraints) << std::endl;
     state.clearAll();
     // state.random(0.025);
@@ -390,7 +386,6 @@ void Example::create() {
         .score = Evaluation::evaluateState(state, constraints),
         .state = state,
         .constraints = constraints,
-        .heuristicProvider = heuristicProvider,
     };
 
     gp_Update = new LocalSearchUpdate{

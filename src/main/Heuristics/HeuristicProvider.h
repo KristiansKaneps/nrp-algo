@@ -12,6 +12,7 @@
 #include "HyperHeuristics/TransformerModel.h"
 
 #include "Moves/AssignPerturbator.h"
+#include "Moves/RandomAssignmentTogglePerturbator.h"
 #include "Moves/UnassignPerturbator.h"
 
 #define HYPERHEURISTICS_HEURISTIC_COUNT 2
@@ -45,12 +46,17 @@ namespace Heuristics {
                                HYPERHEURISTICS_NUM_LAYERS, HYPERHEURISTICS_HEURISTIC_COUNT) {
             m_GeneratedPerturbators.shrink_to_fit();
 
-            m_AvailablePerturbators = {};
+            m_AvailablePerturbators = {
+                new RandomAssignmentTogglePerturbator<X, Y, Z, W>(),
+            };
 
             torch::manual_seed(42);
         }
 
-        ~HeuristicProvider() = default;
+        ~HeuristicProvider() {
+            for (const auto* peturbator : m_AvailablePerturbators)
+                delete peturbator;
+        }
 
         Perturbator<X, Y, Z, W> *operator[](const size_t index) const { return m_AvailablePerturbators[index]; }
 
@@ -109,8 +115,8 @@ namespace Heuristics {
             m_GeneratedPerturbators.reserve(count);
             for (size_t i = 0; m_GeneratedPerturbators.size() < count && count < 1000; ++i) {
                 // const size_t perturbatorIndex = m_Random.randomInt(0, m_Perturbators.size() - 1);
-                AutonomousPerturbator<X, Y, Z, W> *perturb = m_AvailablePerturbators[i % m_AvailablePerturbators.size()]
-                    ->clone();
+                const AutonomousPerturbator<X, Y, Z, W> *perturbTemplate = m_AvailablePerturbators[i % m_AvailablePerturbators.size()];
+                AutonomousPerturbator<X, Y, Z, W> *perturb = perturbTemplate->clone();
                 perturb->configure(nullptr, state);
                 if (perturb->isIdentity()) {
                     delete perturb;
