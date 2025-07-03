@@ -18,8 +18,6 @@ if (NOT tinyxml_FOUND) # If there's none, fetch and build tinyxml
     FetchContent_GetProperties(tinyxml)
     if (NOT tinyxml_POPULATED) # Have we downloaded tinyxml yet?
         set(FETCHCONTENT_QUIET NO)
-        set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-        set(BUILD_TESTING     OFF CACHE BOOL "" FORCE)
         FetchContent_MakeAvailable(tinyxml)
     endif()
 endif()
