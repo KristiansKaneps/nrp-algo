@@ -7,13 +7,13 @@
 namespace Domain::Moves {
     class ValidShiftDayRepairPerturbator final : public DomainAutonomousPerturbator {
     public:
-        explicit ValidShiftDayRepairPerturbator(const axis_size_t yAxisSize, const axis_size_t wAxisSize) : m_PrevValue(BitArray::BitArray(yAxisSize * wAxisSize)) {}
+        explicit ValidShiftDayRepairPerturbator(const axis_size_t yAxisSize, const axis_size_t wAxisSize) noexcept : m_PrevValue(BitArray::BitArray(yAxisSize * wAxisSize)) {}
 
-        [[nodiscard]] ValidShiftDayRepairPerturbator *clone() const override {
+        [[nodiscard]] ValidShiftDayRepairPerturbator *clone() const noexcept override {
             return new ValidShiftDayRepairPerturbator(*this);
         }
 
-        void configure(const Constraints::Violation *violation, const State::DomainState& state) override {
+        void configure(const Constraints::Violation *violation, const State::DomainState& state) noexcept override {
             m_X = violation->getX();
             m_Z = violation->getZ();
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
@@ -23,7 +23,7 @@ namespace Domain::Moves {
             }
         }
 
-        void modify(State::DomainState& state) override {
+        void modify(State::DomainState& state) noexcept override {
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                 for (axis_size_t w = 0; w < state.sizeW(); ++w) {
                     state.clear(m_X, y, m_Z, w);
@@ -31,7 +31,7 @@ namespace Domain::Moves {
             }
         }
 
-        void revert(State::DomainState& state) const override {
+        void revert(State::DomainState& state) const noexcept override {
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                 for (axis_size_t w = 0; w < state.sizeW(); ++w) {
                     state.assign(m_X, y, m_Z, w, m_PrevValue.get(y * state.sizeW() + w));

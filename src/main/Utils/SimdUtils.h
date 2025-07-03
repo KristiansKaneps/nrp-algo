@@ -9,7 +9,7 @@
 #include <cstdint>
 
 namespace Simd {
-    inline void copy_bits(uint8_t *dst, const uint8_t *src, const size_t count) {
+    inline void copy_bits(uint8_t *dst, const uint8_t *src, const size_t count) noexcept {
         constexpr size_t SIMDWidth = 32; // AVX processes 256 bits (32 bytes) at a time
         const size_t simdCount = count / SIMDWidth;
 

@@ -31,7 +31,7 @@ namespace Evaluation {
     template<typename X, typename Y, typename Z, typename W>
     class Evaluator {
     public:
-        explicit Evaluator(const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& constraints) :
+        explicit Evaluator(const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& constraints) noexcept :
             m_Constraints(constraints),
             m_ConstraintScores(constraints.size(), ::Constraints::ConstraintScore{}) {
             #ifdef PRINT_CONSTRAINT_DEBUG_INFO
@@ -46,16 +46,16 @@ namespace Evaluation {
             #endif
         }
 
-        ~Evaluator() = default;
-        Evaluator(const Evaluator&) = default;
+        ~Evaluator() noexcept = default;
+        Evaluator(const Evaluator&) noexcept = default;
 
-        const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& constraints() const { return m_Constraints; }
-        [[nodiscard]] const std::vector<::Constraints::ConstraintScore>& constraintScores() const { return m_ConstraintScores; }
-        [[nodiscard]] size_t constraintCount() const { return m_Constraints.size(); }
-        [[nodiscard]] size_t totalConstraintViolationCount() const { return m_TotalConstraintViolationCount; }
-        [[nodiscard]] size_t violatedConstraintCount() const { return m_ViolatedConstraintCount; }
+        const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& constraints() const noexcept { return m_Constraints; }
+        [[nodiscard]] const std::vector<::Constraints::ConstraintScore>& constraintScores() const noexcept { return m_ConstraintScores; }
+        [[nodiscard]] size_t constraintCount() const noexcept { return m_Constraints.size(); }
+        [[nodiscard]] size_t totalConstraintViolationCount() const noexcept { return m_TotalConstraintViolationCount; }
+        [[nodiscard]] size_t violatedConstraintCount() const noexcept { return m_ViolatedConstraintCount; }
 
-        void printConstraintInfo() const {
+        void printConstraintInfo() const noexcept {
             #ifdef PRINT_CONSTRAINT_DEBUG_INFO
             if (!m_AnyConstraintPrintsInfo) [[likely]] return;
             size_t i = 0;
@@ -87,7 +87,7 @@ namespace Evaluation {
             #endif
         }
 
-        Score::Score evaluateState(const ::State::State<X, Y, Z, W>& state) {
+        [[nodiscard]] Score::Score evaluateState(const ::State::State<X, Y, Z, W>& state) noexcept {
             Score::Score score {};
             m_ConstraintScores.clear();
             m_TotalConstraintViolationCount = 0;

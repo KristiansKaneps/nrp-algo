@@ -11,7 +11,7 @@ namespace Domain::Constraints {
     class CumulativeFatigueConstraint final : public DomainConstraint {
     public:
         explicit CumulativeFatigueConstraint(const int32_t maxCumulativeMinutes,
-                                             const Axes::Axis<Domain::Shift>& xAxis) :
+                                             const Axes::Axis<Domain::Shift>& xAxis) noexcept :
             Constraint("CUMULATIVE_FATIGUE_CONSTRAINT", {}),
             m_MaxCumulativeMinutes(maxCumulativeMinutes) {
             m_SortedShiftIndices.reserve(xAxis.size());
@@ -27,12 +27,12 @@ namespace Domain::Constraints {
                               });
         }
 
-        explicit CumulativeFatigueConstraint(const Axes::Axis<Domain::Shift>& xAxis) : CumulativeFatigueConstraint(
+        explicit CumulativeFatigueConstraint(const Axes::Axis<Domain::Shift>& xAxis) noexcept : CumulativeFatigueConstraint(
             5 * 8 * 60, xAxis) { }
 
-        ~CumulativeFatigueConstraint() override = default;
+        ~CumulativeFatigueConstraint() noexcept override = default;
 
-        [[nodiscard]] ConstraintScore evaluate(const State::DomainState& state) override {
+        [[nodiscard]] ConstraintScore evaluate(const State::DomainState& state) noexcept override {
             #ifdef CUMULATIVEFATIGUECONSTRAINT_CONSTRAINT_DEBUG_INFO
             debug_MaxConsecutiveShiftsPerEmployee.clear();
             debug_MaxConsecutiveShiftsPerEmployee.reserve(state.sizeY());
@@ -85,9 +85,9 @@ namespace Domain::Constraints {
         }
 
         #ifdef CUMULATIVEFATIGUECONSTRAINT_CONSTRAINT_DEBUG_INFO
-        [[nodiscard]] bool printsInfo() const override { return true; }
+        [[nodiscard]] bool printsInfo() const noexcept override { return true; }
 
-        void printInfo() const override {
+        void printInfo() const noexcept override {
             axis_size_t i = 0;
             std::cout << "Max consecutive shifts: " << std::endl;
             for (const auto& maxConsecutiveShifts : debug_MaxConsecutiveShiftsPerEmployee) {
@@ -118,7 +118,7 @@ namespace Domain::Constraints {
             axis_size_t xi {};
             axis_size_t z0 {}, z {};
 
-            void reset(const axis_size_t z) {
+            void reset(const axis_size_t z) noexcept {
                 count = 0;
                 totalDuration = 0;
                 end = 0;
@@ -130,7 +130,7 @@ namespace Domain::Constraints {
             }
 
             void updateCumulativeEnd(const axis_size_t deltaZ, const Time::day_minutes_t consecutiveRestAfter,
-                                     const Time::DailyInterval& interval) {
+                                     const Time::DailyInterval& interval) noexcept {
                 if (static_cast<int32_t>(end) + static_cast<int32_t>(this->consecutiveRestAfter) < static_cast<int32_t>(
                     deltaZ) * 24 * 60 + static_cast<int32_t>(interval.endInMinutes()) + static_cast<int32_t>(
                     consecutiveRestAfter)) { this->consecutiveRestAfter = consecutiveRestAfter; }
@@ -150,7 +150,7 @@ namespace Domain::Constraints {
 
         void evaluateConsecutiveShifts(const State::DomainState& state, LastConsecutiveShift& lastConsecutiveShift,
                                        const axis_size_t y, axis_size_t& z, axis_size_t& nextXi,
-                                       ConstraintScore& totalScore) const {
+                                       ConstraintScore& totalScore) const noexcept {
             for (axis_size_t i = 1; z + i < state.sizeZ(); ++i) {
                 for (axis_size_t xi = 0; xi < state.sizeX(); ++xi) {
                     const auto x = m_SortedShiftIndices[xi];

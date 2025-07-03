@@ -6,7 +6,7 @@
 namespace Statistics {
     class Statistics {
     public:
-        virtual ~Statistics() = default;
+        virtual ~Statistics() noexcept = default;
 
         virtual void write(IO::StatisticsFile& out) const = 0;
     };

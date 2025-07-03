@@ -7,11 +7,11 @@
 namespace Domain {
     class Day : public Axes::AxisEntity {
     public:
-        explicit Day(const uint32_t index, const Time::Range& range) : m_Index(index),
+        explicit Day(const uint32_t index, const Time::Range& range) noexcept : m_Index(index),
                                                                        m_Range(range) { }
 
-        [[nodiscard]] uint32_t index() const { return m_Index; }
-        [[nodiscard]] const Time::Range& range() const { return m_Range; }
+        [[nodiscard]] uint32_t index() const noexcept { return m_Index; }
+        [[nodiscard]] const Time::Range& range() const noexcept { return m_Range; }
 
     protected:
         const uint32_t m_Index;

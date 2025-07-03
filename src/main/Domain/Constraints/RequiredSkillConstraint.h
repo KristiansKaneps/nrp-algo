@@ -10,7 +10,7 @@ namespace Domain::Constraints {
     public:
         explicit RequiredSkillConstraint(const Axes::Axis<Domain::Shift>& xAxis,
                                          const Axes::Axis<Domain::Employee>& yAxis,
-                                         const Axes::Axis<Domain::Skill>& wAxis) : Constraint("REQUIRED_SKILL", {
+                                         const Axes::Axis<Domain::Skill>& wAxis) noexcept : Constraint("REQUIRED_SKILL", {
                 new Moves::DomainUnassignRepairPerturbator(),
             }),
             m_AssignableShiftEmployeeSkillMatrix(xAxis.size(), yAxis.size(), wAxis.size()) {
@@ -26,10 +26,10 @@ namespace Domain::Constraints {
             }
         }
 
-        ~RequiredSkillConstraint() override = default;
+        ~RequiredSkillConstraint() noexcept override = default;
 
         [[nodiscard]] ConstraintScore evaluate(
-            const State::DomainState& state) override {
+            const State::DomainState& state) noexcept override {
             ConstraintScore totalScore;
 
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
@@ -50,7 +50,7 @@ namespace Domain::Constraints {
 
     protected:
         static bool isAssignable(const Domain::Shift& shift, const Domain::Employee& employee,
-                                 const Domain::Skill& skill) {
+                                 const Domain::Skill& skill) noexcept {
             if (!shift.requiresSkill()) [[unlikely]] return true;
             if (!employee.hasSkill(skill.index())) return false;
 

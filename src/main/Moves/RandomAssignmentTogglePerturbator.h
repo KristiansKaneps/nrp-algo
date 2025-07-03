@@ -9,17 +9,17 @@ namespace Moves {
     template<typename X, typename Y, typename Z, typename W>
     class RandomAssignmentTogglePerturbator final : public AutonomousPerturbator<X, Y, Z, W> {
     public:
-        explicit RandomAssignmentTogglePerturbator() {
+        explicit RandomAssignmentTogglePerturbator() noexcept {
             // TODO: determine min Z width to assign at once (for now it is 2).
             //   There must always be a probability that only 1 z will be assigned (for later on in the search process).
             m_MaxZWidth = 2;
         }
 
-        [[nodiscard]] RandomAssignmentTogglePerturbator *clone() const override {
+        [[nodiscard]] RandomAssignmentTogglePerturbator *clone() const noexcept override {
             return new RandomAssignmentTogglePerturbator(*this);
         }
 
-        void configure(const ::State::State<X, Y, Z, W>& state) override {
+        void configure(const ::State::State<X, Y, Z, W>& state) noexcept override {
             m_Location = ::State::Location {
                 m_Random.randomInt(0, state.sizeX() - 1),
                 m_Random.randomInt(0, state.sizeY() - 1),
@@ -32,13 +32,13 @@ namespace Moves {
             }
         }
 
-        [[nodiscard]] bool isIdentity() const override { return false; }
+        [[nodiscard]] bool isIdentity() const noexcept override { return false; }
 
-        void modify(::State::State<X, Y, Z, W>& state) override {
+        void modify(::State::State<X, Y, Z, W>& state) noexcept override {
             apply(state);
         }
 
-        void revert(::State::State<X, Y, Z, W>& state) const override {
+        void revert(::State::State<X, Y, Z, W>& state) const noexcept override {
             apply(state);
         }
     private:
@@ -47,7 +47,7 @@ namespace Moves {
         int32_t m_ZSideIncrement = 1;
         ::State::Location m_Location{};
 
-        void apply(::State::State<X, Y, Z, W>& state) const {
+        void apply(::State::State<X, Y, Z, W>& state) const noexcept {
             state.assign(m_Location, state.get(m_Location) ^ 1);
             for (int32_t i = 0; i < m_ZSideIncrement; ++i) {
                 state.assign(m_Location.x, m_Location.y, m_Location.z + i, m_Location.w, state.get(m_Location.x, m_Location.y, m_Location.z + i, m_Location.w) ^ 1);

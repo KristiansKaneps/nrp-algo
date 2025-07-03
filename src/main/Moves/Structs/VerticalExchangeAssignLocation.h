@@ -11,7 +11,7 @@ namespace Moves::Structs {
     struct VerticalExchangeAssignLocation {
         axis_size_t x, y, w;
 
-        bool operator==(const VerticalExchangeAssignLocation& other) const {
+        bool operator==(const VerticalExchangeAssignLocation& other) const noexcept {
             return x == other.x && y == other.y && w == other.w;
         }
     };

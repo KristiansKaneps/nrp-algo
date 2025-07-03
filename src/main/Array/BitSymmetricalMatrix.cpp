@@ -1,12 +1,12 @@
 #include "Array/BitSymmetricalMatrix.h"
 
 namespace BitMatrix {
-    BitSymmetricalMatrix createSymmetricalMatrix(const array_size_t dimensionSize) {
+    BitSymmetricalMatrix createSymmetricalMatrix(const array_size_t dimensionSize) noexcept {
         BitSymmetricalMatrix matrix(dimensionSize);
         return matrix;
     }
 
-    BitSymmetricalMatrix createIdentitySymmetricalMatrix(const array_size_t dimensionSize) {
+    BitSymmetricalMatrix createIdentitySymmetricalMatrix(const array_size_t dimensionSize) noexcept {
         BitSymmetricalMatrix matrix(dimensionSize);
         for (array_size_t x = 0; x < dimensionSize; ++x)
             matrix.set(x, x);

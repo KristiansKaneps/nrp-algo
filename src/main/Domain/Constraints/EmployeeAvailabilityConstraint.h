@@ -11,7 +11,7 @@ namespace Domain::Constraints {
         explicit EmployeeAvailabilityConstraint(const Time::Range& range, const std::chrono::time_zone *timeZone,
                                                 const Axes::Axis<Domain::Shift>& xAxis,
                                                 const Axes::Axis<Domain::Employee>& yAxis,
-                                                const Axes::Axis<Domain::Day>& zAxis) :
+                                                const Axes::Axis<Domain::Day>& zAxis) noexcept :
             Constraint("EMPLOYEE_AVAILABILITY", {
                 new Moves::DomainUnassignRepairPerturbator(),
             }),
@@ -52,10 +52,10 @@ namespace Domain::Constraints {
             }
         }
 
-        ~EmployeeAvailabilityConstraint() override = default;
+        ~EmployeeAvailabilityConstraint() noexcept override = default;
 
         [[nodiscard]] ConstraintScore evaluate(
-            const State::DomainState& state) override {
+            const State::DomainState& state) noexcept override {
             ConstraintScore totalScore;
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {

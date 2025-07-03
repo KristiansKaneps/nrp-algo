@@ -25,7 +25,7 @@ namespace Domain {
         Shift(const axis_size_t index, const uint8_t weekdayBitMask, const Time::DailyInterval& interval,
               const std::string& name, const uint8_t slotCount, const uint8_t requiredSlotCount,
               const Time::day_minutes_t restMinutesBefore, const Time::day_minutes_t restMinutesAfter,
-              const Time::day_minutes_t consecutiveRestMinutes) : m_Index(index),
+              const Time::day_minutes_t consecutiveRestMinutes) noexcept : m_Index(index),
                                                                   m_WeekdayBitMask(weekdayBitMask),
                                                                   m_Interval(interval),
                                                                   m_Name(name),
@@ -37,7 +37,7 @@ namespace Domain {
 
         Shift(const axis_size_t index, const uint8_t weekdayBitMask, const Time::DailyInterval& interval,
               const std::string& name, const uint8_t slotCount, const uint8_t requiredSlotCount,
-              const Time::day_minutes_t restMinutesBefore, const Time::day_minutes_t restMinutesAfter) : m_Index(index),
+              const Time::day_minutes_t restMinutesBefore, const Time::day_minutes_t restMinutesAfter) noexcept : m_Index(index),
             m_WeekdayBitMask(weekdayBitMask),
             m_Interval(interval),
             m_Name(name),
@@ -50,92 +50,92 @@ namespace Domain {
 
         Shift(const axis_size_t index, const uint8_t weekdayBitMask, const Time::DailyInterval& interval,
               const std::string& name, const uint8_t slotCount, const Time::day_minutes_t restMinutesBefore,
-              const Time::day_minutes_t restMinutesAfter) : Shift(index, weekdayBitMask, interval, name,
+              const Time::day_minutes_t restMinutesAfter) noexcept : Shift(index, weekdayBitMask, interval, name,
                                                                   slotCount, slotCount, restMinutesBefore,
                                                                   restMinutesAfter) { }
 
         Shift(const axis_size_t index, const uint8_t weekdayBitMask, const Time::DailyInterval& interval,
               const std::string& name, const uint8_t slotCount,
-              const Time::day_minutes_t restMinutesBeforeAndAfter) : Shift(index, weekdayBitMask, interval, name,
+              const Time::day_minutes_t restMinutesBeforeAndAfter) noexcept : Shift(index, weekdayBitMask, interval, name,
                                                                            slotCount, slotCount,
                                                                            restMinutesBeforeAndAfter,
                                                                            restMinutesBeforeAndAfter) { }
 
         Shift(const axis_size_t index, const uint8_t weekdayBitMask, const Time::DailyInterval& interval,
-              const std::string& name, const uint8_t slotCount) : Shift(index, weekdayBitMask, interval, name,
+              const std::string& name, const uint8_t slotCount) noexcept : Shift(index, weekdayBitMask, interval, name,
                                                                         slotCount, slotCount,
                                                                         interval.durationInMinutes(),
                                                                         interval.durationInMinutes()) { }
 
         Shift(const axis_size_t index, const uint8_t weekdayBitMask, const Time::DailyInterval& interval,
-              const std::string& name) : Shift(index, weekdayBitMask, interval, name, 1, interval.durationInMinutes(),
+              const std::string& name) noexcept : Shift(index, weekdayBitMask, interval, name, 1, interval.durationInMinutes(),
                                                interval.durationInMinutes()) { }
 
-        [[nodiscard]] axis_size_t index() const { return m_Index; }
-        [[nodiscard]] uint8_t weekdayBitMask() const { return m_WeekdayBitMask; }
-        [[nodiscard]] const Time::DailyInterval& interval() const { return m_Interval; }
-        [[nodiscard]] const std::string& name() const { return m_Name; }
-        [[nodiscard]] uint8_t slotCount(const axis_size_t dayIndex) const {
+        [[nodiscard]] axis_size_t index() const noexcept { return m_Index; }
+        [[nodiscard]] uint8_t weekdayBitMask() const noexcept { return m_WeekdayBitMask; }
+        [[nodiscard]] const Time::DailyInterval& interval() const noexcept { return m_Interval; }
+        [[nodiscard]] const std::string& name() const noexcept { return m_Name; }
+        [[nodiscard]] uint8_t slotCount(const axis_size_t dayIndex) const noexcept {
             return m_SlotCountPerDayIndex.contains(dayIndex) ? m_SlotCountPerDayIndex.at(dayIndex) : m_SlotCount;
         }
-        [[nodiscard]] uint8_t requiredSlotCount(const axis_size_t dayIndex) const {
+        [[nodiscard]] uint8_t requiredSlotCount(const axis_size_t dayIndex) const noexcept {
             return m_RequiredSlotCountPerDayIndex.contains(dayIndex)
                        ? m_RequiredSlotCountPerDayIndex.at(dayIndex)
                        : m_RequiredSlotCount;
         }
-        [[nodiscard]] Time::day_minutes_t restMinutesBefore() const { return m_RestMinutesBefore; }
-        [[nodiscard]] Time::day_minutes_t restMinutesAfter() const { return m_RestMinutesAfter; }
-        [[nodiscard]] Time::day_minutes_t consecutiveRestMinutes() const { return m_ConsecutiveRestMinutes; }
-        [[nodiscard]] const std::set<axis_size_t>& blockedNextDayShiftIndices() const { return m_BlockedNextDayShiftIndices; }
+        [[nodiscard]] Time::day_minutes_t restMinutesBefore() const noexcept { return m_RestMinutesBefore; }
+        [[nodiscard]] Time::day_minutes_t restMinutesAfter() const noexcept { return m_RestMinutesAfter; }
+        [[nodiscard]] Time::day_minutes_t consecutiveRestMinutes() const noexcept { return m_ConsecutiveRestMinutes; }
+        [[nodiscard]] const std::set<axis_size_t>& blockedNextDayShiftIndices() const noexcept { return m_BlockedNextDayShiftIndices; }
 
-        [[nodiscard]] const std::unordered_map<axis_size_t, float>& requiredAllSkills() const {
+        [[nodiscard]] const std::unordered_map<axis_size_t, float>& requiredAllSkills() const noexcept {
             return m_RequiredAllSkills;
         }
-        [[nodiscard]] const std::unordered_map<axis_size_t, float>& requiredOneSkills() const {
+        [[nodiscard]] const std::unordered_map<axis_size_t, float>& requiredOneSkills() const noexcept {
             return m_RequiredOneSkills;
         }
 
-        [[nodiscard]] bool requiresSkill() const {
+        [[nodiscard]] bool requiresSkill() const noexcept {
             return !m_RequiredAllSkills.empty() || !m_RequiredOneSkills.empty();
         }
-        [[nodiscard]] bool requiresSkill(const axis_size_t skillIndex) const {
+        [[nodiscard]] bool requiresSkill(const axis_size_t skillIndex) const noexcept {
             return m_RequiredAllSkills.contains(skillIndex) || (m_RequiredOneSkills.size() == 1 && m_RequiredOneSkills.
                 contains(skillIndex));
         }
 
-        [[nodiscard]] bool blocksShiftIndex(const axis_size_t skillIndex) const {
+        [[nodiscard]] bool blocksShiftIndex(const axis_size_t skillIndex) const noexcept {
             return m_BlockedNextDayShiftIndices.contains(skillIndex);
         }
 
-        void removeRequiredAllSkill(const axis_size_t skillIndex) { m_RequiredAllSkills.erase(skillIndex); }
-        void removeRequiredOneSkill(const axis_size_t skillIndex) { m_RequiredOneSkills.erase(skillIndex); }
+        void removeRequiredAllSkill(const axis_size_t skillIndex) noexcept { m_RequiredAllSkills.erase(skillIndex); }
+        void removeRequiredOneSkill(const axis_size_t skillIndex) noexcept { m_RequiredOneSkills.erase(skillIndex); }
 
-        void setRequiredAllSkillMinWeight(const axis_size_t skillIndex, const float minWeight) {
+        void setRequiredAllSkillMinWeight(const axis_size_t skillIndex, const float minWeight) noexcept {
             m_RequiredAllSkills[skillIndex] = minWeight;
         }
-        void setRequiredOneSkillMinWeight(const axis_size_t skillIndex, const float minWeight) {
+        void setRequiredOneSkillMinWeight(const axis_size_t skillIndex, const float minWeight) noexcept {
             m_RequiredOneSkills[skillIndex] = minWeight;
         }
 
-        void addRequiredAllSkill(const axis_size_t skillIndex, const float minWeight) {
+        void addRequiredAllSkill(const axis_size_t skillIndex, const float minWeight) noexcept {
             m_RequiredAllSkills[skillIndex] = minWeight;
         }
-        void addRequiredOneSkill(const axis_size_t skillIndex, const float minWeight) {
+        void addRequiredOneSkill(const axis_size_t skillIndex, const float minWeight) noexcept {
             m_RequiredOneSkills[skillIndex] = minWeight;
         }
 
-        void setSlotCountAtDay(const axis_size_t dayIndex, const uint8_t slotCount, const uint8_t requiredSlotCount) {
+        void setSlotCountAtDay(const axis_size_t dayIndex, const uint8_t slotCount, const uint8_t requiredSlotCount) noexcept {
             m_SlotCountPerDayIndex.insert({dayIndex, slotCount});
             m_RequiredSlotCountPerDayIndex.insert({dayIndex, requiredSlotCount});
         }
-        void setSlotCountAtDay(const axis_size_t dayIndex, const uint8_t requiredSlotCount) {
+        void setSlotCountAtDay(const axis_size_t dayIndex, const uint8_t requiredSlotCount) noexcept {
             setSlotCountAtDay(dayIndex, requiredSlotCount, requiredSlotCount);
         }
 
-        void addBlockedNextDayShiftIndex(const axis_size_t shiftIndex) {
+        void addBlockedNextDayShiftIndex(const axis_size_t shiftIndex) noexcept {
             m_BlockedNextDayShiftIndices.insert(shiftIndex);
         }
-        void removeBlockedNextDayShiftIndex(const axis_size_t shiftIndex) {
+        void removeBlockedNextDayShiftIndex(const axis_size_t shiftIndex) noexcept {
             m_BlockedNextDayShiftIndices.erase(shiftIndex);
         }
 
@@ -157,7 +157,7 @@ namespace Domain {
 
         std::set<axis_size_t> m_BlockedNextDayShiftIndices {};
 
-        [[nodiscard]] Time::day_minutes_t calculateDefaultConsecutiveRestMinutes() const {
+        [[nodiscard]] Time::day_minutes_t calculateDefaultConsecutiveRestMinutes() const noexcept {
             const Time::day_minutes_t minutesUntilDayEnd = (1 + (m_Interval.endInMinutes() - 1) / (24 * 60)) * 24 * 60 - m_Interval.endInMinutes(); // NOLINT(*-narrowing-conversions)
             return static_cast<Time::day_minutes_t>(24 * 60 + minutesUntilDayEnd);
         }

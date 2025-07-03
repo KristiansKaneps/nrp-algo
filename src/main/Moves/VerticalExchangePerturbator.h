@@ -12,14 +12,14 @@ namespace Moves {
     template<typename X, typename Y, typename Z, typename W>
     class VerticalExchangePerturbator : public AutonomousPerturbator<X, Y, Z, W> {
     public:
-        explicit VerticalExchangePerturbator() = default;
-        ~VerticalExchangePerturbator() override = default;
+        explicit VerticalExchangePerturbator() noexcept = default;
+        ~VerticalExchangePerturbator() noexcept override = default;
 
-        [[nodiscard]] VerticalExchangePerturbator *clone() const override {
+        [[nodiscard]] VerticalExchangePerturbator *clone() const noexcept override {
             return new VerticalExchangePerturbator(*this);
         }
 
-        void configure(const ::State::State<X, Y, Z, W>& state) override {
+        void configure(const ::State::State<X, Y, Z, W>& state) noexcept override {
             if (state.sizeZ() < 2 || state.sizeY() < 1) return;
 
             const axis_size_t z1 = m_Random.randomInt(state.sizeZ() - 1);
@@ -79,15 +79,15 @@ namespace Moves {
             }
         }
 
-        [[nodiscard]] bool isIdentity() const override {
+        [[nodiscard]] bool isIdentity() const noexcept override {
             return m_Z1 == m_Z2 || m_LocationXors.empty();
         }
 
-        void modify(::State::State<X, Y, Z, W>& state) override {
+        void modify(::State::State<X, Y, Z, W>& state) noexcept override {
             apply(state);
         }
 
-        void revert(::State::State<X, Y, Z, W>& state) const override {
+        void revert(::State::State<X, Y, Z, W>& state) const noexcept override {
             apply(state);
         }
 
@@ -97,7 +97,7 @@ namespace Moves {
         axis_size_t m_Z1 {}, m_Z2 {};
         std::unordered_map<VerticalExchangeAssignLocation, uint8_t> m_LocationXors {};
 
-        void apply(::State::State<X, Y, Z, W>& state) const {
+        void apply(::State::State<X, Y, Z, W>& state) const noexcept {
             for (const auto& entry : m_LocationXors) {
                 const auto& [x, y, w] = entry.first;
                 const uint8_t v1 = state.get(x, y, m_Z1, w) ^ entry.second;

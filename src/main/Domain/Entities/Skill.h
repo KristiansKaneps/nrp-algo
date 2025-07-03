@@ -10,11 +10,11 @@ namespace Domain {
 
     class Skill : public Axes::AxisEntity {
     public:
-        explicit Skill(const axis_size_t index, const std::string& name) : m_Index(index),
+        explicit Skill(const axis_size_t index, const std::string& name) noexcept : m_Index(index),
                                                                     m_Name(name) { }
 
-        [[nodiscard]] axis_size_t index() const { return m_Index; }
-        [[nodiscard]] const std::string& name() const { return m_Name; }
+        [[nodiscard]] axis_size_t index() const noexcept { return m_Index; }
+        [[nodiscard]] const std::string& name() const noexcept { return m_Name; }
 
     private:
         const axis_size_t m_Index;

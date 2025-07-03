@@ -7,7 +7,7 @@
 #include <chrono>
 
 namespace String {
-    inline std::tm localtime_xp(const std::time_t timer) {
+    inline std::tm localtime_xp(const std::time_t timer) noexcept {
         std::tm bt {};
         #if defined(__unix__)
         localtime_r(&timer, &bt);
@@ -21,7 +21,7 @@ namespace String {
         return bt;
     }
 
-    inline std::string getTimestampPrefix() {
+    inline std::string getTimestampPrefix() noexcept {
         const auto now = std::chrono::system_clock::now();
         const std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
         const std::tm tm = String::localtime_xp(now_time_t);

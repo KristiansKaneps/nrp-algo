@@ -10,26 +10,26 @@
 namespace Time {
     class RangeCollection {
     public:
-        RangeCollection() = default;
+        RangeCollection() noexcept = default;
 
-        explicit RangeCollection(const size_t capacity) : RangeCollection() { m_Ranges.reserve(capacity); }
+        explicit RangeCollection(const size_t capacity) noexcept : RangeCollection() { m_Ranges.reserve(capacity); }
 
-        RangeCollection(const RangeCollection& other) = default;
+        RangeCollection(const RangeCollection& other) noexcept = default;
 
-        virtual ~RangeCollection() = default;
+        virtual ~RangeCollection() noexcept = default;
 
-        virtual void clear() {
+        virtual void clear() noexcept {
             m_Ranges.clear();
             m_ResolveBoundsOnGet = false;
             m_MinBound = MAX_INSTANT;
             m_MaxBound = MIN_INSTANT;
         }
 
-        [[nodiscard]] virtual size_t size() const { return m_Ranges.size(); }
+        [[nodiscard]] virtual size_t size() const noexcept { return m_Ranges.size(); }
 
-        [[nodiscard]] virtual const std::vector<Range>& ranges() const { return m_Ranges; }
+        [[nodiscard]] virtual const std::vector<Range>& ranges() const noexcept { return m_Ranges; }
 
-        [[nodiscard]] Range bounds() {
+        [[nodiscard]] Range bounds() noexcept {
             if (m_ResolveBoundsOnGet) {
                 m_MinBound = MAX_INSTANT, m_MaxBound = MIN_INSTANT;
                 for (const auto& range : m_Ranges) {
@@ -41,7 +41,7 @@ namespace Time {
             return Range {m_MinBound, m_MaxBound};
         }
 
-        virtual void add(const Range& range) {
+        virtual void add(const Range& range) noexcept {
             if (!m_ResolveBoundsOnGet) {
                 if (range.m_Start < m_MinBound) m_MinBound = range.m_Start;
                 if (range.m_End > m_MaxBound) m_MaxBound = range.m_End;
@@ -49,13 +49,13 @@ namespace Time {
             insert(range);
         }
 
-        virtual void addAll(const RangeCollection& other) {
+        virtual void addAll(const RangeCollection& other) noexcept {
             for (const auto& range : other.m_Ranges) {
                 add(range);
             }
         }
 
-        virtual void remove(const Range& range) {
+        virtual void remove(const Range& range) noexcept {
             m_ResolveBoundsOnGet = range.m_Start <= m_MinBound || range.m_End >= m_MaxBound;
             for (auto it = m_Ranges.cbegin(); it != m_Ranges.cend(); ++it) {
                 if (*it == range) [[unlikely]] {
@@ -65,13 +65,13 @@ namespace Time {
             }
         }
 
-        virtual void removeAll(const RangeCollection& other) {
+        virtual void removeAll(const RangeCollection& other) noexcept {
             for (const auto& range : other.m_Ranges) {
                 remove(range);
             }
         }
 
-        virtual void subtract(const Range& range) {
+        virtual void subtract(const Range& range) noexcept {
             m_ResolveBoundsOnGet = false;
             size_t additionalRangeCollectionCapacity = 0;
             RangeCollection additionalRangeCollection(0);
@@ -116,27 +116,27 @@ namespace Time {
             m_Ranges.shrink_to_fit();
         }
 
-        virtual void subtractAll(const RangeCollection& other) {
+        virtual void subtractAll(const RangeCollection& other) noexcept {
             for (const auto& range : other.m_Ranges) {
                 subtract(range);
             }
         }
 
         template<typename Duration = std::chrono::minutes>
-        Duration duration() const {
+        Duration duration() const noexcept {
             Duration duration = Duration::zero();
             for (const auto& range : m_Ranges) duration += range.duration<Duration>();
             return duration;
         }
 
         template<typename Duration = std::chrono::minutes, typename TimeZone = const std::chrono::time_zone *>
-        Duration duration(TimeZone zone) const {
+        Duration duration(TimeZone zone) const noexcept {
             Duration duration = Duration::zero();
             for (const auto& range : m_Ranges) duration += range.duration<Duration>(zone);
             return duration;
         }
 
-        [[nodiscard]] bool fullyContains(const Ray& other) const {
+        [[nodiscard]] bool fullyContains(const Ray& other) const noexcept {
             if (other.type() == RAY) [[unlikely]] {
                 return std::ranges::all_of(m_Ranges, [other](const Range& range) -> bool {
                     return range.fullyContains(other);
@@ -148,13 +148,13 @@ namespace Time {
             });
         }
 
-        [[nodiscard]] bool fullyContains(const RangeCollection& other) const {
+        [[nodiscard]] bool fullyContains(const RangeCollection& other) const noexcept {
             return std::ranges::all_of(m_Ranges.cbegin(), m_Ranges.cend(), [other](const Range& range) -> bool {
                 return other.isFullyContainedBy(range);
             });
         }
 
-        [[nodiscard]] bool isFullyContainedBy(const Ray& other) const {
+        [[nodiscard]] bool isFullyContainedBy(const Ray& other) const noexcept {
             if (other.type() == RAY) [[unlikely]] {
                 return std::ranges::all_of(m_Ranges, [other](const Range& range) -> bool {
                     return other.fullyContains(range);
@@ -166,13 +166,13 @@ namespace Time {
             });
         }
 
-        [[nodiscard]] bool isFullyContainedBy(const RangeCollection& other) const {
+        [[nodiscard]] bool isFullyContainedBy(const RangeCollection& other) const noexcept {
             return std::ranges::all_of(m_Ranges.cbegin(), m_Ranges.cend(), [other](const Range& range) -> bool {
                 return other.fullyContains(range);
             });
         }
 
-        [[nodiscard]] bool intersects(const Ray& ray) const {
+        [[nodiscard]] bool intersects(const Ray& ray) const noexcept {
             if (ray.type() == RAY) [[unlikely]] {
                 return std::ranges::any_of(m_Ranges, [ray](const Range& range) -> bool {
                     return range.m_End > ray.m_Start;
@@ -184,13 +184,13 @@ namespace Time {
             });
         }
 
-        [[nodiscard]] bool intersects(const RangeCollection& other) const {
+        [[nodiscard]] bool intersects(const RangeCollection& other) const noexcept {
             return std::ranges::any_of(m_Ranges.cbegin(), m_Ranges.cend(), [other](const Range& range) -> bool {
                 return other.intersects(range);
             });
         }
 
-        RangeCollection getIntersection(const Range& other) {
+        RangeCollection getIntersection(const Range& other) noexcept {
             if (!bounds().intersects(other)) return RangeCollection(0);
             RangeCollection result(m_Ranges.size());
             for (const auto& range : m_Ranges) {
@@ -201,7 +201,7 @@ namespace Time {
             return result;
         }
 
-        RangeCollection getIntersection(RangeCollection& other) {
+        RangeCollection getIntersection(RangeCollection& other) noexcept {
             if (!bounds().intersects(other.bounds())) return RangeCollection(0);
             RangeCollection result(m_Ranges.size());
             for(const auto &range1 : m_Ranges) {
@@ -213,14 +213,14 @@ namespace Time {
             return result;
         }
 
-        RangeCollection operator+(const Range& rhs) const {
+        RangeCollection operator+(const Range& rhs) const noexcept {
             RangeCollection result = *this;
             result.reserve(m_Ranges.size() + 1);
             result.add(rhs);
             return result;
         }
 
-        RangeCollection operator-(const Range& rhs) const {
+        RangeCollection operator-(const Range& rhs) const noexcept {
             size_t capacity = 0;
             RangeCollection result(0);
             result.m_ResolveBoundsOnGet = false;
@@ -243,15 +243,15 @@ namespace Time {
         bool m_ResolveBoundsOnGet = false;
         Instant m_MinBound = MAX_INSTANT, m_MaxBound = MIN_INSTANT;
 
-        constexpr void reserve(const size_t newCapacity) {
+        constexpr void reserve(const size_t newCapacity) noexcept {
             m_Ranges.reserve(newCapacity);
         }
 
-        constexpr void insert(const Range& range) {
+        constexpr void insert(const Range& range) noexcept {
             m_Ranges.insert(std::ranges::upper_bound(std::as_const(m_Ranges), range), range);
         }
 
-        static RangeCollection add(const Range& lhs, const Range& rhs) {
+        static RangeCollection add(const Range& lhs, const Range& rhs) noexcept {
             if (!lhs.intersects(rhs)) {
                 RangeCollection result(2);
                 result.m_ResolveBoundsOnGet = false;
@@ -310,7 +310,7 @@ namespace Time {
             return RangeCollection(0);
         }
 
-        static RangeCollection subtract(const Range& lhs, const Range& rhs) {
+        static RangeCollection subtract(const Range& lhs, const Range& rhs) noexcept {
             if (!lhs.intersects(rhs)) {
                 RangeCollection result(1);
                 result.m_ResolveBoundsOnGet = false;
@@ -350,7 +350,7 @@ namespace Time {
             return RangeCollection(0);
         }
 
-        static RangeCollection subtract(const Range &lhs, const RangeCollection &rhs) {
+        static RangeCollection subtract(const Range &lhs, const RangeCollection &rhs) noexcept {
             RangeCollection result(1);
             result.m_ResolveBoundsOnGet = false;
             result.m_Ranges.push_back(lhs);
@@ -360,7 +360,7 @@ namespace Time {
             return result;
         }
 
-        static RangeCollection getSymmetricDifference(const Range& range1, const Range& range2) {
+        static RangeCollection getSymmetricDifference(const Range& range1, const Range& range2) noexcept {
             // auto difference = subtract(range1, range2);
             // difference.addAll(subtract(range2, range1));
             // return difference;

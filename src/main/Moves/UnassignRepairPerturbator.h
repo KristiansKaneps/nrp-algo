@@ -9,14 +9,14 @@ namespace Moves {
     template<typename X, typename Y, typename Z, typename W>
     class UnassignRepairPerturbator : public AutonomousPerturbator<X, Y, Z, W> {
     public:
-        explicit UnassignRepairPerturbator() = default;
-        ~UnassignRepairPerturbator() override = default;
+        explicit UnassignRepairPerturbator() noexcept = default;
+        ~UnassignRepairPerturbator() noexcept override = default;
 
-        [[nodiscard]] UnassignRepairPerturbator *clone() const override {
+        [[nodiscard]] UnassignRepairPerturbator *clone() const noexcept override {
             return new UnassignRepairPerturbator(*this);
         }
 
-        void configure(const Constraints::Violation *violation, const ::State::State<X, Y, Z, W>& state) override {
+        void configure(const Constraints::Violation *violation, const ::State::State<X, Y, Z, W>& state) noexcept override {
             if (violation == nullptr || violation->info != 0) return;
             const axis_size_t maxXi = violation->hasX() ? 1 : state.sizeX();
             const axis_size_t maxYi = violation->hasY() ? 1 : state.sizeY();
@@ -38,17 +38,17 @@ namespace Moves {
             }
         }
 
-        [[nodiscard]] bool isIdentity() const override {
+        [[nodiscard]] bool isIdentity() const noexcept override {
             return m_Locations.size() == 0;
         }
 
-        void modify(::State::State<X, Y, Z, W>& state) override {
+        void modify(::State::State<X, Y, Z, W>& state) noexcept override {
             for (const auto& loc : m_Locations) {
                 state.clear(loc);
             }
         }
 
-        void revert(::State::State<X, Y, Z, W>& state) const override {
+        void revert(::State::State<X, Y, Z, W>& state) const noexcept override {
             for (const auto& loc : m_Locations) {
                 state.set(loc);
             }

@@ -6,59 +6,59 @@
 namespace Time {
     class Range;
     class RangeCollection;
-    std::ostream& operator<<(std::ostream& out, const Range& range);
+    std::ostream& operator<<(std::ostream& out, const Range& range) noexcept;
 
     class Range : public Ray {
     public:
-        Range(const Instant& start, const Instant& end) : Ray(start),
+        Range(const Instant& start, const Instant& end) noexcept : Ray(start),
                                                           m_End(end) { }
 
         template<class Duration = std::chrono::system_clock::duration>
         Range(const std::chrono::time_point<std::chrono::system_clock, Duration>& start,
-              const std::chrono::time_point<std::chrono::system_clock, Duration>& end) : Ray(start),
+              const std::chrono::time_point<std::chrono::system_clock, Duration>& end) noexcept : Ray(start),
             m_End(std::chrono::time_point_cast<INSTANT_PRECISION>(end)) { }
 
-        Range(const Range& other) : Range(other.m_Start, other.m_End) { }
+        Range(const Range& other) noexcept : Range(other.m_Start, other.m_End) { }
 
-        [[nodiscard]] PeriodType type() const override { return RANGE; }
+        [[nodiscard]] PeriodType type() const noexcept override { return RANGE; }
 
-        [[nodiscard]] const Instant& end() const { return m_End; }
+        [[nodiscard]] const Instant& end() const noexcept { return m_End; }
 
-        [[nodiscard]] Ray asRayFromStart() const { return {m_Start}; }
-        [[nodiscard]] Ray asRayFromEnd() const { return {m_End}; }
-        [[nodiscard]] Ray asRay() const { return asRayFromStart(); }
+        [[nodiscard]] Ray asRayFromStart() const noexcept { return {m_Start}; }
+        [[nodiscard]] Ray asRayFromEnd() const noexcept { return {m_End}; }
+        [[nodiscard]] Ray asRay() const noexcept { return asRayFromStart(); }
 
-        bool operator==(const Ray& other) const override {
+        bool operator==(const Ray& other) const noexcept override {
             return (other.type() == RANGE && other.m_Start == m_Start
                     && static_cast<const Range&>(other).m_End == m_End) // NOLINT(*-pro-type-static-cast-downcast)
                 || (other.type() == RAY && other.m_Start == m_Start && other.m_Start == m_End);
         }
 
-        bool operator!=(const Ray& other) const override {
+        bool operator!=(const Ray& other) const noexcept override {
             return (other.type() == RANGE && (other.m_Start != m_Start
                     || static_cast<const Range&>(other).m_End != m_End)) // NOLINT(*-pro-type-static-cast-downcast)
                 || (other.type() == RAY && (other.m_Start != m_Start || other.m_Start != m_End));
         }
 
-        bool operator<=(const Ray& other) const override {
+        bool operator<=(const Ray& other) const noexcept override {
             if (other.type() == RAY) [[unlikely]] return other.m_Start >= m_End;
             if (other.type() == RANGE) [[likely]] { return m_Start <= other.m_Start; }
             return false;
         }
 
-        bool operator>=(const Ray& other) const override {
+        bool operator>=(const Ray& other) const noexcept override {
             if (other.type() == RAY) [[unlikely]] return other.m_Start == m_End;
             if (other.type() == RANGE) [[likely]] { return m_Start >= other.m_Start; }
             return false;
         }
 
-        bool operator<(const Ray& other) const override {
+        bool operator<(const Ray& other) const noexcept override {
             if (other.type() == RAY) [[unlikely]] return other.m_Start > m_End;
             if (other.type() == RANGE) [[likely]] { return m_Start < other.m_Start; }
             return false;
         }
 
-        bool operator>(const Ray& other) const override {
+        bool operator>(const Ray& other) const noexcept override {
             if (other.type() == RAY) [[unlikely]] return false;
             if (other.type() == RANGE) [[likely]] { return m_Start > other.m_Start; }
             return false;
@@ -66,7 +66,7 @@ namespace Time {
 
         template<typename TimeZone = const std::chrono::time_zone *>
         std::chrono::zoned_time<std::chrono::system_clock::duration, TimeZone> getDayAt(
-            const size_t dayIndex, TimeZone zone) const {
+            const size_t dayIndex, TimeZone zone) const noexcept {
             using namespace std::chrono_literals;
             const auto zonedStart = std::chrono::zoned_time(zone, m_Start);
             const auto localDay = floor<std::chrono::days>(zonedStart.get_local_time()) + std::chrono::days(dayIndex);
@@ -76,7 +76,7 @@ namespace Time {
         }
 
         template<typename TimeZone = const std::chrono::time_zone *>
-        Range getDayRangeAt(const size_t dayIndex, TimeZone zone) const {
+        Range getDayRangeAt(const size_t dayIndex, TimeZone zone) const noexcept {
             using namespace std::chrono_literals;
             const auto zonedStart = std::chrono::zoned_time(zone, m_Start);
             const auto localRef = std::chrono::floor<std::chrono::days>(zonedStart.get_local_time()) +
@@ -87,7 +87,7 @@ namespace Time {
         }
 
         template<typename TimeZone = const std::chrono::time_zone *>
-        Range getRangePartitionByDays(const size_t offsetDay, const size_t dayCount, TimeZone zone) const {
+        Range getRangePartitionByDays(const size_t offsetDay, const size_t dayCount, TimeZone zone) const noexcept {
             using namespace std::chrono_literals;
             const auto zonedStart = std::chrono::zoned_time(zone, m_Start);
             const auto localStartRef = zonedStart.get_local_time() + std::chrono::days(offsetDay);
@@ -98,13 +98,13 @@ namespace Time {
         }
 
         template<typename Duration = std::chrono::minutes>
-        Duration duration() const {
+        Duration duration() const noexcept {
             if (m_End == MIN_INSTANT && m_Start == MAX_INSTANT) [[unlikely]] return Duration::zero();
             return std::chrono::floor<Duration>(m_End - m_Start);
         }
 
         template<typename Duration = std::chrono::minutes, typename TimeZone = const std::chrono::time_zone *>
-        Duration duration(TimeZone zone) const {
+        Duration duration(TimeZone zone) const noexcept {
             if (m_End == MIN_INSTANT && m_Start == MAX_INSTANT) [[unlikely]] return Duration::zero();
             const auto start = std::chrono::zoned_time(zone, m_Start);
             const auto end = std::chrono::zoned_time(zone, m_End);
@@ -114,15 +114,15 @@ namespace Time {
         }
 
         template<typename TimeZone = const std::chrono::time_zone *>
-        int32_t getWorkdayCount(TimeZone zone) const { return getDayCount(zone, 0x1f); }
+        int32_t getWorkdayCount(TimeZone zone) const noexcept { return getDayCount(zone, 0x1f); }
 
         template<typename TimeZone = const std::chrono::time_zone *>
-        int32_t getDayCount(TimeZone zone) const {
+        int32_t getDayCount(TimeZone zone) const noexcept {
             return getDayCount(zone, 0xff);
         }
 
         template<typename TimeZone = const std::chrono::time_zone *>
-        int32_t getDayCount(TimeZone zone, const uint8_t weekdayBitMask) const {
+        int32_t getDayCount(TimeZone zone, const uint8_t weekdayBitMask) const noexcept {
             if ((m_End == MIN_INSTANT && m_Start == MAX_INSTANT) || m_End == m_Start) [[unlikely]] return 0;
             auto zonedStart = std::chrono::zoned_time(zone, m_Start);
             auto zonedEnd = std::chrono::zoned_time(zone, m_End);
@@ -151,10 +151,10 @@ namespace Time {
         }
 
         template<typename TimeZone = const std::chrono::time_zone *>
-        float getPartialWorkdayCount(TimeZone zone) const { return getPartialDayCount(zone, 0x1f); }
+        float getPartialWorkdayCount(TimeZone zone) const noexcept { return getPartialDayCount(zone, 0x1f); }
 
         template<typename TimeZone = const std::chrono::time_zone *>
-        float getPartialDayCount(TimeZone zone, const uint8_t weekdayBitMask) const {
+        float getPartialDayCount(TimeZone zone, const uint8_t weekdayBitMask) const noexcept {
             if ((m_End == MIN_INSTANT && m_Start == MAX_INSTANT) || m_End == m_Start) [[unlikely]] return 0;
             auto zonedStart = std::chrono::zoned_time(zone, m_Start);
             auto zonedEnd = std::chrono::zoned_time(zone, m_End);
@@ -205,7 +205,7 @@ namespace Time {
             return dayCount * static_cast<float>(sign);
         }
 
-        [[nodiscard]] bool isStartAdjacentTo(const Ray& other) const override {
+        [[nodiscard]] bool isStartAdjacentTo(const Ray& other) const noexcept override {
             if (other.type() == RAY) [[unlikely]] return other.m_Start == m_Start;
             if (other.type() == RANGE) [[likely]] {
                 const auto &r = static_cast<const Range&>(other); // NOLINT(*-pro-type-static-cast-downcast)
@@ -214,33 +214,33 @@ namespace Time {
             return other.isStartAdjacentTo(*this);
         }
 
-        [[nodiscard]] virtual bool isEndAdjacentTo(const Ray& other) const {
+        [[nodiscard]] virtual bool isEndAdjacentTo(const Ray& other) const noexcept {
             if (other.type() == RAY) [[unlikely]] return other.m_Start == m_End;
             if (other.type() == RANGE) [[likely]] { return other.m_Start == m_End; }
             return other.isStartAdjacentTo(*this);
         }
 
-        [[nodiscard]] bool isAdjacentTo(const Ray& other) const override {
+        [[nodiscard]] bool isAdjacentTo(const Ray& other) const noexcept override {
             return isStartAdjacentTo(other) || isEndAdjacentTo(other);
         }
 
-        [[nodiscard]] bool fullyContains(const Ray& other) const override {
+        [[nodiscard]] bool fullyContains(const Ray& other) const noexcept override {
             if (other.type() == RAY) [[unlikely]] return false;
             const auto &r = static_cast<const Range&>(other); // NOLINT(*-pro-type-static-cast-downcast)
             return m_Start <= r.m_Start && m_End >= r.m_End;
         }
 
-        [[nodiscard]] bool fullyContains(const RangeCollection& other) const override;
+        [[nodiscard]] bool fullyContains(const RangeCollection& other) const noexcept override;
 
-        [[nodiscard]] bool isFullyContainedBy(const Ray& other) const override {
+        [[nodiscard]] bool isFullyContainedBy(const Ray& other) const noexcept override {
             if (other.type() == RAY) [[unlikely]] return other.fullyContains(*this);
             const auto &r = static_cast<const Range&>(other); // NOLINT(*-pro-type-static-cast-downcast)
             return m_Start >= r.m_Start && m_End <= r.m_End;
         }
 
-        [[nodiscard]] bool isFullyContainedBy(const RangeCollection& other) const override;
+        [[nodiscard]] bool isFullyContainedBy(const RangeCollection& other) const noexcept override;
 
-        [[nodiscard]] bool intersects(const Ray& other) const override {
+        [[nodiscard]] bool intersects(const Ray& other) const noexcept override {
             if (other.type() == RAY) [[unlikely]]
                 return other.m_Start < m_End;
             if (other.type() == RANGE) [[likely]] {
@@ -250,9 +250,9 @@ namespace Time {
             return other.intersects(*this);
         }
 
-        [[nodiscard]] bool intersects(const RangeCollection& other) const override;
+        [[nodiscard]] bool intersects(const RangeCollection& other) const noexcept override;
 
-        [[nodiscard]] Range getIntersectionUnsafe(const Ray& other) const {
+        [[nodiscard]] Range getIntersectionUnsafe(const Ray& other) const noexcept {
             if (other.type() == RAY) [[unlikely]] {
                 if (m_End <= other.m_Start) return {MAX_INSTANT, MIN_INSTANT};
                 return {m_Start > other.m_Start ? m_Start : other.m_Start, m_End};
@@ -265,7 +265,7 @@ namespace Time {
             return {MAX_INSTANT, MIN_INSTANT};
         }
 
-        [[nodiscard]] std::unique_ptr<const Range> getIntersection(const Ray& other) const {
+        [[nodiscard]] std::unique_ptr<const Range> getIntersection(const Ray& other) const noexcept {
             if (other.type() == RAY) [[unlikely]] {
                 if (m_End <= other.m_Start) return {nullptr};
                 return std::make_unique<const Range>(m_Start > other.m_Start ? m_Start : other.m_Start, m_End);
@@ -278,14 +278,14 @@ namespace Time {
             return {nullptr};
         }
 
-        RangeCollection getIntersection(RangeCollection& other) const;
+        RangeCollection getIntersection(RangeCollection& other) const noexcept;
 
-        [[nodiscard]] RangeCollection getSymmetricDifference(const Range& other) const;
+        [[nodiscard]] RangeCollection getSymmetricDifference(const Range& other) const noexcept;
 
-        RangeCollection operator+(const Range& rhs) const;
-        RangeCollection operator+(const RangeCollection& rhs) const;
-        RangeCollection operator-(const Range& rhs) const;
-        RangeCollection operator-(const RangeCollection& rhs) const;
+        RangeCollection operator+(const Range& rhs) const noexcept;
+        RangeCollection operator+(const RangeCollection& rhs) const noexcept;
+        RangeCollection operator-(const Range& rhs) const noexcept;
+        RangeCollection operator-(const RangeCollection& rhs) const noexcept;
 
     protected:
         Instant m_End;
@@ -293,7 +293,7 @@ namespace Time {
         friend class RangeCollection;
     };
 
-    inline std::ostream& operator<<(std::ostream& out, const Range& range) {
+    inline std::ostream& operator<<(std::ostream& out, const Range& range) noexcept {
         out << '[' << range.start() << "; " << range.end() << ']';
         return out;
     }

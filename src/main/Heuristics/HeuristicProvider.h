@@ -42,7 +42,7 @@ namespace Heuristics {
     template<typename X, typename Y, typename Z, typename W>
     class HeuristicProvider {
     public:
-        explicit HeuristicProvider(const ::State::State<X, Y, Z, W> *initialState, const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& constraints) :
+        explicit HeuristicProvider(const ::State::State<X, Y, Z, W> *initialState, const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& constraints) noexcept :
             m_ConstraintCount(constraints.size()),
             m_TransformerModel(HYPERHEURISTICS_INPUT_DIM, HYPERHEURISTICS_D_MODEL, HYPERHEURISTICS_N_HEAD,
                                HYPERHEURISTICS_NUM_LAYERS, HYPERHEURISTICS_HEURISTIC_COUNT) {
@@ -57,15 +57,15 @@ namespace Heuristics {
             torch::manual_seed(42);
         }
 
-        ~HeuristicProvider() {
+        ~HeuristicProvider() noexcept {
             for (const auto* peturbator : m_AvailablePerturbators)
                 delete peturbator;
         }
 
-        Perturbator<X, Y, Z, W> *operator[](const size_t index) const { return m_AvailablePerturbators[index]; }
+        Perturbator<X, Y, Z, W> *operator[](const size_t index) const noexcept { return m_AvailablePerturbators[index]; }
 
         PerturbatorChain<X, Y, Z, W> predictPerturbators(const Evaluation::Evaluator<X, Y, Z, W>& evaluator,
-                                                         const ::State::State<X, Y, Z, W>& state) {
+                                                         const ::State::State<X, Y, Z, W>& state) noexcept {
             m_GeneratedPerturbators.clear();
             if (evaluator.m_TotalConstraintViolationCount == 0) return PerturbatorChain(m_GeneratedPerturbators);
 
@@ -88,7 +88,7 @@ namespace Heuristics {
 
         [[nodiscard]] PerturbatorChain<X, Y, Z, W> generateRepairPerturbators(
             const Evaluation::Evaluator<X, Y, Z, W>& evaluator,
-            const ::State::State<X, Y, Z, W>& state) {
+            const ::State::State<X, Y, Z, W>& state) noexcept {
             m_GeneratedPerturbators.clear();
             m_GeneratedPerturbators.reserve(evaluator.m_ViolatedConstraintCount);
             for (size_t i = 0; i < evaluator.m_ConstraintScores.size(); ++i) {
@@ -113,7 +113,7 @@ namespace Heuristics {
 
         [[nodiscard]] PerturbatorChain<X, Y, Z, W> generateSearchPerturbators(
             const Evaluation::Evaluator<X, Y, Z, W>& evaluator,
-            const ::State::State<X, Y, Z, W>& state) {
+            const ::State::State<X, Y, Z, W>& state) noexcept {
             m_GeneratedPerturbators.clear();
             size_t count = m_Random.randomInt(1, 5);
             m_GeneratedPerturbators.reserve(count);
@@ -171,7 +171,7 @@ namespace Heuristics {
 
         std::vector<Perturbator<X, Y, Z, W> *> m_GeneratedPerturbators {};
 
-        [[nodiscard]] torch::Tensor createInputTensor(const Evaluation::Evaluator<X, Y, Z, W>& evaluator) {
+        [[nodiscard]] torch::Tensor createInputTensor(const Evaluation::Evaluator<X, Y, Z, W>& evaluator) noexcept {
             constexpr int batchSize = 1;
             const int seqLength = evaluator.m_TotalConstraintViolationCount;
             constexpr int featureSize = 9;
@@ -187,7 +187,7 @@ namespace Heuristics {
             return tensor;
         }
 
-        [[nodiscard]] static Perturbator<X, Y, Z, W>* createHeuristicFromTensor(const torch::Tensor& tensor, const ::State::Size& stateSize) {
+        [[nodiscard]] static Perturbator<X, Y, Z, W>* createHeuristicFromTensor(const torch::Tensor& tensor, const ::State::Size& stateSize) noexcept {
             const size_t heuristicIndex = static_cast<size_t>(tensor[0].argmax().item<int>()); // The first few entries are scores per heuristic
             const axis_size_t x = static_cast<axis_size_t>(tensor[1].item<float>());
             const axis_size_t y = static_cast<axis_size_t>(tensor[2].item<float>());

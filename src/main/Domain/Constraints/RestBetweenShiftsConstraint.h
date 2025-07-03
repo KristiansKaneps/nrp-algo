@@ -9,7 +9,7 @@
 namespace Domain::Constraints {
     class RestBetweenShiftsConstraint final : public DomainConstraint {
     public:
-        explicit RestBetweenShiftsConstraint(const Axes::Axis<Domain::Shift>& xAxis) :
+        explicit RestBetweenShiftsConstraint(const Axes::Axis<Domain::Shift>& xAxis) noexcept :
             Constraint("REST_BETWEEN_SHIFTS", {}),
             m_IntersectingShiftsInSameDayMatrix(BitMatrix::createIdentitySymmetricalMatrix(xAxis.size())) {
             int32_t maxDuration = 0;
@@ -71,9 +71,9 @@ namespace Domain::Constraints {
             }
         }
 
-        ~RestBetweenShiftsConstraint() override = default;
+        ~RestBetweenShiftsConstraint() noexcept override = default;
 
-        [[nodiscard]] ConstraintScore evaluate(const State::DomainState& state) override {
+        [[nodiscard]] ConstraintScore evaluate(const State::DomainState& state) noexcept override {
             ConstraintScore totalScore;
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                 axis_size_t z = 0;

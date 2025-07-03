@@ -17,7 +17,7 @@ namespace Search {
     public:
         // ReSharper disable CppRedundantQualifier
         explicit LocalSearch(const ::State::State<X, Y, Z, W> *initialState,
-                             const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints) :
+                             const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints) noexcept :
             mp_InitialState(initialState),
             m_Constraints(constraints),
             m_HeuristicProvider(::Heuristics::HeuristicProvider<X, Y, Z, W>(initialState, constraints)) {
@@ -25,28 +25,28 @@ namespace Search {
         }
         // ReSharper restore CppRedundantQualifier
 
-        LocalSearch(const LocalSearch& other) = default;
+        LocalSearch(const LocalSearch& other) noexcept = default;
 
-        ~LocalSearch() = default;
+        ~LocalSearch() noexcept = default;
 
-        [[nodiscard]] Statistics::ScoreStatistics scoreStatistics() const { return m_ScoreStatistics; }
+        [[nodiscard]] Statistics::ScoreStatistics scoreStatistics() const noexcept { return m_ScoreStatistics; }
 
-        void reset() {
+        void reset() noexcept {
             m_Done = false;
         }
 
-        void startStatistics() {
+        void startStatistics() noexcept {
             m_ScoreStatistics.startRecording(mp_Task->getInitialScore());
         }
 
-        void endStatistics() {
+        void endStatistics() noexcept {
             m_ScoreStatistics.finishRecording();
         }
 
         /**
          * @return `true` if new best state is found, `false` otherwise
          */
-        bool step() {
+        bool step() noexcept {
             // Finalizer
             if (mp_Task->shouldStep()) [[likely]] {
                 mp_Task->step(m_HeuristicProvider);
@@ -59,13 +59,13 @@ namespace Search {
             }
         }
 
-        [[nodiscard]] bool isDone() const { return m_Done; }
+        [[nodiscard]] bool isDone() const noexcept { return m_Done; }
 
         // ReSharper disable once CppRedundantQualifier
-        ::State::State<X, Y, Z, W> getBestState() const { return mp_Task->getOutputState(); }
-        [[nodiscard]] Score::Score getBestScore() const { return mp_Task->getOutputScore(); }
+        ::State::State<X, Y, Z, W> getBestState() const noexcept { return mp_Task->getOutputState(); }
+        [[nodiscard]] Score::Score getBestScore() const noexcept { return mp_Task->getOutputScore(); }
 
-        [[nodiscard]] Score::Score evaluateCurrentBestState() const {
+        [[nodiscard]] Score::Score evaluateCurrentBestState() const noexcept {
             Score::Score score {};
             // ReSharper disable once CppRedundantQualifier
             for (::Constraints::Constraint<X, Y, Z, W> *constraint : m_Constraints)
@@ -73,7 +73,7 @@ namespace Search {
             return score;
         }
 
-        void printBestScore() const {
+        void printBestScore() const noexcept {
             std::cout << "Best score: " << mp_Task->getOutputScore() << "; delta=" << (mp_Task->getOutputScore() - mp_Task->m_InitScore) << std::endl;
         }
 

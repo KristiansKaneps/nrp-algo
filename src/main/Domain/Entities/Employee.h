@@ -73,32 +73,32 @@ namespace Domain {
                 int8_t weight;
             };
 
-            Availability(const Time::RangeCollection& rangeCollection, const Type type, const bool paidUnavailability) :
+            Availability(const Time::RangeCollection& rangeCollection, const Type type, const bool paidUnavailability) noexcept :
                 m_RangeCollection(rangeCollection),
                 m_Type(type),
                 m_PaidUnavailability(paidUnavailability) { }
 
-            void addSpecificRequest(const size_t shiftIndex, const size_t dayIndex, const int8_t weight) {
+            void addSpecificRequest(const size_t shiftIndex, const size_t dayIndex, const int8_t weight) noexcept {
                 m_SpecificRequests.emplace_back(SpecificRequest{shiftIndex, dayIndex, weight});
             }
         };
 
         class DesiredAvailability final : public Availability {
         public:
-            DesiredAvailability(const Time::RangeCollection& rangeCollection) : Availability(rangeCollection, Type::DESIRED, false) { }
-            DesiredAvailability() : DesiredAvailability(Time::RangeCollection()) { }
+            DesiredAvailability(const Time::RangeCollection& rangeCollection) noexcept : Availability(rangeCollection, Type::DESIRED, false) { }
+            DesiredAvailability() noexcept : DesiredAvailability(Time::RangeCollection()) { }
         };
 
         class PaidUnavailableAvailability final : public Availability {
         public:
-            PaidUnavailableAvailability(const Time::RangeCollection& rangeCollection) : Availability(rangeCollection, Type::UNAVAILABLE, true) { }
-            PaidUnavailableAvailability() : PaidUnavailableAvailability(Time::RangeCollection()) { }
+            PaidUnavailableAvailability(const Time::RangeCollection& rangeCollection) noexcept : Availability(rangeCollection, Type::UNAVAILABLE, true) { }
+            PaidUnavailableAvailability() noexcept : PaidUnavailableAvailability(Time::RangeCollection()) { }
         };
 
         class UnpaidUnavailableAvailability final : public Availability {
         public:
-            UnpaidUnavailableAvailability(const Time::RangeCollection& rangeCollection) : Availability(rangeCollection, Type::UNAVAILABLE, false) { }
-            UnpaidUnavailableAvailability() : UnpaidUnavailableAvailability(Time::RangeCollection()) { }
+            UnpaidUnavailableAvailability(const Time::RangeCollection& rangeCollection) noexcept : Availability(rangeCollection, Type::UNAVAILABLE, false) { }
+            UnpaidUnavailableAvailability() noexcept : UnpaidUnavailableAvailability(Time::RangeCollection()) { }
         };
     }
 
@@ -106,73 +106,73 @@ namespace Domain {
     public:
         struct GeneralConstraints;
 
-        explicit Employee(const axis_size_t index) : m_Index(index), m_Name(std::to_string(index + 1)) { }
-        Employee(const axis_size_t index, const std::string& name) : m_Index(index), m_Name(name) { }
+        explicit Employee(const axis_size_t index) noexcept : m_Index(index), m_Name(std::to_string(index + 1)) { }
+        Employee(const axis_size_t index, const std::string& name) noexcept : m_Index(index), m_Name(name) { }
 
-        ~Employee() override = default;
+        ~Employee() noexcept override = default;
 
-        [[nodiscard]] axis_size_t index() const { return m_Index; }
-        [[nodiscard]] std::string name() const { return m_Name; }
-        [[nodiscard]] Workload::TotalChangeEvent totalChangeEvent() const { return m_TotalChangeEvent; }
-        [[nodiscard]] const std::unordered_map<axis_size_t, EmployeeSkill>& skills() const { return m_Skills; }
-        [[nodiscard]] GeneralConstraints generalConstraints() const { return m_GeneralConstraints; }
+        [[nodiscard]] axis_size_t index() const noexcept { return m_Index; }
+        [[nodiscard]] std::string name() const noexcept { return m_Name; }
+        [[nodiscard]] Workload::TotalChangeEvent totalChangeEvent() const noexcept { return m_TotalChangeEvent; }
+        [[nodiscard]] const std::unordered_map<axis_size_t, EmployeeSkill>& skills() const noexcept { return m_Skills; }
+        [[nodiscard]] GeneralConstraints generalConstraints() const noexcept { return m_GeneralConstraints; }
 
-        void setTotalChangeEvent(const Workload::TotalChangeEvent& event) { m_TotalChangeEvent = event; }
+        void setTotalChangeEvent(const Workload::TotalChangeEvent& event) noexcept { m_TotalChangeEvent = event; }
 
-        [[nodiscard]] const EmployeeSkill* skill(const axis_size_t skillIndex) const {
+        [[nodiscard]] const EmployeeSkill* skill(const axis_size_t skillIndex) const noexcept {
             const auto skill = m_Skills.find(skillIndex);
             return skill == m_Skills.end() ? nullptr : &skill->second;
         }
 
-        [[nodiscard]] bool hasSkill(const axis_size_t skillIndex) const { return m_Skills.contains(skillIndex); }
+        [[nodiscard]] bool hasSkill(const axis_size_t skillIndex) const noexcept { return m_Skills.contains(skillIndex); }
 
-        [[nodiscard]] float getSkillWeight(const axis_size_t skillIndex) const {
+        [[nodiscard]] float getSkillWeight(const axis_size_t skillIndex) const noexcept {
             const auto weight = m_Skills.find(skillIndex);
             if (weight == m_Skills.end()) return 0.0f;
             return weight->second.weight;
         }
 
-        void removeSkill(const axis_size_t skillIndex) { m_Skills.erase(skillIndex); }
+        void removeSkill(const axis_size_t skillIndex) noexcept { m_Skills.erase(skillIndex); }
 
-        void setSkillWeight(const axis_size_t skillIndex, const float weight) { m_Skills[skillIndex].weight = weight; }
+        void setSkillWeight(const axis_size_t skillIndex, const float weight) noexcept { m_Skills[skillIndex].weight = weight; }
 
-        void addSkill(const axis_size_t skillIndex, const EmployeeSkill& skill) { m_Skills[skillIndex] = skill; }
+        void addSkill(const axis_size_t skillIndex, const EmployeeSkill& skill) noexcept { m_Skills[skillIndex] = skill; }
 
-        void setGeneralConstraints(const GeneralConstraints& generalConstraints) { m_GeneralConstraints = generalConstraints; }
+        void setGeneralConstraints(const GeneralConstraints& generalConstraints) noexcept { m_GeneralConstraints = generalConstraints; }
 
-        void setUnpaidUnavailableAvailability(const Availability::UnpaidUnavailableAvailability &availability) {
+        void setUnpaidUnavailableAvailability(const Availability::UnpaidUnavailableAvailability &availability) noexcept {
             m_UnpaidUnavailableAvailability = availability;
         }
-        void addUnpaidUnavailableAvailability(const Time::RangeCollection &availabilityRangeCollection) {
+        void addUnpaidUnavailableAvailability(const Time::RangeCollection &availabilityRangeCollection) noexcept {
             m_UnpaidUnavailableAvailability.m_RangeCollection.addAll(availabilityRangeCollection);
         }
-        void addUnpaidUnavailableAvailability(const Availability::UnpaidUnavailableAvailability::SpecificRequest &specificRequest) {
+        void addUnpaidUnavailableAvailability(const Availability::UnpaidUnavailableAvailability::SpecificRequest &specificRequest) noexcept {
             m_UnpaidUnavailableAvailability.m_SpecificRequests.emplace_back(specificRequest);
         }
 
-        void setPaidUnavailableAvailability(const Availability::PaidUnavailableAvailability &availability) {
+        void setPaidUnavailableAvailability(const Availability::PaidUnavailableAvailability &availability) noexcept {
             m_PaidUnavailableAvailability = availability;
         }
-        void addPaidUnavailableAvailability(const Time::RangeCollection &availabilityRangeCollection) {
+        void addPaidUnavailableAvailability(const Time::RangeCollection &availabilityRangeCollection) noexcept {
             m_PaidUnavailableAvailability.m_RangeCollection.addAll(availabilityRangeCollection);
         }
-        void addPaidUnavailableAvailability(const Availability::PaidUnavailableAvailability::SpecificRequest &specificRequest) {
+        void addPaidUnavailableAvailability(const Availability::PaidUnavailableAvailability::SpecificRequest &specificRequest) noexcept {
             m_PaidUnavailableAvailability.m_SpecificRequests.emplace_back(specificRequest);
         }
 
-        void setDesiredAvailability(const Availability::DesiredAvailability &availability) {
+        void setDesiredAvailability(const Availability::DesiredAvailability &availability) noexcept {
             m_DesiredAvailability = availability;
         }
-        void addDesiredAvailability(const Time::RangeCollection &availabilityRangeCollection) {
+        void addDesiredAvailability(const Time::RangeCollection &availabilityRangeCollection) noexcept {
             m_DesiredAvailability.m_RangeCollection.addAll(availabilityRangeCollection);
         }
-        void addDesiredAvailability(const Availability::DesiredAvailability::SpecificRequest &specificRequest) {
+        void addDesiredAvailability(const Availability::DesiredAvailability::SpecificRequest &specificRequest) noexcept {
             m_DesiredAvailability.m_SpecificRequests.emplace_back(specificRequest);
         }
 
-        [[nodiscard]] const Availability::UnpaidUnavailableAvailability& unpaidUnavailableAvailability() const { return m_UnpaidUnavailableAvailability; }
-        [[nodiscard]] const Availability::PaidUnavailableAvailability& paidUnavailableAvailability() const { return m_PaidUnavailableAvailability; }
-        [[nodiscard]] const Availability::DesiredAvailability& desiredAvailability() const { return m_DesiredAvailability; }
+        [[nodiscard]] const Availability::UnpaidUnavailableAvailability& unpaidUnavailableAvailability() const noexcept { return m_UnpaidUnavailableAvailability; }
+        [[nodiscard]] const Availability::PaidUnavailableAvailability& paidUnavailableAvailability() const noexcept { return m_PaidUnavailableAvailability; }
+        [[nodiscard]] const Availability::DesiredAvailability& desiredAvailability() const noexcept { return m_DesiredAvailability; }
 
         struct GeneralConstraints {
             uint8_t minConsecutiveShiftCount = 0;

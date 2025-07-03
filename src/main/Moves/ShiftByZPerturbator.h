@@ -11,19 +11,19 @@ namespace Moves {
     template<typename X, typename Y, typename Z, typename W>
     class ShiftByZPerturbator : public AutonomousPerturbator<X, Y, Z, W> {
     public:
-        explicit ShiftByZPerturbator() = default;
-        ~ShiftByZPerturbator() override = default;
+        explicit ShiftByZPerturbator() noexcept = default;
+        ~ShiftByZPerturbator() noexcept override = default;
 
-        [[nodiscard]] ShiftByZPerturbator *clone() const override {
+        [[nodiscard]] ShiftByZPerturbator *clone() const noexcept override {
             return new ShiftByZPerturbator(*this);
         }
 
         [[nodiscard]] bool configureIfApplicable(const Evaluation::Evaluator<X, Y, Z, W>& evaluator,
-                                                 const ::State::State<X, Y, Z, W>& state) override {
+                                                 const ::State::State<X, Y, Z, W>& state) noexcept override {
             return false;
         }
 
-        void configure(const ::State::State<X, Y, Z, W>& state) override {
+        void configure(const ::State::State<X, Y, Z, W>& state) noexcept override {
             std::vector<axis_size_t> employeesWithWork;
             for (axis_size_t x = 0; x < state.sizeX(); x++) {
                 for (axis_size_t z = 0; z < state.sizeZ(); z++) {
@@ -80,16 +80,16 @@ namespace Moves {
             }
         }
 
-        [[nodiscard]] bool isIdentity() const override { return m_UnassignLocations.empty() && m_AssignLocations.empty(); }
+        [[nodiscard]] bool isIdentity() const noexcept override { return m_UnassignLocations.empty() && m_AssignLocations.empty(); }
 
-        void modify(::State::State<X, Y, Z, W>& state) override {
+        void modify(::State::State<X, Y, Z, W>& state) noexcept override {
             for (const auto& unassignLocation : m_UnassignLocations)
                 state.clear(unassignLocation);
             for (const auto& assignLocation : m_AssignLocations)
                 state.set(assignLocation);
         }
 
-        void revert(::State::State<X, Y, Z, W>& state) const override {
+        void revert(::State::State<X, Y, Z, W>& state) const noexcept override {
             for (const auto& unassignLocation : m_AssignLocations)
                 state.clear(unassignLocation);
             for (const auto& assignLocation : m_UnassignLocations)

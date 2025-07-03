@@ -13,7 +13,7 @@ namespace Domain::Constraints {
                                                  const std::chrono::time_zone *timeZone,
                                                  const Axes::Axis<Domain::Shift>& xAxis,
                                                  const Axes::Axis<Domain::Employee>& yAxis,
-                                                 const Axes::Axis<Domain::Day>& zAxis) : Constraint(
+                                                 const Axes::Axis<Domain::Day>& zAxis) noexcept : Constraint(
                 "EMPLOYMENT_MAX_DURATION", {}),
             m_WorkdayCount(range.getWorkdayCount(timeZone)),
             m_PartialWorkdayCount(range.getPartialWorkdayCount(timeZone)),
@@ -46,10 +46,10 @@ namespace Domain::Constraints {
             }
         }
 
-        ~EmploymentMaxDurationConstraint() override = default;
+        ~EmploymentMaxDurationConstraint() noexcept override = default;
 
         [[nodiscard]] ConstraintScore evaluate(
-            const State::DomainState& state) override {
+            const State::DomainState& state) noexcept override {
             ConstraintScore totalScore;
 
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {

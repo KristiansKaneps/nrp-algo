@@ -9,7 +9,7 @@ namespace Domain::Constraints {
     public:
         explicit EmployeeGeneralConstraint(const Time::Range& range, const std::chrono::time_zone *timeZone,
                                            const Axes::Axis<Domain::Shift>& xAxis,
-                                           const Axes::Axis<Domain::Day>& zAxis) : Constraint(
+                                           const Axes::Axis<Domain::Day>& zAxis) noexcept : Constraint(
                 "EMPLOYEE_GENERAL_CONSTRAINT", {}),
             m_Weekends(zAxis.size()),
             m_ShiftDurationInMinutes(xAxis.size() * zAxis.size(), 0) {
@@ -29,10 +29,10 @@ namespace Domain::Constraints {
             }
         }
 
-        ~EmployeeGeneralConstraint() override = default;
+        ~EmployeeGeneralConstraint() noexcept override = default;
 
         [[nodiscard]] ConstraintScore evaluate(
-            const State::DomainState& state) override {
+            const State::DomainState& state) noexcept override {
             ConstraintScore totalScore;
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                 const auto& g = state.y()[y].generalConstraints();

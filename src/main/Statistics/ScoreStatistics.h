@@ -15,23 +15,23 @@ namespace Statistics {
             Score::Score score;
         };
 
-        ScoreStatistics() = default;
-        ~ScoreStatistics() override = default;
+        ScoreStatistics() noexcept = default;
+        ~ScoreStatistics() noexcept override = default;
 
-        [[nodiscard]] const std::vector<Point>& points() const {
+        [[nodiscard]] const std::vector<Point>& points() const noexcept {
             return m_Points;
         }
 
-        [[nodiscard]] Score::Score min() const {
+        [[nodiscard]] Score::Score min() const noexcept {
             return m_MinScore;
         }
-        [[nodiscard]] Score::Score max() const {
+        [[nodiscard]] Score::Score max() const noexcept {
             return m_MaxScore;
         }
 
         void write(IO::StatisticsFile& out) const override;
 
-        void startRecording(const Score::Score &score) {
+        void startRecording(const Score::Score &score) noexcept {
             #ifdef ENABLE_SCORE_STATISTICS
             using std::chrono_literals::operator ""ms;
             m_StartTime = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch() / 1ms);
@@ -41,7 +41,7 @@ namespace Statistics {
             #endif
         }
 
-        void record(const Score::Score &score) {
+        void record(const Score::Score &score) noexcept {
             #ifdef ENABLE_SCORE_STATISTICS
             using std::chrono_literals::operator ""ms;
             if (const auto time = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch() / 1ms) - m_StartTime; m_LastPoint.time == time) {
@@ -55,7 +55,7 @@ namespace Statistics {
             #endif
         }
 
-        void finishRecording() {
+        void finishRecording() noexcept {
             #ifdef ENABLE_SCORE_STATISTICS
             if (m_Points.size() == 0) return;
             if (m_MinScore > m_LastPoint.score) m_MinScore = m_LastPoint.score;
@@ -72,7 +72,7 @@ namespace Statistics {
         Score::Score m_MaxScore {};
         std::vector<Point> m_Points {};
 
-        void record(const Point &point) {
+        void record(const Point &point) noexcept {
             using std::chrono_literals::operator ""ms;
             if (m_MinScore > point.score) m_MinScore = point.score;
             if (m_MaxScore < point.score) m_MaxScore = point.score;

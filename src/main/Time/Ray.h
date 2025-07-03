@@ -13,34 +13,34 @@ namespace Time {
         RANGE
     };
 
-    std::ostream& operator<<(std::ostream& out, const Ray& ray);
+    std::ostream& operator<<(std::ostream& out, const Ray& ray) noexcept;
 
     class Ray {
     public:
-        Ray(const Instant& start) : m_Start(start) { } // NOLINT(*-explicit-constructor)
+        Ray(const Instant& start) noexcept : m_Start(start) { } // NOLINT(*-explicit-constructor)
 
         template<class Duration = std::chrono::system_clock::duration>
-        Ray(const std::chrono::time_point<std::chrono::system_clock, Duration>& start) : m_Start(
+        Ray(const std::chrono::time_point<std::chrono::system_clock, Duration>& start) noexcept : m_Start(
             std::chrono::time_point_cast<INSTANT_PRECISION>(start)) { } // NOLINT(*-explicit-constructor)
 
-        Ray(const Ray& other) : Ray(other.m_Start) { }
+        Ray(const Ray& other) noexcept : Ray(other.m_Start) { }
 
-        virtual ~Ray() = default;
+        virtual ~Ray() noexcept = default;
 
-        [[nodiscard]] virtual PeriodType type() const { return RAY; }
+        [[nodiscard]] virtual PeriodType type() const noexcept { return RAY; }
 
-        [[nodiscard]] const Instant& start() const { return m_Start; }
+        [[nodiscard]] const Instant& start() const noexcept { return m_Start; }
 
-        virtual bool operator==(const Ray& other) const { return other.type() == RAY && other.m_Start == m_Start; }
-        virtual bool operator!=(const Ray& other) const { return other.type() != RAY || other.m_Start != m_Start; }
-        virtual bool operator<=(const Ray& other) const { return other.type() == RAY && other.m_Start <= m_Start; }
-        virtual bool operator>=(const Ray& other) const { return other.type() == RAY && other.m_Start >= m_Start; }
-        virtual bool operator<(const Ray& other) const { return other.type() == RAY && other.m_Start < m_Start; }
-        virtual bool operator>(const Ray& other) const { return other.type() == RAY && other.m_Start > m_Start; }
+        virtual bool operator==(const Ray& other) const noexcept { return other.type() == RAY && other.m_Start == m_Start; }
+        virtual bool operator!=(const Ray& other) const noexcept { return other.type() != RAY || other.m_Start != m_Start; }
+        virtual bool operator<=(const Ray& other) const noexcept { return other.type() == RAY && other.m_Start <= m_Start; }
+        virtual bool operator>=(const Ray& other) const noexcept { return other.type() == RAY && other.m_Start >= m_Start; }
+        virtual bool operator<(const Ray& other) const noexcept { return other.type() == RAY && other.m_Start < m_Start; }
+        virtual bool operator>(const Ray& other) const noexcept { return other.type() == RAY && other.m_Start > m_Start; }
 
         template<typename DurationType = std::chrono::days, typename TimeZone = const std::chrono::time_zone *>
         [[nodiscard]] std::chrono::time_point<std::chrono::system_clock, DurationType> getDayStartAt(
-            const size_t dayIndex, TimeZone zone) const {
+            const size_t dayIndex, TimeZone zone) const noexcept {
             const auto zonedStart = std::chrono::zoned_time(zone, m_Start);
             const auto localRef = std::chrono::floor<std::chrono::days>(zonedStart.get_local_time()) +
                 std::chrono::days(dayIndex);
@@ -50,44 +50,44 @@ namespace Time {
         }
 
         template<typename TimeZone = const std::chrono::time_zone *>
-        [[nodiscard]] Ray offsetStartByDayCount(const int32_t offsetDayCount, TimeZone zone) const {
+        [[nodiscard]] Ray offsetStartByDayCount(const int32_t offsetDayCount, TimeZone zone) const noexcept {
             const auto zonedStart = std::chrono::zoned_time(zone, m_Start);
             const auto localRef = zonedStart.get_local_time() + std::chrono::days(offsetDayCount);
             return {std::chrono::time_point_cast<INSTANT_PRECISION>(zone->to_sys(localRef))};
         }
 
         template<class Duration = std::chrono::system_clock::duration>
-        [[nodiscard]] Range rangeTo(const std::chrono::time_point<std::chrono::system_clock, Duration>& end) const;
+        [[nodiscard]] Range rangeTo(const std::chrono::time_point<std::chrono::system_clock, Duration>& end) const noexcept;
         template<class Duration = std::chrono::system_clock::duration>
-        [[nodiscard]] Range rangeFrom(const std::chrono::time_point<std::chrono::system_clock, Duration>& start) const;
+        [[nodiscard]] Range rangeFrom(const std::chrono::time_point<std::chrono::system_clock, Duration>& start) const noexcept;
 
         template<typename Duration = std::chrono::minutes, typename TimePoint = Instant>
-        Duration durationTo(const TimePoint& end) const { return std::chrono::round<Duration>(end - m_Start); }
+        Duration durationTo(const TimePoint& end) const noexcept { return std::chrono::round<Duration>(end - m_Start); }
 
-        [[nodiscard]] virtual bool isStartAdjacentTo(const Ray& other) const { // NOLINT(*-no-recursion)
+        [[nodiscard]] virtual bool isStartAdjacentTo(const Ray& other) const noexcept { // NOLINT(*-no-recursion)
             if (other.type() == RAY) [[unlikely]] return other.m_Start == m_Start;
             return other.isStartAdjacentTo(*this);
         }
 
-        [[nodiscard]] virtual bool isAdjacentTo(const Ray& other) const { return isStartAdjacentTo(other); }
+        [[nodiscard]] virtual bool isAdjacentTo(const Ray& other) const noexcept { return isStartAdjacentTo(other); }
 
-        [[nodiscard]] virtual bool fullyContains(const Ray& other) const {
+        [[nodiscard]] virtual bool fullyContains(const Ray& other) const noexcept {
             return m_Start <= other.m_Start;
         }
 
-        [[nodiscard]] virtual bool fullyContains(const RangeCollection& other) const;
+        [[nodiscard]] virtual bool fullyContains(const RangeCollection& other) const noexcept;
 
-        [[nodiscard]] virtual bool isFullyContainedBy(const Ray& other) const {
+        [[nodiscard]] virtual bool isFullyContainedBy(const Ray& other) const noexcept {
             return m_Start >= other.m_Start;
         }
 
-        [[nodiscard]] virtual bool isFullyContainedBy(const RangeCollection& other) const;
+        [[nodiscard]] virtual bool isFullyContainedBy(const RangeCollection& other) const noexcept;
 
-        [[nodiscard]] virtual bool intersects(const Ray& other) const;
+        [[nodiscard]] virtual bool intersects(const Ray& other) const noexcept;
 
-        [[nodiscard]] virtual bool intersects(const RangeCollection& other) const;
+        [[nodiscard]] virtual bool intersects(const RangeCollection& other) const noexcept;
 
-        [[nodiscard]] Ray getRayIntersection(const Ray& other) const {
+        [[nodiscard]] Ray getRayIntersection(const Ray& other) const noexcept {
             return {other.m_Start < m_Start ? m_Start : other.m_Start};
         }
 
@@ -98,7 +98,7 @@ namespace Time {
         friend class RangeCollection;
     };
 
-    inline std::ostream& operator<<(std::ostream& out, const Ray& ray) {
+    inline std::ostream& operator<<(std::ostream& out, const Ray& ray) noexcept {
         out << '[' << ray.start() << ']';
         return out;
     }

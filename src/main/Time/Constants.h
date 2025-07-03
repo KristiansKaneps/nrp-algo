@@ -15,7 +15,7 @@ namespace Time {
     constexpr Instant MAX_INSTANT = Instant::max();
 
     template<typename Duration = std::chrono::minutes>
-    static std::string InstantToString(const std::chrono::time_point<std::chrono::system_clock, Duration>& instant) {
+    static std::string InstantToString(const std::chrono::time_point<std::chrono::system_clock, Duration>& instant) noexcept {
         // Truncate to seconds for base time formatting
         const auto seconds = std::chrono::time_point_cast<std::chrono::seconds>(instant);
         // Extract nanoseconds as a remainder
@@ -101,7 +101,7 @@ namespace Time {
      * @return weekday as an unsigned 8-bit int (0 - Monday, ..., 6 - Sunday)
      */
     template<typename TimeZone = const std::chrono::time_zone *>
-    static uint8_t InstantToWeekday(const Instant& instant, TimeZone zone) {
+    static uint8_t InstantToWeekday(const Instant& instant, TimeZone zone) noexcept {
         auto localTime = zone->to_local(instant);
         // POSIX standard (0 - Sunday, 1 - Monday, ..., 6 - Saturday).
         const auto weekdayIsoStd = std::chrono::year_month_weekday {std::chrono::floor<std::chrono::days>(localTime)}.
@@ -114,7 +114,7 @@ namespace Time {
      * @return weekday as an unsigned 8-bit int (0 - Monday, ..., 6 - Sunday)
      */
     template<typename TimeZone = const std::chrono::time_zone *>
-    static uint8_t InstantToWeekday(const std::chrono::zoned_time<TimeZone>& zonedInstant) {
+    static uint8_t InstantToWeekday(const std::chrono::zoned_time<TimeZone>& zonedInstant) noexcept {
         auto localTime = zonedInstant.get_local_time();
         // POSIX standard (0 - Sunday, 1 - Monday, ..., 6 - Saturday).
         const auto weekdayIsoStd = std::chrono::year_month_weekday {std::chrono::floor<std::chrono::days>(localTime)}.
@@ -125,7 +125,7 @@ namespace Time {
 
     template<typename Duration = std::chrono::minutes>
     std::ostream& operator<<(std::ostream& out,
-                             const std::chrono::time_point<std::chrono::system_clock, Duration>& instant) {
+                             const std::chrono::time_point<std::chrono::system_clock, Duration>& instant) noexcept {
         out << InstantToString(instant);
         return out;
     }

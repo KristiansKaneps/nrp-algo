@@ -13,7 +13,7 @@ namespace Domain::Constraints {
                                          const Axes::Axis<Domain::Shift>& xAxis,
                                          const axis_size_t yAxisSize,
                                          const Axes::Axis<Domain::Day>& zAxis,
-                                         const axis_size_t wAxisSize) : Constraint("VALID_SHIFT_DAY", {
+                                         const axis_size_t wAxisSize) noexcept : Constraint("VALID_SHIFT_DAY", {
                 new Moves::ValidShiftDayRepairPerturbator(yAxisSize, wAxisSize),
             }),
             m_ShiftAndDayConflictMatrix(BitMatrix::createMatrix(xAxis.size(), zAxis.size())) {
@@ -32,10 +32,10 @@ namespace Domain::Constraints {
             }
         }
 
-        ~ValidShiftDayConstraint() override = default;
+        ~ValidShiftDayConstraint() noexcept override = default;
 
         [[nodiscard]] ConstraintScore evaluate(
-            const State::DomainState& state) override {
+            const State::DomainState& state) noexcept override {
             ConstraintScore totalScore;
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {

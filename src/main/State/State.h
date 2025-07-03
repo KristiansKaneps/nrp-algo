@@ -16,7 +16,7 @@ namespace State {
     class State {
     public:
         State(const Time::Range& range, const std::chrono::time_zone *timeZone, const Axes::Axis<X>* x, const Axes::Axis<Y>* y,
-                      const Axes::Axis<Z>* z, const Axes::Axis<W>* w) : m_Size(x->size(), y->size(), z->size(), w->size()),
+                      const Axes::Axis<Z>* z, const Axes::Axis<W>* w) noexcept : m_Size(x->size(), y->size(), z->size(), w->size()),
                                                                         m_Range(range),
                                                                         mp_TimeZone(timeZone),
                                                                         m_Matrix(m_Size.volume()),
@@ -26,9 +26,9 @@ namespace State {
                                                                         m_W(w) { }
 
         State(const Time::Range& range, const Axes::Axis<X>* x, const Axes::Axis<Y>* y,
-              const Axes::Axis<Z>* z, const Axes::Axis<W>* w) : State(range, nullptr, x, y, z, w) {}
+              const Axes::Axis<Z>* z, const Axes::Axis<W>* w) noexcept : State(range, nullptr, x, y, z, w) {}
 
-        State(const State &other) : m_Size(other.m_Size),
+        State(const State &other) noexcept : m_Size(other.m_Size),
                                     m_Range(other.m_Range),
                                     mp_TimeZone(other.mp_TimeZone),
                                     m_Matrix(other.m_Matrix),
@@ -37,160 +37,160 @@ namespace State {
                                     m_Z(other.m_Z),
                                     m_W(other.m_W) { }
 
-        State &operator=(const State &other) = default;
+        State &operator=(const State &other) noexcept = default;
 
-        ~State() = default;
+        ~State() noexcept = default;
 
-        void printSize() const {
+        void printSize() const noexcept {
             std::cout << m_Size.width << 'x' << m_Size.height << 'x' << m_Size.depth << 'x' << m_Size.concepts <<
                 std::endl;
         }
 
-        void printFlatSize() const { std::cout << flatSize() << std::endl; }
+        void printFlatSize() const noexcept { std::cout << flatSize() << std::endl; }
 
-        [[nodiscard]] bool isValid() const { return m_Size.isValid(); }
+        [[nodiscard]] bool isValid() const noexcept { return m_Size.isValid(); }
 
-        [[nodiscard]] const Time::Range& range() const { return m_Range; }
-        [[nodiscard]] const std::chrono::time_zone *timeZone() const { return mp_TimeZone; }
+        [[nodiscard]] const Time::Range& range() const noexcept { return m_Range; }
+        [[nodiscard]] const std::chrono::time_zone *timeZone() const noexcept { return mp_TimeZone; }
 
-        [[nodiscard]] const Size& size() const { return m_Size; }
+        [[nodiscard]] const Size& size() const noexcept { return m_Size; }
 
-        [[nodiscard]] axis_size_t sizeX() const { return m_Size.width; }
-        [[nodiscard]] axis_size_t sizeY() const { return m_Size.height; }
-        [[nodiscard]] axis_size_t sizeZ() const { return m_Size.depth; }
-        [[nodiscard]] axis_size_t sizeW() const { return m_Size.concepts; }
+        [[nodiscard]] axis_size_t sizeX() const noexcept { return m_Size.width; }
+        [[nodiscard]] axis_size_t sizeY() const noexcept { return m_Size.height; }
+        [[nodiscard]] axis_size_t sizeZ() const noexcept { return m_Size.depth; }
+        [[nodiscard]] axis_size_t sizeW() const noexcept { return m_Size.concepts; }
 
-        [[nodiscard]] state_size_t flatSize() const { return m_Matrix.size(); }
+        [[nodiscard]] state_size_t flatSize() const noexcept { return m_Matrix.size(); }
 
-        [[nodiscard]] const Axes::Axis<X>& x() const { return *m_X; }
-        [[nodiscard]] const Axes::Axis<Y>& y() const { return *m_Y; }
-        [[nodiscard]] const Axes::Axis<Z>& z() const { return *m_Z; }
-        [[nodiscard]] const Axes::Axis<W>& w() const { return *m_W; }
+        [[nodiscard]] const Axes::Axis<X>& x() const noexcept { return *m_X; }
+        [[nodiscard]] const Axes::Axis<Y>& y() const noexcept { return *m_Y; }
+        [[nodiscard]] const Axes::Axis<Z>& z() const noexcept { return *m_Z; }
+        [[nodiscard]] const Axes::Axis<W>& w() const noexcept { return *m_W; }
 
-        [[nodiscard]] const BitArray::BitArray &getBitArray() const { return m_Matrix; }
+        [[nodiscard]] const BitArray::BitArray &getBitArray() const noexcept { return m_Matrix; }
 
-        [[nodiscard]] const Axes::AxisEntity& x(const axis_size_t xIndex) const { return (*m_X)[xIndex]; }
-        [[nodiscard]] const Axes::AxisEntity& y(const axis_size_t yIndex) const { return (*m_Y)[yIndex]; }
-        [[nodiscard]] const Axes::AxisEntity& z(const axis_size_t zIndex) const { return (*m_Z)[zIndex]; }
-        [[nodiscard]] const Axes::AxisEntity& w(const axis_size_t wIndex) const { return (*m_W)[wIndex]; }
+        [[nodiscard]] const Axes::AxisEntity& x(const axis_size_t xIndex) const noexcept { return (*m_X)[xIndex]; }
+        [[nodiscard]] const Axes::AxisEntity& y(const axis_size_t yIndex) const noexcept { return (*m_Y)[yIndex]; }
+        [[nodiscard]] const Axes::AxisEntity& z(const axis_size_t zIndex) const noexcept { return (*m_Z)[zIndex]; }
+        [[nodiscard]] const Axes::AxisEntity& w(const axis_size_t wIndex) const noexcept { return (*m_W)[wIndex]; }
 
-        uint8_t toggle(const Location& location) {
+        uint8_t toggle(const Location& location) noexcept {
             return toggle(location.getX(), location.getY(), location.getZ(), location.getW());
         }
 
-        uint8_t toggle(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w) {
+        uint8_t toggle(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w) noexcept {
             const uint8_t newValue = m_Matrix.get(index(x, y, z, w) ^ 1) & 1;
             m_Matrix.assign(index(x, y, z, w), newValue);
             return newValue;
         }
 
-        void assign(const Location& location, const bool value) {
+        void assign(const Location& location, const bool value) noexcept {
             assign(location.getX(), location.getY(), location.getZ(), location.getW(), value);
         }
 
-        void assign(const Location& location, const uint8_t value) {
+        void assign(const Location& location, const uint8_t value) noexcept {
             assign(location.getX(), location.getY(), location.getZ(), location.getW(), value);
         }
 
-        void assign(const Location& location, const uint32_t value) {
+        void assign(const Location& location, const uint32_t value) noexcept {
             assign(location.getX(), location.getY(), location.getZ(), location.getW(), value);
         }
 
-        void assign(const Location& location, const int32_t value) {
+        void assign(const Location& location, const int32_t value) noexcept {
             assign(location.getX(), location.getY(), location.getZ(), location.getW(), value);
         }
 
         void assign(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w,
-                    const bool value) { m_Matrix.assign(index(x, y, z, w), static_cast<uint8_t>(value)); }
+                    const bool value) noexcept { m_Matrix.assign(index(x, y, z, w), static_cast<uint8_t>(value)); }
 
         void assign(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w,
-                    const uint8_t value) { m_Matrix.assign(index(x, y, z, w), value & 1); }
+                    const uint8_t value) noexcept { m_Matrix.assign(index(x, y, z, w), value & 1); }
 
         void assign(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w,
-                    const uint32_t value) { m_Matrix.assign(index(x, y, z, w), value & 1); }
+                    const uint32_t value) noexcept { m_Matrix.assign(index(x, y, z, w), value & 1); }
 
         void assign(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w,
-                    const int32_t value) { m_Matrix.assign(index(x, y, z, w), value & 1); }
+                    const int32_t value) noexcept { m_Matrix.assign(index(x, y, z, w), value & 1); }
 
-        void set(const Location& location) {
+        void set(const Location& location) noexcept {
             set(location.getX(), location.getY(), location.getZ(), location.getW());
         }
 
-        void set(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w) {
+        void set(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w) noexcept {
             m_Matrix.set(index(x, y, z, w));
         }
 
-        void clear(const Location& location) {
+        void clear(const Location& location) noexcept {
             clear(location.getX(), location.getY(), location.getZ(), location.getW());
         }
 
-        void clear(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w) {
+        void clear(const axis_size_t x, const axis_size_t y, const axis_size_t z, const axis_size_t w) noexcept {
             m_Matrix.clear(index(x, y, z, w));
         }
 
-        void setAll() {
+        void setAll() noexcept {
             m_Matrix.setAll();
         }
 
-        void clearAll() {
+        void clearAll() noexcept {
             m_Matrix.clearAll();
         }
 
-        [[nodiscard]] uint8_t get(const Location& location) const {
+        [[nodiscard]] uint8_t get(const Location& location) const noexcept {
             return get(location.getX(), location.getY(), location.getZ(), location.getW());
         }
 
         [[nodiscard]] uint8_t get(const axis_size_t x, const axis_size_t y, const axis_size_t z,
-                                  const axis_size_t w) const { return m_Matrix.get(index(x, y, z, w)); }
+                                  const axis_size_t w) const noexcept { return m_Matrix.get(index(x, y, z, w)); }
 
-        [[nodiscard]] uint8_t get(const axis_size_t x, const axis_size_t y, const axis_size_t z) const {
+        [[nodiscard]] uint8_t get(const axis_size_t x, const axis_size_t y, const axis_size_t z) const noexcept {
             return m_Matrix.test(offset(x, y, z), m_Size.concepts);
         }
 
-        [[nodiscard]] uint8_t getXZ(const axis_size_t x, const axis_size_t z) const {
+        [[nodiscard]] uint8_t getXZ(const axis_size_t x, const axis_size_t z) const noexcept {
             for (axis_size_t y = 0; y < m_Size.height; ++y) {
                 if (m_Matrix.test(offset(x, y, z), m_Size.concepts)) return 1;
             }
             return 0;
         }
 
-        [[nodiscard]] char getCharRepresentation(const Location& location) const {
+        [[nodiscard]] char getCharRepresentation(const Location& location) const noexcept {
             return get(location.getX(), location.getY(), location.getZ(), location.getW());
         }
 
         [[nodiscard]] char getCharRepresentation(const axis_size_t x, const axis_size_t y,
-                                   const axis_size_t z, const axis_size_t w) const {
+                                   const axis_size_t z, const axis_size_t w) const noexcept {
             return BitArray::BIT_CHAR_REPRESENTATIONS[get(x, y, z, w)];
         }
 
         void getLineXYW(BitArray::BitArray& dst, const axis_size_t x, const axis_size_t y,
-                        const axis_size_t w) const {
+                        const axis_size_t w) const noexcept {
             m_Matrix.copyTo(
                 dst, x * m_Size.height * m_Size.depth * m_Size.concepts + y * m_Size.depth * m_Size.concepts + w,
                 m_Size.concepts, 0);
         }
 
         void getLineXZW(BitArray::BitArray& dst, const axis_size_t x, const axis_size_t z,
-                        const axis_size_t w) const {
+                        const axis_size_t w) const noexcept {
             m_Matrix.copyTo(dst, x * m_Size.height * m_Size.depth * m_Size.concepts + z * m_Size.concepts + w,
                             m_Size.depth * m_Size.concepts, 0);
         }
 
         void getLineYZW(BitArray::BitArray& dst, const axis_size_t y, const axis_size_t z,
-                        const axis_size_t w) const {
+                        const axis_size_t w) const noexcept {
             m_Matrix.copyTo(dst, y * m_Size.depth * m_Size.concepts + z * m_Size.concepts + w,
                             m_Size.height * m_Size.depth * m_Size.concepts, 0);
         }
 
         void getLineXYZ(BitArray::BitArray& dst, const axis_size_t x, const axis_size_t y,
-                        const axis_size_t z) const {
+                        const axis_size_t z) const noexcept {
             m_Matrix.copyTo(
                 dst,
                 x * m_Size.height * m_Size.depth * m_Size.concepts + y * m_Size.depth * m_Size.concepts + z * m_Size.
                 concepts, 1, 0);
         }
 
-        void getPlaneXY(BitArray::BitArray& dst, const axis_size_t z, const axis_size_t w) const {
+        void getPlaneXY(BitArray::BitArray& dst, const axis_size_t z, const axis_size_t w) const noexcept {
             for (axis_size_t x = 0; x < m_Size.width; ++x) {
                 for (axis_size_t y = 0; y < m_Size.height; ++y) {
                     const BitArray::array_size_t srcIndex = index(x, y, z, w);
@@ -200,7 +200,7 @@ namespace State {
             }
         }
 
-        void getPlaneXZ(BitArray::BitArray& dst, const axis_size_t y, const axis_size_t w) const {
+        void getPlaneXZ(BitArray::BitArray& dst, const axis_size_t y, const axis_size_t w) const noexcept {
             for (axis_size_t x = 0; x < m_Size.width; ++x) {
                 for (axis_size_t z = 0; z < m_Size.depth; ++z) {
                     const BitArray::array_size_t srcIndex = index(x, y, z, w);
@@ -210,7 +210,7 @@ namespace State {
             }
         }
 
-        void getPlaneYZ(BitArray::BitArray& dst, const axis_size_t x, const axis_size_t w) const {
+        void getPlaneYZ(BitArray::BitArray& dst, const axis_size_t x, const axis_size_t w) const noexcept {
             for (axis_size_t y = 0; y < m_Size.height; ++y) {
                 for (axis_size_t z = 0; z < m_Size.depth; ++z) {
                     const BitArray::array_size_t srcIndex = index(x, y, z, w);
@@ -220,7 +220,7 @@ namespace State {
             }
         }
 
-        void getPlaneXW(BitArray::BitArray& dst, const axis_size_t y, const axis_size_t z) const {
+        void getPlaneXW(BitArray::BitArray& dst, const axis_size_t y, const axis_size_t z) const noexcept {
             for (axis_size_t x = 0; x < m_Size.width; ++x) {
                 for (axis_size_t w = 0; w < m_Size.concepts; ++w) {
                     const BitArray::array_size_t srcIndex = index(x, y, z, w);
@@ -230,7 +230,7 @@ namespace State {
             }
         }
 
-        void getPlaneYW(BitArray::BitArray& dst, const axis_size_t x, const axis_size_t z) const {
+        void getPlaneYW(BitArray::BitArray& dst, const axis_size_t x, const axis_size_t z) const noexcept {
             for (axis_size_t y = 0; y < m_Size.height; ++y) {
                 for (axis_size_t w = 0; w < m_Size.concepts; ++w) {
                     const BitArray::array_size_t srcIndex = index(x, y, z, w);
@@ -240,7 +240,7 @@ namespace State {
             }
         }
 
-        void assignPlaneYW(const BitArray::BitArray& src, const axis_size_t x, const axis_size_t z) {
+        void assignPlaneYW(const BitArray::BitArray& src, const axis_size_t x, const axis_size_t z) noexcept {
             for (axis_size_t y = 0; y < m_Size.height; ++y) {
                 for (axis_size_t w = 0; w < m_Size.concepts; ++w) {
                     const BitArray::array_size_t dstIndex = index(x, y, z, w);
@@ -250,7 +250,7 @@ namespace State {
             }
         }
 
-        void clearPlaneYW(const axis_size_t x, const axis_size_t z) {
+        void clearPlaneYW(const axis_size_t x, const axis_size_t z) noexcept {
             for (axis_size_t y = 0; y < m_Size.height; ++y) {
                 for (axis_size_t w = 0; w < m_Size.concepts; ++w) {
                     const BitArray::array_size_t dstIndex = index(x, y, z, w);
@@ -259,7 +259,7 @@ namespace State {
             }
         }
 
-        void getPlaneZW(BitArray::BitArray& dst, const axis_size_t x, const axis_size_t y) const {
+        void getPlaneZW(BitArray::BitArray& dst, const axis_size_t x, const axis_size_t y) const noexcept {
             for (axis_size_t z = 0; z < m_Size.depth; ++z) {
                 for (axis_size_t w = 0; w < m_Size.concepts; ++w) {
                     const BitArray::array_size_t srcIndex = index(x, y, z, w);
@@ -271,13 +271,13 @@ namespace State {
 
         void collectTestIndicesW(const BitArray::BitArray& other, const axis_size_t x, const axis_size_t y,
                                  const axis_size_t z,
-                                 std::vector<BitArray::array_size_t>& result) const {
+                                 std::vector<BitArray::array_size_t>& result) const noexcept {
             m_Matrix.collectTestIndices(other, offset(x, y, z), result);
         }
 
-        void random(const float probability) { m_Matrix.random(probability); }
+        void random(const float probability) noexcept { m_Matrix.random(probability); }
 
-        void random() { m_Matrix.random(); }
+        void random() noexcept { m_Matrix.random(); }
 
     protected:
         Size m_Size;
@@ -285,17 +285,17 @@ namespace State {
         const std::chrono::time_zone *mp_TimeZone;
         BitArray::BitArray m_Matrix;
 
-        [[nodiscard]] constexpr state_size_t offset(const axis_size_t x, const axis_size_t y) const {
+        [[nodiscard]] constexpr state_size_t offset(const axis_size_t x, const axis_size_t y) const noexcept {
             return m_Size.offset(x, y);
         }
 
         [[nodiscard]] constexpr state_size_t
-        offset(const axis_size_t x, const axis_size_t y, const axis_size_t z) const {
+        offset(const axis_size_t x, const axis_size_t y, const axis_size_t z) const noexcept {
             return m_Size.offset(x, y, z);
         }
 
         [[nodiscard]] constexpr state_size_t index(const axis_size_t x, const axis_size_t y, const axis_size_t z,
-                                                   const axis_size_t w) const {
+                                                   const axis_size_t w) const noexcept {
             return m_Size.index(x, y, z, w);
         }
 

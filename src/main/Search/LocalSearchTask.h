@@ -17,7 +17,7 @@ namespace Search::Task {
         // ReSharper disable CppRedundantQualifier
         explicit LocalSearchTask(const ::State::State<X, Y, Z, W> inputState,
                                  const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints,
-                                 Statistics::ScoreStatistics &scoreStatistics) :
+                                 Statistics::ScoreStatistics &scoreStatistics) noexcept :
             m_OutputState(inputState),
             m_Evaluator(constraints),
             m_ScoreStatistics(scoreStatistics),
@@ -28,28 +28,28 @@ namespace Search::Task {
         }
         // ReSharper restore CppRedundantQualifier
 
-        virtual ~LocalSearchTask() = default;
+        virtual ~LocalSearchTask() noexcept = default;
 
-        [[nodiscard]] bool newBestFound() const { return m_NewBestFound; }
+        [[nodiscard]] bool newBestFound() const noexcept { return m_NewBestFound; }
 
         // ReSharper disable once CppRedundantQualifier
-        virtual void reset(const ::State::State<X, Y, Z, W> inputState) { m_OutputState = inputState; }
+        virtual void reset(const ::State::State<X, Y, Z, W> inputState) noexcept { m_OutputState = inputState; }
 
         // ReSharper disable CppRedundantQualifier
-        virtual void step(::Heuristics::HeuristicProvider<X, Y, Z, W> &heuristicProvider) = 0;
+        virtual void step(::Heuristics::HeuristicProvider<X, Y, Z, W> &heuristicProvider) noexcept = 0;
         // ReSharper restore CppRedundantQualifier
 
         /**
          * Defines termination criteria.
          * @return `true` if should keep searching for local optima, `false` otherwise
          */
-        virtual [[nodiscard]] bool shouldStep() = 0;
+        virtual [[nodiscard]] bool shouldStep() noexcept = 0;
 
-        [[nodiscard]] Score::Score getInitialScore() const { return m_InitScore; }
+        [[nodiscard]] Score::Score getInitialScore() const noexcept { return m_InitScore; }
 
         // ReSharper disable once CppRedundantQualifier
-        [[nodiscard]] ::State::State<X, Y, Z, W> getOutputState() const { return m_OutputState; }
-        [[nodiscard]] Score::Score getOutputScore() const { return m_OutputScore; }
+        [[nodiscard]] ::State::State<X, Y, Z, W> getOutputState() const noexcept { return m_OutputState; }
+        [[nodiscard]] Score::Score getOutputScore() const noexcept { return m_OutputScore; }
 
     protected:
         // ReSharper disable once CppRedundantQualifier

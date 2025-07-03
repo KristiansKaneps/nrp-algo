@@ -15,30 +15,30 @@ namespace Search::Task {
         // ReSharper disable CppRedundantQualifier
         explicit LateAcceptanceLocalSearchTask(const ::State::State<X, Y, Z, W> inputState,
                                  const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints,
-                                 Statistics::ScoreStatistics &scoreStatistics) : Base(inputState, constraints, scoreStatistics) {
+                                 Statistics::ScoreStatistics &scoreStatistics) noexcept : Base(inputState, constraints, scoreStatistics) {
             m_History.fill(Base::m_InitScore);
         }
         // ReSharper restore CppRedundantQualifier
 
-        ~LateAcceptanceLocalSearchTask() override = default;
+        ~LateAcceptanceLocalSearchTask() noexcept override = default;
 
         // ReSharper disable once CppRedundantQualifier
-        void reset(const ::State::State<X, Y, Z, W> inputState) override { Base::reset(inputState); }
+        void reset(const ::State::State<X, Y, Z, W> inputState) noexcept override { Base::reset(inputState); }
 
         // ReSharper disable CppRedundantQualifier
-        void step(::Heuristics::HeuristicProvider<X, Y, Z, W> &heuristicProvider) override {
+        void step(::Heuristics::HeuristicProvider<X, Y, Z, W> &heuristicProvider) noexcept override {
             Base::m_NewBestFound = false;
 
             // Generate new candidate solution
             ::State::State<X, Y, Z, W>& candidateState = Base::m_CurrentState;
             auto perturbators = heuristicProvider.generateSearchPerturbators(Base::m_Evaluator, candidateState);
-            if (!m_RepairPerturbatorsApplied && m_BestScoreAchievedBeforePerturbationCount > 100000) {
-                m_RepairPerturbatorsApplied = true;
-                auto repairPerturbators = heuristicProvider.generateRepairPerturbators(Base::m_Evaluator, candidateState);
-                repairPerturbators.modify(candidateState);
-                m_AppliedPerturbators.append(repairPerturbators);
-                std::cout << "Applying repair perturbators" << std::endl;
-            }
+            // if (!m_RepairPerturbatorsApplied && m_BestScoreAchievedBeforePerturbationCount > 100000) {
+            //     m_RepairPerturbatorsApplied = true;
+            //     auto repairPerturbators = heuristicProvider.generateRepairPerturbators(Base::m_Evaluator, candidateState);
+            //     repairPerturbators.modify(candidateState);
+            //     m_AppliedPerturbators.append(repairPerturbators);
+            //     std::cout << "Applying repair perturbators" << std::endl;
+            // }
             perturbators.modify(candidateState);
             const Score::Score candidateScore = Base::m_Evaluator.evaluateState(candidateState);
 
@@ -92,7 +92,7 @@ namespace Search::Task {
         }
         // ReSharper restore CppRedundantQualifier
 
-        [[nodiscard]] bool shouldStep() override {
+        [[nodiscard]] bool shouldStep() noexcept override {
             if (Base::m_OutputScore.isZero()) [[unlikely]] {
                 if (m_IterationCountAtZeroScore >= ITERATION_COUNT_AT_ZERO_SCORE_THRESHOLD) [[unlikely]] return m_IdleIterations < MAX_FEASIBLE_IDLE_ITERATION_COUNT >> 1;
                 m_IterationCountAtZeroScore += 1;

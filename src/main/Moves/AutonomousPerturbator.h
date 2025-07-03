@@ -19,16 +19,16 @@ namespace Moves {
     template<typename X, typename Y, typename Z, typename W>
     class AutonomousPerturbator : public Perturbator<X, Y, Z, W> {
     public:
-        explicit AutonomousPerturbator() = default;
-        virtual ~AutonomousPerturbator() = default;
-        AutonomousPerturbator(const AutonomousPerturbator&) = default;
-        AutonomousPerturbator(AutonomousPerturbator&&) = default;
+        explicit AutonomousPerturbator() noexcept = default;
+        ~AutonomousPerturbator() noexcept override = default;
+        AutonomousPerturbator(const AutonomousPerturbator&) noexcept = default;
+        AutonomousPerturbator(AutonomousPerturbator&&) noexcept = default;
 
         /**
          * Clone should be deleted afterward.
          * @return Cloned perturbator.
          */
-        [[nodiscard]] virtual AutonomousPerturbator *clone() const = 0;
+        [[nodiscard]] virtual AutonomousPerturbator *clone() const noexcept = 0;
 
         /**
          * Check if this perturbator is applicable for current evaluated candidate state and configure it.
@@ -36,7 +36,7 @@ namespace Moves {
          * @param state Current candidate state
          * @return `true` if configuration is done; `false` otherwise
          */
-        [[nodiscard]] virtual bool configureIfApplicable(const ::Evaluation::Evaluator<X, Y, Z, W>& evaluator, const ::State::State<X, Y, Z, W>& state) {
+        [[nodiscard]] virtual bool configureIfApplicable(const ::Evaluation::Evaluator<X, Y, Z, W>& evaluator, const ::State::State<X, Y, Z, W>& state) noexcept {
             return false;
         }
 
@@ -46,7 +46,7 @@ namespace Moves {
          * @param state State to modify afterward.
          * @see configureIfApplicable
          */
-        virtual void configure(const Constraints::Violation *violation, const ::State::State<X, Y, Z, W>& state) {
+        virtual void configure(const Constraints::Violation *violation, const ::State::State<X, Y, Z, W>& state) noexcept {
             configure(state);
         }
 
@@ -54,7 +54,7 @@ namespace Moves {
          * Prepares this perturbator for modifying a given state.
          * @param state State to modify afterward.
          */
-        void configure(const ::State::State<X, Y, Z, W>& state) override { }
+        void configure(const ::State::State<X, Y, Z, W>& state) noexcept override { }
 
     protected:
         friend class PerturbatorChain<X, Y, Z, W>;
@@ -88,14 +88,14 @@ namespace Moves {
 
         void configure(const Constraints::Violation *, const ::State::State<X, Y, Z, W>&) noexcept override { }
 
-        bool isIdentity() const override { return true; }
+        bool isIdentity() const noexcept override { return true; }
 
         void modify(::State::State<X, Y, Z, W>&) noexcept override { }
         void revert(::State::State<X, Y, Z, W>&) const noexcept override { }
 
     private:
-        IdentityPerturbator() = default;
-        ~IdentityPerturbator() override = default;
+        IdentityPerturbator() noexcept = default;
+        ~IdentityPerturbator() noexcept override = default;
     };
 }
 

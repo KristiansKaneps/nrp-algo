@@ -9,7 +9,7 @@
 namespace Domain::Constraints {
     class NoOverlapConstraint final : public DomainConstraint {
     public:
-        explicit NoOverlapConstraint(const Axes::Axis<Domain::Shift>& xAxis) : Constraint("NO_OVERLAP", {
+        explicit NoOverlapConstraint(const Axes::Axis<Domain::Shift>& xAxis) noexcept : Constraint("NO_OVERLAP", {
                                                                                    new Moves::DomainUnassignRepairPerturbator(),
                                                                                }),
                                                                                m_IntersectingShiftsInSameDayMatrix(
@@ -36,10 +36,10 @@ namespace Domain::Constraints {
             }
         }
 
-        ~NoOverlapConstraint() override = default;
+        ~NoOverlapConstraint() noexcept override = default;
 
         [[nodiscard]] ConstraintScore evaluate(
-            const State::DomainState& state) override {
+            const State::DomainState& state) noexcept override {
             ConstraintScore totalScore;
             for (axis_size_t y = 0; y < state.sizeY(); ++y) {
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {

@@ -15,7 +15,7 @@ namespace Domain::Constraints {
     public:
         explicit ShiftCoverageConstraint(const Time::Range& range, const std::chrono::time_zone *timeZone,
                                          const Axes::Axis<Domain::Shift>& xAxis,
-                                         const Axes::Axis<Domain::Day>& zAxis) : Constraint("SHIFT_COVERAGE", {}),
+                                         const Axes::Axis<Domain::Day>& zAxis) noexcept : Constraint("SHIFT_COVERAGE", {}),
             m_CoverageData(xAxis.size() * zAxis.size(), CoverageData {}),
             m_WorkloadDurationInRange(range.getWorkdayCount(timeZone) * 8 * 60) {
             using std::chrono_literals::operator ""min;
@@ -35,9 +35,9 @@ namespace Domain::Constraints {
             }
         }
 
-        ~ShiftCoverageConstraint() override = default;
+        ~ShiftCoverageConstraint() noexcept override = default;
 
-        [[nodiscard]] ConstraintScore evaluate(const State::DomainState& state) override {
+        [[nodiscard]] ConstraintScore evaluate(const State::DomainState& state) noexcept override {
             ConstraintScore totalScore;
             for (axis_size_t x = 0; x < state.sizeX(); ++x) {
                 for (axis_size_t z = 0; z < state.sizeZ(); ++z) {
@@ -161,7 +161,7 @@ namespace Domain::Constraints {
         std::vector<CoverageData> m_CoverageData;
         const int64_t m_WorkloadDurationInRange;
 
-        EmployeeAssignmentDuration employeeAssignmentDuration(const State::DomainState& st, axis_size_t y) const {
+        EmployeeAssignmentDuration employeeAssignmentDuration(const State::DomainState& st, const axis_size_t y) const noexcept {
             const auto& employee = st.y()[y];
             const auto& totalChangeEvent = employee.totalChangeEvent();
 

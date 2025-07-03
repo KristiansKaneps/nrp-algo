@@ -28,20 +28,20 @@ namespace BitArray {
         array_size_t end;
     };
 
-    inline std::ostream& operator<<(std::ostream& out, const ArrayIndexRange& intRange) {
+    inline std::ostream& operator<<(std::ostream& out, const ArrayIndexRange& intRange) noexcept {
         out << '[' << intRange.start << "; " << intRange.end << ']';
         return out;
     }
 
     class BitArrayInterface {
     public:
-        explicit BitArrayInterface(const array_size_t size) : m_Size(size) { }
+        explicit BitArrayInterface(const array_size_t size) noexcept : m_Size(size) { }
 
-        virtual ~BitArrayInterface() = default;
+        virtual ~BitArrayInterface() noexcept = default;
 
-        [[nodiscard]] array_size_t size() const { return m_Size; }
+        [[nodiscard]] array_size_t size() const noexcept { return m_Size; }
 
-        virtual std::string getStringRepresentation() const { // NOLINT(*-use-nodiscard)
+        virtual std::string getStringRepresentation() const noexcept { // NOLINT(*-use-nodiscard)
             std::string str;
             str.reserve(m_Size);
             for (array_size_t i = 0; i < m_Size; ++i)
@@ -49,45 +49,45 @@ namespace BitArray {
             return str;
         }
 
-        virtual void setAll() = 0;
-        virtual void clearAll() = 0;
+        virtual void setAll() noexcept = 0;
+        virtual void clearAll() noexcept = 0;
 
-        virtual void assign(array_size_t index, bool value) = 0;
-        virtual void assign(array_size_t index, uint8_t value) = 0;
-        virtual void assign(array_size_t index, int8_t value) = 0;
-        virtual void assign(array_size_t index, uint16_t value) = 0;
-        virtual void assign(array_size_t index, int16_t value) = 0;
-        virtual void assign(array_size_t index, uint32_t value) = 0;
-        virtual void assign(array_size_t index, int32_t value) = 0;
-        virtual void assign(array_size_t index, uint64_t value) = 0;
-        virtual void assign(array_size_t index, int64_t value) = 0;
-        virtual void set(array_size_t index) = 0;
-        virtual void clear(array_size_t index) = 0;
+        virtual void assign(array_size_t index, bool value) noexcept = 0;
+        virtual void assign(array_size_t index, uint8_t value) noexcept = 0;
+        virtual void assign(array_size_t index, int8_t value) noexcept = 0;
+        virtual void assign(array_size_t index, uint16_t value) noexcept = 0;
+        virtual void assign(array_size_t index, int16_t value) noexcept = 0;
+        virtual void assign(array_size_t index, uint32_t value) noexcept = 0;
+        virtual void assign(array_size_t index, int32_t value) noexcept = 0;
+        virtual void assign(array_size_t index, uint64_t value) noexcept = 0;
+        virtual void assign(array_size_t index, int64_t value) noexcept = 0;
+        virtual void set(array_size_t index) noexcept = 0;
+        virtual void clear(array_size_t index) noexcept = 0;
 
-        virtual void assignWord(array_size_t index, uint64_t word) = 0;
+        virtual void assignWord(array_size_t index, uint64_t word) noexcept = 0;
 
-        [[nodiscard]] virtual uint8_t get(array_size_t index) const = 0;
+        [[nodiscard]] virtual uint8_t get(array_size_t index) const noexcept = 0;
 
-        virtual uint8_t operator[](const array_size_t index) const { return get(index); }
+        virtual uint8_t operator[](const array_size_t index) const noexcept { return get(index); }
 
-        [[nodiscard]] virtual uint64_t word(array_size_t index) const = 0;
-        [[nodiscard]] virtual uint64_t wordn(array_size_t index, uint8_t n) const = 0;
+        [[nodiscard]] virtual uint64_t word(array_size_t index) const noexcept = 0;
+        [[nodiscard]] virtual uint64_t wordn(array_size_t index, uint8_t n) const noexcept = 0;
 
-        char getCharRepresentation(const array_size_t index) const { // NOLINT(*-use-nodiscard)
+        char getCharRepresentation(const array_size_t index) const noexcept { // NOLINT(*-use-nodiscard)
             return BIT_CHAR_REPRESENTATIONS[get(index)];
         }
 
         virtual void copyTo(BitArrayInterface& dst, array_size_t srcOffset, array_size_t srcStride,
-                            array_size_t dstOffset) const = 0;
+                            array_size_t dstOffset) const noexcept = 0;
 
-        [[nodiscard]] virtual ArrayIndexRange getDifferenceBounds(const BitArrayInterface& other) const = 0;
+        [[nodiscard]] virtual ArrayIndexRange getDifferenceBounds(const BitArrayInterface& other) const noexcept = 0;
 
-        virtual void random(float probability) = 0;
-        virtual void random() { random(0.5f); }
+        virtual void random(float probability) noexcept = 0;
+        virtual void random() noexcept { random(0.5f); }
 
-        [[nodiscard]] virtual bool test(array_size_t index, array_size_t length) const = 0;
+        [[nodiscard]] virtual bool test(array_size_t index, array_size_t length) const noexcept = 0;
 
-        [[nodiscard]] virtual array_size_t count() const = 0;
+        [[nodiscard]] virtual array_size_t count() const noexcept = 0;
 
     protected:
         array_size_t m_Size;
@@ -101,7 +101,7 @@ namespace BitArray {
     };
 
     template<std::integral T>
-    constexpr uint8_t countBits(const T bits) {
+    constexpr uint8_t countBits(const T bits) noexcept {
         #ifdef _WIN32
         return static_cast<uint8_t>(__popcnt64(bits));
         #else
@@ -124,50 +124,50 @@ namespace BitArray {
 
         word_t bits;
 
-        constexpr word_t operator~() const { return ~(this->bits); }
+        constexpr word_t operator~() const noexcept { return ~(this->bits); }
 
-        constexpr word_t operator|(const word_t rhs) const { return this->bits | rhs; }
+        constexpr word_t operator|(const word_t rhs) const noexcept { return this->bits | rhs; }
 
-        constexpr word_t operator|(const Word& rhs) const { return this->bits | rhs.bits; }
+        constexpr word_t operator|(const Word& rhs) const noexcept { return this->bits | rhs.bits; }
 
-        constexpr word_t operator&(const word_t rhs) const { return this->bits & rhs; }
+        constexpr word_t operator&(const word_t rhs) const noexcept { return this->bits & rhs; }
 
-        constexpr word_t operator&(const Word& rhs) const { return this->bits & rhs.bits; }
+        constexpr word_t operator&(const Word& rhs) const noexcept { return this->bits & rhs.bits; }
 
-        constexpr word_t operator^(const word_t rhs) const { return this->bits ^ rhs; }
+        constexpr word_t operator^(const word_t rhs) const noexcept { return this->bits ^ rhs; }
 
-        constexpr word_t operator^(const Word& rhs) const { return this->bits ^ rhs.bits; }
+        constexpr word_t operator^(const Word& rhs) const noexcept { return this->bits ^ rhs.bits; }
 
-        constexpr void operator|=(const word_t rhs) { this->bits |= rhs; }
+        constexpr void operator|=(const word_t rhs) noexcept { this->bits |= rhs; }
 
-        constexpr void operator|=(const Word& rhs) { this->bits |= rhs.bits; }
+        constexpr void operator|=(const Word& rhs) noexcept { this->bits |= rhs.bits; }
 
-        constexpr void operator&=(const word_t rhs) { this->bits &= rhs; }
+        constexpr void operator&=(const word_t rhs) noexcept { this->bits &= rhs; }
 
-        constexpr void operator&=(const Word& rhs) { this->bits &= rhs.bits; }
+        constexpr void operator&=(const Word& rhs) noexcept { this->bits &= rhs.bits; }
 
-        constexpr void operator^=(const word_t rhs) { this->bits ^= rhs; }
+        constexpr void operator^=(const word_t rhs) noexcept { this->bits ^= rhs; }
 
-        constexpr void operator^=(const Word& rhs) { this->bits ^= rhs.bits; }
+        constexpr void operator^=(const Word& rhs) noexcept { this->bits ^= rhs.bits; }
 
         static constexpr array_size_t length = sizeof(word_t) * 8;
         static constexpr uint8_t BYTE_SIZE = sizeof(word_t);
         static constexpr word_t ALL_BITS_SET = static_cast<word_t>(-1);
 
-        [[nodiscard]] constexpr uint8_t countBits() const {
+        [[nodiscard]] constexpr uint8_t countBits() const noexcept {
             return ::BitArray::countBits(bits);
         }
     };
 
     class BitArray final : public BitArrayInterface {
     public:
-        explicit BitArray(const array_size_t size) : BitArrayInterface(size),
+        explicit BitArray(const array_size_t size) noexcept : BitArrayInterface(size),
                                                      m_WordCount((size + Word::length - 1) / Word::length),
                                                      m_Words(nullptr) {
             if (m_WordCount > 0) [[likely]] { m_Words = new Word[m_WordCount](); }
         }
 
-        BitArray(const BitArray& other) : BitArrayInterface(other.m_Size),
+        BitArray(const BitArray& other) noexcept : BitArrayInterface(other.m_Size),
                                           m_WordCount(other.m_WordCount),
                                           m_Words(nullptr) {
             if (other.m_WordCount > 0) [[likely]] {
@@ -179,7 +179,7 @@ namespace BitArray {
             }
         }
 
-        BitArray& operator=(const BitArray& rhs) {
+        BitArray& operator=(const BitArray& rhs) noexcept {
             if (this == &rhs) [[unlikely]] return *this;
             delete[] m_Words;
             m_Size = rhs.m_Size;
@@ -194,77 +194,77 @@ namespace BitArray {
             return *this;
         }
 
-        ~BitArray() override {
+        ~BitArray() noexcept override {
             delete[] m_Words;
             m_Words = nullptr;
         }
 
-        [[nodiscard]] constexpr Word *getUnderlyingImplementation() const { return m_Words; }
+        [[nodiscard]] constexpr Word *getUnderlyingImplementation() const noexcept { return m_Words; }
 
-        void setAll() override {
+        void setAll() noexcept override {
             for (array_size_t i = 0; i < m_WordCount; ++i)
                 m_Words[i].bits = Word::ALL_BITS_SET;
         }
 
-        void clearAll() override {
+        void clearAll() noexcept override {
             for (array_size_t i = 0; i < m_WordCount; ++i)
                 m_Words[i].bits = 0;
         }
 
-        void assign(const array_size_t index, const bool value) override {
+        void assign(const array_size_t index, const bool value) noexcept override {
             const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
             m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
-        void assign(const array_size_t index, const uint8_t value) override {
+        void assign(const array_size_t index, const uint8_t value) noexcept override {
             const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
             m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
-        void assign(const array_size_t index, const int8_t value) override {
+        void assign(const array_size_t index, const int8_t value) noexcept override {
             const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
             m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
-        void assign(const array_size_t index, const uint16_t value) override {
+        void assign(const array_size_t index, const uint16_t value) noexcept override {
             const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
             m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
-        void assign(const array_size_t index, const int16_t value) override {
+        void assign(const array_size_t index, const int16_t value) noexcept override {
             const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
             m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
-        void assign(const array_size_t index, const uint32_t value) override {
+        void assign(const array_size_t index, const uint32_t value) noexcept override {
             const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
             m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
-        void assign(const array_size_t index, const int32_t value) override {
+        void assign(const array_size_t index, const int32_t value) noexcept override {
             const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
             m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
-        void assign(const array_size_t index, const uint64_t value) override {
+        void assign(const array_size_t index, const uint64_t value) noexcept override {
             const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
             m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
-        void assign(const array_size_t index, const int64_t value) override {
+        void assign(const array_size_t index, const int64_t value) noexcept override {
             const Word::word_t mask = static_cast<Word::word_t>(1) << bitIndex(index);
             m_Words[wordIndex(index)] ^= (m_Words[wordIndex(index)] ^ -static_cast<Word::word_t>(value)) & mask;
         }
 
-        void set(const array_size_t index) override {
+        void set(const array_size_t index) noexcept override {
             m_Words[wordIndex(index)] |= static_cast<Word::word_t>(1) << bitIndex(index);
         }
 
-        void clear(const array_size_t index) override {
+        void clear(const array_size_t index) noexcept override {
             m_Words[wordIndex(index)] &= ~(static_cast<Word::word_t>(1) << bitIndex(index));
         }
 
-        void assignWord(const array_size_t index, const uint64_t word) override {
+        void assignWord(const array_size_t index, const uint64_t word) noexcept override {
             const array_size_t wordIndex = BitArray::wordIndex(index);
             const array_size_t bitIndex = BitArray::bitIndex(index);
             assert(wordIndex < m_WordCount && "Word index out of bounds");
@@ -290,17 +290,17 @@ namespace BitArray {
             }
         }
 
-        [[nodiscard]] uint8_t get(const array_size_t index) const override {
+        [[nodiscard]] uint8_t get(const array_size_t index) const noexcept override {
             return static_cast<uint8_t>((m_Words[wordIndex(index)] & static_cast<Word::word_t>(1) << bitIndex(index)) >>
                 bitIndex(index));
         }
 
-        uint8_t operator[](const array_size_t index) const override {
+        uint8_t operator[](const array_size_t index) const noexcept override {
             return static_cast<uint8_t>((m_Words[wordIndex(index)] & static_cast<Word::word_t>(1) << bitIndex(index)) >>
                 bitIndex(index));
         }
 
-        [[nodiscard]] uint64_t word(const array_size_t index) const override {
+        [[nodiscard]] uint64_t word(const array_size_t index) const noexcept override {
             const array_size_t wordIndex = BitArray::wordIndex(index);
             const array_size_t bitIndex = BitArray::bitIndex(index);
             assert(wordIndex < m_WordCount && "Word index out of bounds");
@@ -321,13 +321,13 @@ namespace BitArray {
                 Word::length - bitIndex;
         }
 
-        [[nodiscard]] uint64_t wordn(const array_size_t index, const uint8_t n) const override {
+        [[nodiscard]] uint64_t wordn(const array_size_t index, const uint8_t n) const noexcept override {
             assert(n <= 64 && "Max word length is 64 bits");
             return word(index) & (1 << n) - 1;
         }
 
         void copyTo(BitArrayInterface& other, const array_size_t srcOffset, const array_size_t srcStride,
-                    const array_size_t dstOffset) const override {
+                    const array_size_t dstOffset) const noexcept override {
             assert(srcStride > 0 && "Stride must be larger than 0");
             auto& array = static_cast<BitArray&>(other); // NOLINT(*-pro-type-static-cast-downcast)
 
@@ -337,7 +337,7 @@ namespace BitArray {
             }
         }
 
-        [[nodiscard]] ArrayIndexRange getDifferenceBounds(const BitArrayInterface& other) const override {
+        [[nodiscard]] ArrayIndexRange getDifferenceBounds(const BitArrayInterface& other) const noexcept override {
             assert(m_Size == other.m_Size && "Can't get difference bounds (comparison) for different size bit arrays.");
             ArrayIndexRange result {};
             for (array_size_t i = m_Size; i > 0; --i) {
@@ -351,7 +351,7 @@ namespace BitArray {
             return result;
         }
 
-        void random(const float probability) override {
+        void random(const float probability) noexcept override {
             std::random_device dev;
             std::mt19937 rng(dev());
             std::uniform_real_distribution<float> dist(std::numeric_limits<float>::min(), 1.0);
@@ -361,7 +361,7 @@ namespace BitArray {
             }
         }
 
-        void random() override {
+        void random() noexcept override {
             std::random_device dev;
             std::mt19937 rng(dev());
             std::uniform_int_distribution<std::mt19937::result_type> dist(0, Word::ALL_BITS_SET);
@@ -369,7 +369,7 @@ namespace BitArray {
             m_Words[m_WordCount - 1].bits = dist(rng) & (static_cast<Word::word_t>(1) << m_Size % m_WordCount) - 1;
         }
 
-        [[nodiscard]] bool test(const array_size_t index, const array_size_t length) const override {
+        [[nodiscard]] bool test(const array_size_t index, const array_size_t length) const noexcept override {
             assert(index + length <= m_Size && "Parameter (index and length) sum should not exceed array length.");
             const size_t iterationCount = length / Word::length;
             for (size_t i = 0; i < iterationCount; ++i) { if (word(index + i * Word::length)) return true; }
@@ -377,7 +377,7 @@ namespace BitArray {
             return remainingBits > 0 && wordn(index + iterationCount * Word::length, remainingBits);
         }
 
-        [[nodiscard]] array_size_t count() const override {
+        [[nodiscard]] array_size_t count() const noexcept override {
             array_size_t count = 0;
             for (array_size_t i = 0; i < m_WordCount; ++i) {
                 count += m_Words[i].countBits();
@@ -386,7 +386,7 @@ namespace BitArray {
         }
 
         void collectTestIndices(const BitArray& other, const array_size_t offset,
-                                std::vector<array_size_t>& result) const {
+                                std::vector<array_size_t>& result) const noexcept {
             const size_t iterationCount = other.m_Size >> 6; // 64 == 2^6
             if (result.capacity() == 0) [[unlikely]] result.reserve((other.m_Size >> 2) + 1);
             for (size_t i = 0; i < iterationCount; ++i) {
@@ -413,12 +413,12 @@ namespace BitArray {
         array_size_t m_WordCount;
         Word *m_Words;
 
-        static constexpr array_size_t wordIndex(const array_size_t index) { return index / Word::length; }
+        static constexpr array_size_t wordIndex(const array_size_t index) noexcept { return index / Word::length; }
 
-        static constexpr array_size_t bitIndex(const array_size_t index) { return index % Word::length; }
+        static constexpr array_size_t bitIndex(const array_size_t index) noexcept { return index % Word::length; }
     };
 
-    inline std::ostream& operator<<(std::ostream& out, const BitArrayInterface& array) {
+    inline std::ostream& operator<<(std::ostream& out, const BitArrayInterface& array) noexcept {
         out << array.getStringRepresentation();
         return out;
     }

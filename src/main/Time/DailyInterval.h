@@ -14,7 +14,7 @@ namespace Time {
         static constexpr day_minutes_t MINUTES_IN_A_DAY = 24 * 60;
         static constexpr day_minutes_t MINUTES_IN_TWO_DAYS = 2 * MINUTES_IN_A_DAY;
 
-        DailyInterval(const day_minutes_t startInMinutes, const day_minutes_t durationInMinutes) :
+        DailyInterval(const day_minutes_t startInMinutes, const day_minutes_t durationInMinutes) noexcept :
             m_StartInMinutes(startInMinutes),
             m_DurationInMinutes(durationInMinutes) { }
 
@@ -25,16 +25,16 @@ namespace Time {
             parseString(startAsString),
             static_cast<day_minutes_t>(parseString(endAsString) - parseString(startAsString))) { }
 
-        DailyInterval(const DailyInterval& other) : DailyInterval(other.m_StartInMinutes, other.m_DurationInMinutes) { }
+        DailyInterval(const DailyInterval& other) noexcept : DailyInterval(other.m_StartInMinutes, other.m_DurationInMinutes) { }
 
-        ~DailyInterval() = default;
+        ~DailyInterval() noexcept = default;
 
-        bool operator==(const DailyInterval& other) const {
+        bool operator==(const DailyInterval& other) const noexcept {
             return m_StartInMinutes == other.m_StartInMinutes && m_DurationInMinutes == other.m_DurationInMinutes;
         }
 
         template<typename TimeZone = const std::chrono::time_zone *>
-        static DailyInterval fromRange(const Range& range, TimeZone timeZone) {
+        static DailyInterval fromRange(const Range& range, TimeZone timeZone) noexcept {
             using std::chrono_literals::operator ""min;
             const day_minutes_t durationMinutes = range.duration(timeZone) / 1min;
             const auto dayStart = range.getDayStartAt(0, timeZone);
@@ -42,27 +42,27 @@ namespace Time {
             return {startMinutes, durationMinutes};
         }
 
-        [[nodiscard]] day_minutes_t startInMinutes() const { return m_StartInMinutes; }
+        [[nodiscard]] day_minutes_t startInMinutes() const noexcept { return m_StartInMinutes; }
 
-        [[nodiscard]] day_minutes_t endInMinutes() const {
+        [[nodiscard]] day_minutes_t endInMinutes() const noexcept {
             return static_cast<day_minutes_t>(m_StartInMinutes + m_DurationInMinutes);
         }
 
-        [[nodiscard]] day_minutes_t durationInMinutes() const { return m_DurationInMinutes; }
+        [[nodiscard]] day_minutes_t durationInMinutes() const noexcept { return m_DurationInMinutes; }
 
-        [[nodiscard]] std::chrono::duration<uint16_t, std::ratio<60>> start() const {
+        [[nodiscard]] std::chrono::duration<uint16_t, std::ratio<60>> start() const noexcept {
             return std::chrono::duration<uint16_t, std::ratio<60>>(m_StartInMinutes);
         }
 
-        [[nodiscard]] std::chrono::duration<uint16_t, std::ratio<60>> end() const {
+        [[nodiscard]] std::chrono::duration<uint16_t, std::ratio<60>> end() const noexcept {
             return std::chrono::duration<uint16_t, std::ratio<60>>(m_StartInMinutes + m_DurationInMinutes);
         }
 
-        [[nodiscard]] std::chrono::duration<uint16_t, std::ratio<60>> duration() const {
+        [[nodiscard]] std::chrono::duration<uint16_t, std::ratio<60>> duration() const noexcept {
             return std::chrono::duration<uint16_t, std::ratio<60>>(m_DurationInMinutes);
         }
 
-        [[nodiscard]] std::string startAsString() const {
+        [[nodiscard]] std::string startAsString() const noexcept {
             const auto hours = static_cast<uint8_t>(m_StartInMinutes / 60);
             const auto minutes = static_cast<uint8_t>(m_StartInMinutes % 60);
             char cStr[5] = {'0', '0', ':', '0', '0'};
@@ -73,7 +73,7 @@ namespace Time {
             return {cStr, 5};
         }
 
-        [[nodiscard]] std::string endAsString() const {
+        [[nodiscard]] std::string endAsString() const noexcept {
             const auto hours = static_cast<uint8_t>((m_StartInMinutes + m_DurationInMinutes) / 60);
             const auto minutes = static_cast<uint8_t>((m_StartInMinutes + m_DurationInMinutes) % 60);
             char cStr[5] = {'0', '0', ':', '0', '0'};
@@ -85,7 +85,7 @@ namespace Time {
         }
 
         template<typename DurationType = std::chrono::minutes, typename TimeZone = const std::chrono::time_zone *>
-        Range toRange(const std::chrono::zoned_time<DurationType, TimeZone>& day) const {
+        Range toRange(const std::chrono::zoned_time<DurationType, TimeZone>& day) const noexcept {
             auto zone = day.get_time_zone();
             auto localRef = std::chrono::floor<std::chrono::days>(day.get_local_time());
             auto start = zone->to_sys(localRef + DailyInterval::start());
@@ -93,15 +93,15 @@ namespace Time {
             return {start, end};
         }
 
-        [[nodiscard]] bool isStartAdjacentTo(const DailyInterval& other) const {
+        [[nodiscard]] bool isStartAdjacentTo(const DailyInterval& other) const noexcept {
             return m_StartInMinutes == other.m_StartInMinutes + other.m_DurationInMinutes;
         }
 
-        [[nodiscard]] bool isEndAdjacentTo(const DailyInterval& other) const {
+        [[nodiscard]] bool isEndAdjacentTo(const DailyInterval& other) const noexcept {
             return m_StartInMinutes + m_DurationInMinutes == other.m_StartInMinutes;
         }
 
-        [[nodiscard]] bool isAdjacentTo(const DailyInterval& other) const {
+        [[nodiscard]] bool isAdjacentTo(const DailyInterval& other) const noexcept {
             return isStartAdjacentTo(other) || isEndAdjacentTo(other);
         }
 
@@ -110,7 +110,7 @@ namespace Time {
          * @param offset Day offset number in respect to this interval's day.
          * @return true if intersects, false otherwise
          */
-        [[nodiscard]] bool intersectsOtherInOffsetDay(const DailyInterval& other, const int32_t offset) const {
+        [[nodiscard]] bool intersectsOtherInOffsetDay(const DailyInterval& other, const int32_t offset) const noexcept {
             return static_cast<int32_t>(m_StartInMinutes) < other.m_StartInMinutes + other.m_DurationInMinutes + offset
                 * MINUTES_IN_A_DAY && static_cast<int32_t>(m_StartInMinutes) +
                 static_cast<int32_t>(m_DurationInMinutes) > other.m_StartInMinutes + offset * MINUTES_IN_A_DAY;
@@ -120,7 +120,7 @@ namespace Time {
          * @param other Interval that is in the same day as this interval.
          * @return true if intersects, false otherwise
          */
-        [[nodiscard]] bool intersectsInSameDay(const DailyInterval& other) const {
+        [[nodiscard]] bool intersectsInSameDay(const DailyInterval& other) const noexcept {
             return m_StartInMinutes < other.m_StartInMinutes + other.m_DurationInMinutes && m_StartInMinutes +
                 m_DurationInMinutes > other.m_StartInMinutes;
         }
@@ -129,7 +129,7 @@ namespace Time {
          * @param other Interval that is in the previous day with respect to this interval.
          * @return true if intersects, false otherwise
          */
-        [[nodiscard]] bool intersectsOtherInPrevDay(const DailyInterval& other) const {
+        [[nodiscard]] bool intersectsOtherInPrevDay(const DailyInterval& other) const noexcept {
             return other.m_StartInMinutes + other.m_DurationInMinutes - MINUTES_IN_A_DAY > m_StartInMinutes;
         }
 
@@ -137,18 +137,18 @@ namespace Time {
          * @param other Interval that is in the next day with respect to this interval.
          * @return true if intersects, false otherwise
          */
-        [[nodiscard]] bool intersectsOtherInNextDay(const DailyInterval& other) const {
+        [[nodiscard]] bool intersectsOtherInNextDay(const DailyInterval& other) const noexcept {
             return m_StartInMinutes + m_DurationInMinutes > other.m_StartInMinutes + MINUTES_IN_A_DAY;
         }
 
-        [[nodiscard]] DailyInterval inPreviousDay() const {
+        [[nodiscard]] DailyInterval inPreviousDay() const noexcept {
             return {
                 static_cast<day_minutes_t>(m_StartInMinutes - MINUTES_IN_A_DAY),
                 m_DurationInMinutes,
             };
         }
 
-        [[nodiscard]] DailyInterval inNextDay() const {
+        [[nodiscard]] DailyInterval inNextDay() const noexcept {
             return {
                 static_cast<day_minutes_t>(m_StartInMinutes + MINUTES_IN_A_DAY),
                 m_DurationInMinutes,
@@ -160,7 +160,7 @@ namespace Time {
          * @param padding Padding to apply to each side (start and end).
          * @return New daily interval with applied padding.
          */
-        [[nodiscard]] DailyInterval withPadding(const day_minutes_t padding) const {
+        [[nodiscard]] DailyInterval withPadding(const day_minutes_t padding) const noexcept {
             return {
                 static_cast<day_minutes_t>(m_StartInMinutes - padding),
                 static_cast<day_minutes_t>(m_DurationInMinutes + 2 * padding),
@@ -174,7 +174,7 @@ namespace Time {
          * @return New daily interval with applied padding.
          */
         [[nodiscard]] DailyInterval
-        withPadding(const day_minutes_t startPadding, const day_minutes_t endPadding) const {
+        withPadding(const day_minutes_t startPadding, const day_minutes_t endPadding) const noexcept {
             return {
                 static_cast<day_minutes_t>(m_StartInMinutes - startPadding),
                 static_cast<day_minutes_t>(m_DurationInMinutes + startPadding + endPadding),
@@ -199,7 +199,7 @@ namespace Time {
         }
     };
 
-    inline std::ostream& operator<<(std::ostream& out, const DailyInterval& dailyInterval) {
+    inline std::ostream& operator<<(std::ostream& out, const DailyInterval& dailyInterval) noexcept {
         out << '[' << dailyInterval.startAsString() << "; " << dailyInterval.endAsString() << ']';
         return out;
     }

@@ -14,7 +14,7 @@ namespace HyperHeuristics {
         torch::nn::TransformerEncoder encoder{nullptr};
         torch::nn::Linear output_head{nullptr};
 
-        TransformerModelImpl(int input_dim, int d_model, int nhead, int num_layers, int output_dim) : d_model_sqrt(std::sqrt(static_cast<double>(d_model))) {
+        TransformerModelImpl(int input_dim, int d_model, int nhead, int num_layers, int output_dim) noexcept : d_model_sqrt(std::sqrt(static_cast<double>(d_model))) {
             assert(input_dim > 0 && d_model > 0 && nhead > 0 && num_layers > 0 && output_dim > 0);
             assert(d_model % nhead == 0 && "d_model must be divisible by nhead");
 
@@ -33,7 +33,7 @@ namespace HyperHeuristics {
             output_head = register_module("output_head", torch::nn::Linear(d_model, output_dim));
         }
 
-        torch::Tensor forward(torch::Tensor x) {
+        torch::Tensor forward(torch::Tensor x) noexcept {
             x = input_proj(x) * d_model_sqrt;
             x = x.transpose(0, 1); // [SeqLen, Batch, d_model]
             x = encoder(x);

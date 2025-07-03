@@ -19,27 +19,27 @@ namespace Moves {
     template<typename X, typename Y, typename Z, typename W>
     class Perturbator {
     public:
-        explicit Perturbator() = default;
-        virtual ~Perturbator() = default;
-        Perturbator(const Perturbator&) = default;
-        Perturbator(Perturbator&&) = default;
+        explicit Perturbator() noexcept = default;
+        virtual ~Perturbator() noexcept = default;
+        Perturbator(const Perturbator&) noexcept = default;
+        Perturbator(Perturbator&&) noexcept = default;
 
         /**
          * Prepares this perturbator for modifying a given state.
          * @param state State to modify afterward.
          */
-        virtual void configure(const ::State::State<X, Y, Z, W>& state) = 0;
+        virtual void configure(const ::State::State<X, Y, Z, W>& state) noexcept = 0;
 
         /**
          * Checks whether this perturbator (with current configuration) is effectively an identity perturbator.
          * @return `true` if this perturbator won't make any changes (with current configuration), `false` otherwise.
          */
-        [[nodiscard]] virtual bool isIdentity() const { return false; }
+        [[nodiscard]] virtual bool isIdentity() const noexcept { return false; }
 
-        virtual void modify(::State::State<X, Y, Z, W>& state) = 0;
-        virtual void revert(::State::State<X, Y, Z, W>& state) const = 0;
+        virtual void modify(::State::State<X, Y, Z, W>& state) noexcept = 0;
+        virtual void revert(::State::State<X, Y, Z, W>& state) const noexcept = 0;
 
-        constexpr void operator()(::State::State<X, Y, Z, W>& state) { modify(state); }
+        constexpr void operator()(::State::State<X, Y, Z, W>& state) noexcept { modify(state); }
 
     protected:
         friend class PerturbatorChain<X, Y, Z, W>;

@@ -8,12 +8,12 @@ namespace Memory {
         size_t totalAllocated = 0;
         size_t totalFreed = 0;
 
-        [[nodiscard]] size_t usage() const { return totalAllocated - totalFreed; }
+        [[nodiscard]] size_t usage() const noexcept { return totalAllocated - totalFreed; }
     };
 
     static AllocationMetrics s_AllocationMetrics;
 
-    inline void printMemoryUsage() {
+    inline void printMemoryUsage() noexcept {
         std::cout << "Memory usage: " << s_AllocationMetrics.usage() << " bytes." << std::endl;
     }
 }

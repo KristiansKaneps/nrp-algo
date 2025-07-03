@@ -11,7 +11,7 @@ namespace Moves {
     template<typename X, typename Y, typename Z, typename W>
     class RankedIntersectionTogglePerturbator : public AutonomousPerturbator<X, Y, Z, W> {
     public:
-        explicit RankedIntersectionTogglePerturbator(const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& constraints) {
+        explicit RankedIntersectionTogglePerturbator(const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& constraints) noexcept {
             for (size_t i = 0; i < constraints.size(); ++i) {
                 const auto* constraint = constraints[i];
                 if (constraint->name() == "EMPLOYMENT_MAX_DURATION")
@@ -25,14 +25,14 @@ namespace Moves {
             // TODO: determine min Z width to assign at once (for now it is 2).
             //   There must always be a probability that only 1 z will be assigned (for later on in the search process).
         }
-        ~RankedIntersectionTogglePerturbator() override = default;
+        ~RankedIntersectionTogglePerturbator() noexcept override = default;
 
-        [[nodiscard]] RankedIntersectionTogglePerturbator *clone() const override {
+        [[nodiscard]] RankedIntersectionTogglePerturbator *clone() const noexcept override {
             return new RankedIntersectionTogglePerturbator(*this);
         }
 
         [[nodiscard]] bool configureIfApplicable(const Evaluation::Evaluator<X, Y, Z, W>& evaluator,
-                                                 const ::State::State<X, Y, Z, W>& state) override {
+                                                 const ::State::State<X, Y, Z, W>& state) noexcept override {
             const auto& coverageConstraintScore = evaluator.constraintScores()[m_CoverageConstraintIndex];
             const auto& maxDurationConstraintScore = evaluator.constraintScores()[m_EmployeeMaxDurationConstraintIndex];
 
@@ -119,15 +119,15 @@ namespace Moves {
             return !m_LocationXors.empty();
         }
 
-        void configure(const ::State::State<X, Y, Z, W>& state) override {
+        void configure(const ::State::State<X, Y, Z, W>& state) noexcept override {
 
         }
 
-        [[nodiscard]] bool isIdentity() const override { return m_LocationXors.empty(); }
+        [[nodiscard]] bool isIdentity() const noexcept override { return m_LocationXors.empty(); }
 
-        void modify(::State::State<X, Y, Z, W>& state) override { apply(state); }
+        void modify(::State::State<X, Y, Z, W>& state) noexcept override { apply(state); }
 
-        void revert(::State::State<X, Y, Z, W>& state) const override { apply(state); }
+        void revert(::State::State<X, Y, Z, W>& state) const noexcept override { apply(state); }
 
     protected:
         inline static Random::RandomGenerator& m_Random = Random::generator();
@@ -136,7 +136,7 @@ namespace Moves {
 
         std::unordered_map<::State::Location, uint8_t> m_LocationXors {};
 
-        void apply(::State::State<X, Y, Z, W>& state) const {
+        void apply(::State::State<X, Y, Z, W>& state) const noexcept {
             for (const auto& [loc, val] : m_LocationXors) {
                 state.assign(loc, state.get(loc) ^ val);
             }

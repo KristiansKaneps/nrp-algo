@@ -13,25 +13,25 @@ namespace Constraints {
     class Constraint {
     public:
         explicit Constraint(std::string name,
-                            const std::vector<Moves::AutonomousPerturbator<X, Y, Z, W> *> repairPerturbators) :
+                            const std::vector<Moves::AutonomousPerturbator<X, Y, Z, W> *> repairPerturbators) noexcept :
             m_Name(std::move(name)),
             m_RepairPerturbators(std::move(repairPerturbators)) { }
 
-        virtual ~Constraint() {
+        virtual ~Constraint() noexcept {
             for (const Moves::AutonomousPerturbator<X, Y, Z, W> *repairPerturbator : m_RepairPerturbators)
                 delete repairPerturbator;
         }
 
-        Constraint(const Constraint&) = default;
+        Constraint(const Constraint&) noexcept = default;
 
-        [[nodiscard]] virtual bool printsInfo() const { return false; }
-        virtual void printInfo() const { }
+        [[nodiscard]] virtual bool printsInfo() const noexcept { return false; }
+        virtual void printInfo() const noexcept { }
 
-        [[nodiscard]] const std::string& name() const { return m_Name; }
+        [[nodiscard]] const std::string& name() const noexcept { return m_Name; }
 
-        [[nodiscard]] const std::vector<Moves::AutonomousPerturbator<X, Y, Z, W> *>& getRepairPerturbators() const { return m_RepairPerturbators; }
+        [[nodiscard]] const std::vector<Moves::AutonomousPerturbator<X, Y, Z, W> *>& getRepairPerturbators() const noexcept { return m_RepairPerturbators; }
 
-        virtual ConstraintScore evaluate(const ::State::State<X, Y, Z, W>& state) = 0;
+        virtual ConstraintScore evaluate(const ::State::State<X, Y, Z, W>& state) noexcept = 0;
 
     private:
         std::string m_Name;
