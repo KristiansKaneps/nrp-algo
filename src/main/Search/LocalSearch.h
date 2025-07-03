@@ -1,13 +1,15 @@
 #ifndef LOCALSEARCH_H
 #define LOCALSEARCH_H
 
-#include "Search/LocalSearchTask.h"
-
 #include "State/State.h"
 #include "Constraints/Constraint.h"
 #include "Heuristics/HeuristicProvider.h"
 #include "Score/Score.h"
 #include "Statistics/ScoreStatistics.h"
+
+#include "Search/LocalSearchTask.h"
+
+#include "Search/Implementation/LateAcceptanceLocalSearchTask.h"
 
 namespace Search {
     template<typename X, typename Y, typename Z, typename W>
@@ -18,8 +20,9 @@ namespace Search {
                              const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints) :
             mp_InitialState(initialState),
             m_Constraints(constraints),
-            m_HeuristicProvider(::Heuristics::HeuristicProvider<X, Y, Z, W>(initialState, constraints)),
-            m_Task(*initialState, m_Constraints, m_ScoreStatistics) { }
+            m_HeuristicProvider(::Heuristics::HeuristicProvider<X, Y, Z, W>(initialState, constraints)) {
+            mp_Task = new Task::LateAcceptanceLocalSearchTask(*initialState, m_Constraints, m_ScoreStatistics);
+        }
         // ReSharper restore CppRedundantQualifier
 
         LocalSearch(const LocalSearch& other) = default;
@@ -30,11 +33,10 @@ namespace Search {
 
         void reset() {
             m_Done = false;
-            resetInternalTerminationCriteriaState();
         }
 
         void startStatistics() {
-            m_ScoreStatistics.startRecording(m_Task.getInitialScore());
+            m_ScoreStatistics.startRecording(mp_Task->getInitialScore());
         }
 
         void endStatistics() {
@@ -46,9 +48,9 @@ namespace Search {
          */
         bool step() {
             // Finalizer
-            if (shouldStep()) [[likely]] {
-                m_Task.step(m_HeuristicProvider);
-                return m_Task.newBestFound();
+            if (mp_Task->shouldStep()) [[likely]] {
+                mp_Task->step(m_HeuristicProvider);
+                return mp_Task->newBestFound();
                 // ReSharper disable once CppRedundantElseKeywordInsideCompoundStatement
             } else {
                 m_Done = true;
@@ -60,53 +62,22 @@ namespace Search {
         [[nodiscard]] bool isDone() const { return m_Done; }
 
         // ReSharper disable once CppRedundantQualifier
-        ::State::State<X, Y, Z, W> getBestState() const { return m_Task.getOutputState(); }
-        [[nodiscard]] Score::Score getBestScore() const { return m_Task.getOutputScore(); }
+        ::State::State<X, Y, Z, W> getBestState() const { return mp_Task->getOutputState(); }
+        [[nodiscard]] Score::Score getBestScore() const { return mp_Task->getOutputScore(); }
 
         [[nodiscard]] Score::Score evaluateCurrentBestState() const {
             Score::Score score {};
             // ReSharper disable once CppRedundantQualifier
             for (::Constraints::Constraint<X, Y, Z, W> *constraint : m_Constraints)
-                score += constraint->evaluate(m_Task.getOutputState());
+                score += constraint->evaluate(mp_Task->getOutputState());
             return score;
         }
 
         void printBestScore() const {
-            std::cout << "Best score: " << m_Task.getOutputScore() << "; iterations=" << m_Task.m_Iterations << " (idle=" << m_Task.m_IdleIterations <<
-                "); delta=" << (m_Task.getOutputScore() - m_Task.m_InitScore) << std::endl;
+            std::cout << "Best score: " << mp_Task->getOutputScore() << "; delta=" << (mp_Task->getOutputScore() - mp_Task->m_InitScore) << std::endl;
         }
 
     protected:
-        static constexpr int ITERATION_COUNT_AT_ZERO_SCORE_THRESHOLD = 2000;
-        static constexpr int ITERATION_COUNT_AT_FEASIBLE_SCORE_THRESHOLD = 4000;
-        static constexpr int MAX_FEASIBLE_IDLE_ITERATION_COUNT = 3000;
-        static constexpr int MAX_IDLE_ITERATION_COUNT = 500000;
-
-        /**
-         * Defines termination criteria.
-         * @return `true` if should keep searching for local optima, `false` otherwise
-         */
-        [[nodiscard]] bool shouldStep() {
-            if (m_Task.getOutputScore().isZero()) [[unlikely]] {
-                if (m_IterationCountAtZeroScore >= ITERATION_COUNT_AT_ZERO_SCORE_THRESHOLD) [[unlikely]] return m_Task.getIdleIterationCount() < MAX_FEASIBLE_IDLE_ITERATION_COUNT >> 1;
-                m_IterationCountAtZeroScore += 1;
-                return true;
-            }
-            if (m_Task.getOutputScore().isFeasible()) [[unlikely]] {
-                if (m_IterationCountAtFeasibleScore >= ITERATION_COUNT_AT_FEASIBLE_SCORE_THRESHOLD) [[unlikely]] return m_Task.getIdleIterationCount() < MAX_FEASIBLE_IDLE_ITERATION_COUNT;
-                m_IterationCountAtFeasibleScore += 1;
-                return true;
-            }
-            // return m_Task.getIterationCount() <= 20000 && (m_Task.getIterationCount() <= 2000 || m_Task.getIdleIterationCount() <= m_Task.getIterationCount() * 0.02);
-            // return m_Task.getIterationCount() <= 2000 || m_Task.getIdleIterationCount() <= m_Task.getIterationCount() * 0.02;
-            return m_Task.getIdleIterationCount() < MAX_IDLE_ITERATION_COUNT;
-            // return !m_Task.getOutputScore().isZero();
-        }
-
-        void resetInternalTerminationCriteriaState() {
-            m_IterationCountAtZeroScore = 0;
-            m_IterationCountAtFeasibleScore = 0;
-        }
 
     private:
         bool m_Done = false;
@@ -117,9 +88,7 @@ namespace Search {
         // ReSharper disable once CppRedundantQualifier
         ::Heuristics::HeuristicProvider<X, Y, Z, W> m_HeuristicProvider;
         Statistics::ScoreStatistics m_ScoreStatistics{};
-        Task::LocalSearchTask<X, Y, Z, W> m_Task;
-
-        uint64_t m_IterationCountAtZeroScore = 0, m_IterationCountAtFeasibleScore = 0;
+        Task::LocalSearchTask<X, Y, Z, W>* mp_Task;
     };
 }
 
