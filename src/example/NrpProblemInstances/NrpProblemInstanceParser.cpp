@@ -40,13 +40,13 @@ namespace NrpProblemInstances {
             if (currentSection == "SECTION_HORIZON") {
                 const int horizonDays = std::stoi(fields[0]);
                 if (fields.size() > 2) {
-                    const auto localStart = std::chrono::local_time<std::chrono::milliseconds>(Time::ParseIsoUtc(fields[1]).time_since_epoch());
+                    const auto localStart = std::chrono::local_time<std::chrono::milliseconds>(Time::StringToInstant(fields[1] + 'Z').time_since_epoch());
                     const auto zonedStart = std::chrono::zoned_time(m_TimeZone, localStart);
-                    const auto localEnd = std::chrono::local_time<std::chrono::milliseconds>((Time::ParseIsoUtc(fields[2]) + std::chrono::days(1)).time_since_epoch());
+                    const auto localEnd = std::chrono::local_time<std::chrono::milliseconds>((Time::StringToInstant(fields[2] + 'Z') + std::chrono::days(1)).time_since_epoch());
                     const auto zonedEnd = std::chrono::zoned_time(m_TimeZone, localEnd);
                     m_Range = Time::Range(zonedStart.get_sys_time(), zonedEnd.get_sys_time());
                 } else if (fields.size() > 1) {
-                    const auto local = std::chrono::local_time<std::chrono::milliseconds>(Time::ParseIsoUtc(fields[1]).time_since_epoch());
+                    const auto local = std::chrono::local_time<std::chrono::milliseconds>(Time::StringToInstant(fields[1] + 'Z').time_since_epoch());
                     const auto zonedStart = std::chrono::zoned_time(m_TimeZone, local);
                     const auto end = zonedStart.get_sys_time() + std::chrono::days(horizonDays);
                     m_Range = Time::Range(zonedStart.get_sys_time(), end);
@@ -212,7 +212,7 @@ namespace NrpProblemInstances {
         const auto* end = root->FirstChildElement("EndDate");
         if (!start || !end) throw std::runtime_error("Missing dates");
 
-        const auto range = Time::Range { Time::StringToInstant(start->GetText()), Time::StringToInstant(end->GetText()) + std::chrono::days(1) };
+        const auto range = Time::Range { Time::StringToInstant(start->GetText() + 'Z'), Time::StringToInstant(end->GetText() + 'Z') + std::chrono::days(1) };
 
         std::cout << "Horizon: " << m_Range << std::endl;
 

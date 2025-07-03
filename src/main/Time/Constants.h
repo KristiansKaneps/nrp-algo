@@ -27,10 +27,12 @@ namespace Time {
 
     static Instant StringToInstant(const std::string& input) {
         // Regular expression to match the supported formats:
-        // 1. ISO 8601 with Z: "2024-12-17T18:00:00.123456789Z"
-        // 2. ISO 8601 with space and offset: "2024-12-17 18:00:00+00"
+        // 1. ISO 8601 without time zone: "2024-12-17T18:00:00.123456789"
+        // 2. ISO 8601 with time zone: "2024-12-17T18:00:00.123456789Z" or "2024-12-17 18:00:00+00"
+        // 3. ISO 8601 date: "2024-12-17"
+        // 4. ISO 8601 date with time zone: "2024-12-17Z" or "2024-12-17+00"
         static const std::regex regex(
-            R"((\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?([+-]\d{2}:?\d{2}|[+-]\d{2}|Z)?)");
+            R"((\d{4})-(\d{2})-(\d{2})([T ](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?)?([+-]\d{2}:?\d{2}|[+-]\d{2}|Z)?)");
         std::smatch match;
 
         if (!std::regex_match(input, match, regex)) [[unlikely]] {
@@ -42,14 +44,14 @@ namespace Time {
         const int year = std::stoi(match[1].str());
         const unsigned int month = std::stoi(match[2].str());
         const unsigned int day = std::stoi(match[3].str());
-        const unsigned int hour = std::stoi(match[4].str());
-        const unsigned int minute = std::stoi(match[5].str());
-        const unsigned int second = std::stoi(match[6].str());
+        const unsigned int hour = match[5].matched ? std::stoi(match[5].str()) : 0;
+        const unsigned int minute = match[6].matched ? std::stoi(match[6].str()) : 0;
+        const unsigned int second = match[7].matched ? std::stoi(match[7].str()) : 0;
 
         // Extract fractional seconds if they exist
         int64_t nanoseconds = 0;
-        if (match[7].matched) {
-            std::string fraction = match[7].str();
+        if (match[8].matched) {
+            std::string fraction = match[8].str();
             // Normalize the fractional seconds to nanoseconds
             if (fraction.size() < 9) {
                 fraction.append(9 - fraction.size(), '0'); // Pad with zeros to nanoseconds
@@ -61,8 +63,8 @@ namespace Time {
 
         // Extract the UTC offset (e.g., "+00", "+02:00", "Z")
         std::chrono::duration<int> offsetDuration {};
-        if (match.size() > 8 && match[8].matched) {
-            if (const std::string offset = match[8].str(); offset == "Z" || offset == "+00" || offset == "+00:00") {
+        if (match[9].matched) {
+            if (const std::string offset = match[9].str(); offset == "Z" || offset == "+00" || offset == "+00:00") {
                 offsetDuration = std::chrono::hours(0); // UTC
             } else {
                 // Parse offset: "+HH:MM" or "+HHMM"
@@ -93,18 +95,6 @@ namespace Time {
 
         // Return the time_point with nanosecond precision
         return std::chrono::time_point_cast<INSTANT_PRECISION>(timePoint + std::chrono::nanoseconds(nanoseconds));
-    }
-
-    static std::chrono::sys_days ParseIsoDate(const std::string& iso) {
-        std::chrono::sys_days dayPoint;
-        std::istringstream iss {iso};
-        std::chrono::from_stream(iss, "%F", dayPoint);
-        if (iss.fail()) throw std::runtime_error("Bad date: " + iso);
-        return dayPoint;
-    }
-
-    static Instant ParseIsoUtc(const std::string& iso) {
-        return std::chrono::time_point_cast<INSTANT_PRECISION>(ParseIsoDate(iso));
     }
 
     /**
