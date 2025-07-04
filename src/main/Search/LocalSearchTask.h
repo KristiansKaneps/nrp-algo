@@ -43,7 +43,7 @@ namespace Search::Task {
          * Defines termination criteria.
          * @return `true` if should keep searching for local optima, `false` otherwise
          */
-        virtual [[nodiscard]] bool shouldStep() noexcept = 0;
+        [[nodiscard]] virtual bool shouldStep() noexcept = 0;
 
         [[nodiscard]] Score::Score getInitialScore() const noexcept { return m_InitScore; }
 
