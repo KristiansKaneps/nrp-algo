@@ -9,19 +9,30 @@
 
 #include "Search/LocalSearchTask.h"
 
-#include "Search/Implementation/LateAcceptanceLocalSearchTask.h"
+#include "Search/Implementation/LahcLocalSearchTask.h"
+#include "Search/Implementation/DlasLocalSearchTask.h"
 
 namespace Search {
+    enum class LocalSearchType { LAHC, DLAS };
+    
     template<typename X, typename Y, typename Z, typename W>
     class LocalSearch {
     public:
         // ReSharper disable CppRedundantQualifier
         explicit LocalSearch(const ::State::State<X, Y, Z, W> *initialState,
-                             const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints) noexcept :
+                             const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints,
+                             LocalSearchType type = LocalSearchType::DLAS) noexcept :
             mp_InitialState(initialState),
             m_Constraints(constraints),
             m_HeuristicProvider(::Heuristics::HeuristicProvider<X, Y, Z, W>(initialState, constraints)) {
-            mp_Task = new Task::LateAcceptanceLocalSearchTask(*initialState, m_Constraints, m_ScoreStatistics);
+            switch (type) {
+                case LocalSearchType::LAHC:
+                    mp_Task = new Task::LahcLocalSearchTask<X, Y, Z, W>(*initialState, m_Constraints, m_ScoreStatistics);
+                    break;
+                case LocalSearchType::DLAS:
+                    mp_Task = new Task::DlasLocalSearchTask<X, Y, Z, W>(*initialState, m_Constraints, m_ScoreStatistics);
+                    break;
+            }
         }
         // ReSharper restore CppRedundantQualifier
 

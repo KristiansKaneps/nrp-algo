@@ -1,96 +1,103 @@
-#ifndef LATEACCEPTANCELOCALSEARCHTASK_H
-#define LATEACCEPTANCELOCALSEARCHTASK_H
+#ifndef DLASLOCALSEARCHTASK_H
+#define DLASLOCALSEARCHTASK_H
+
+#define LOCALSEARCH_DEBUG
 
 #include "Search/LocalSearchTask.h"
-
 #include <array>
+#include <algorithm>
 
 namespace Search::Task {
     template<typename X, typename Y, typename Z, typename W>
-    class LateAcceptanceLocalSearchTask : public LocalSearchTask<X, Y, Z, W> {
+    class DlasLocalSearchTask : public LocalSearchTask<X, Y, Z, W> {
         using Base = LocalSearchTask<X, Y, Z, W>;
     public:
-        LateAcceptanceLocalSearchTask(const LateAcceptanceLocalSearchTask&) = delete;
+        DlasLocalSearchTask(const DlasLocalSearchTask&) = delete;
 
-        // ReSharper disable CppRedundantQualifier
-        explicit LateAcceptanceLocalSearchTask(const ::State::State<X, Y, Z, W> inputState,
-                                 const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints,
-                                 Statistics::ScoreStatistics &scoreStatistics) noexcept : Base(inputState, constraints, scoreStatistics) {
+        explicit DlasLocalSearchTask(const ::State::State<X, Y, Z, W> inputState,
+                                     const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints,
+                                     Statistics::ScoreStatistics &scoreStatistics) noexcept : Base(inputState, constraints, scoreStatistics) {
             m_History.fill(Base::m_InitScore);
+            m_PhiMin = Base::m_InitScore;
+            m_N = Lh;
         }
-        // ReSharper restore CppRedundantQualifier
 
-        ~LateAcceptanceLocalSearchTask() noexcept override = default;
+        ~DlasLocalSearchTask() noexcept override = default;
 
-        // ReSharper disable once CppRedundantQualifier
-        void reset(const ::State::State<X, Y, Z, W> inputState) noexcept override { Base::reset(inputState); }
+        void reset(const ::State::State<X, Y, Z, W> inputState) noexcept override {
+            Base::reset(inputState);
+            m_History.fill(Base::m_InitScore);
+            m_PhiMin = Base::m_InitScore;
+            m_N = Lh;
+            m_Iterations = 0;
+            m_IdleIterations = 0;
+            m_IterationCountAtZeroScore = 0;
+            m_IterationCountAtFeasibleScore = 0;
+        }
 
-        // ReSharper disable CppRedundantQualifier
         void step(::Heuristics::HeuristicProvider<X, Y, Z, W> &heuristicProvider) noexcept override {
             Base::m_NewBestFound = false;
+
+            // Save previous fitness value
+            const Score::Score prevScore = Base::m_CurrentScore;
 
             // Generate new candidate solution
             ::State::State<X, Y, Z, W>& candidateState = Base::m_CurrentState;
             auto perturbators = heuristicProvider.generateSearchPerturbators(Base::m_Evaluator, candidateState);
-            // if (!m_RepairPerturbatorsApplied && m_BestScoreAchievedBeforePerturbationCount > 100000) {
-            //     m_RepairPerturbatorsApplied = true;
-            //     auto repairPerturbators = heuristicProvider.generateRepairPerturbators(Base::m_Evaluator, candidateState);
-            //     repairPerturbators.modify(candidateState);
-            //     m_AppliedPerturbators.append(repairPerturbators);
-            //     std::cout << "Applying repair perturbators" << std::endl;
-            // }
             perturbators.modify(candidateState);
             const Score::Score candidateScore = Base::m_Evaluator.evaluateState(candidateState);
 
             // Track idle iterations (termination criteria)
             if (candidateScore <= Base::m_CurrentScore) { m_IdleIterations++; } else { m_IdleIterations = 0; }
 
-            // Compute virtual history index
-            const uint32_t v = m_Iterations % Lh;
-            const Score::Score& fv = m_History[v];
+            // Compute history index
+            const uint32_t l = m_Iterations % Lh;
+            Score::Score& phi_l = m_History[l];
 
-            // Selector (Acceptance criteria)
-            if (candidateScore > fv || candidateScore >= Base::m_CurrentScore) {
+            // DLAS acceptance criteria
+            if (candidateScore == Base::m_CurrentScore || candidateScore > m_PhiMin) {
+                // Accept candidate
                 // `m_CurrentState = candidateState` assignment is not needed, because `candidateState` is a reference
                 // to "working memory" `m_CurrentState`. But we need to update the score.
                 Base::m_CurrentScore = candidateScore;
 
                 if (Base::m_CurrentScore > Base::m_OutputScore) {
-                    // The new best state is found.
-                    // It is already updated as the current "working memory" `m_CurrentState`.
+                    // New best state found
                     Base::m_OutputScore = Base::m_CurrentScore;
                     Base::m_OutputState = Base::m_CurrentState;
                     Base::m_NewBestFound = true;
-
-                    // Record score statistics
                     Base::m_ScoreStatistics.record(Base::m_CurrentScore);
 
                     #ifdef LOCALSEARCH_DEBUG
                     std::cout << "New best score: " << Base::m_OutputScore << "; iterations=" << (m_Iterations + 1) << "; delta=" << (Base::m_OutputScore - Base::m_InitScore) << std::endl;
-                    Base::m_Evaluator.printConstraintInfo();
+                    // Base::m_Evaluator.printConstraintInfo();
                     #endif
+                }
 
-                    m_RepairPerturbatorsApplied = false;
-                    m_BestScoreAchievedBeforePerturbationCount = 0;
-                } else {
-                    m_BestScoreAchievedBeforePerturbationCount += perturbators.size();
+                // Update history
+                if (Base::m_CurrentScore < phi_l) {
+                    phi_l = Base::m_CurrentScore;
+                } else if (Base::m_CurrentScore > phi_l && Base::m_CurrentScore > prevScore) {
+                    if (phi_l == m_PhiMin) {
+                        m_N--;
+                    }
+                    phi_l = Base::m_CurrentScore;
+                    if (m_N == 0) {
+                        // Recompute PhiMin and N
+                        m_PhiMin = *std::ranges::min_element(m_History);
+                        m_N = std::ranges::count(m_History, m_PhiMin);
+                    }
                 }
 
                 m_AppliedPerturbators.append(perturbators);
                 std::cout << "Applied perturbators size: " << m_AppliedPerturbators.size() << ", best score achieved before " << m_BestScoreAchievedBeforePerturbationCount << " perturbations; idle iteration count: " << m_IdleIterations << std::endl;
             } else {
-                // Revert the new candidate state to the previous candidate state,
-                // because the new candidate state references the "working memory" `m_CurrentState`.
+                // Revert candidate
                 perturbators.revert(candidateState);
             }
 
-            // Update history
-            if (Base::m_CurrentScore > fv) { m_History[v] = Base::m_CurrentScore; }
-
-            // Increment iterations
             ++m_Iterations;
         }
-        // ReSharper restore CppRedundantQualifier
 
         [[nodiscard]] bool shouldStep() noexcept override {
             if (Base::m_OutputScore.isZero()) [[unlikely]] {
@@ -103,10 +110,7 @@ namespace Search::Task {
                 m_IterationCountAtFeasibleScore += 1;
                 return true;
             }
-            // return m_Iterations <= 20000 && (m_Iterations <= 2000 || m_IdleIterations <= m_Iterations * 0.02);
-            // return m_Iterations <= 2000 || m_IdleIterations <= m_Iterations * 0.02;
             return m_IdleIterations < MAX_IDLE_ITERATION_COUNT;
-            // return !Base::m_OutputScore.isZero();
         }
 
     private:
@@ -117,15 +121,16 @@ namespace Search::Task {
         uint64_t m_IterationCountAtZeroScore = 0, m_IterationCountAtFeasibleScore = 0;
 
         static constexpr size_t Lh = 25;
-        std::array<Score::Score, Lh> m_History {};
+        std::array<Score::Score, Lh> m_History{};
+        Score::Score m_PhiMin;
+        size_t m_N = Lh;
 
         uint64_t m_Iterations = 0;
         uint64_t m_IdleIterations = 0;
 
-        bool m_RepairPerturbatorsApplied = false;
         size_t m_BestScoreAchievedBeforePerturbationCount {};
         ::Heuristics::PerturbatorChain<X, Y, Z, W> m_AppliedPerturbators {};
     };
 }
 
-#endif //LATEACCEPTANCELOCALSEARCHTASK_H
+#endif //DLASLOCALSEARCHTASK_H 
