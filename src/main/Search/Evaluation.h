@@ -6,10 +6,12 @@
 #endif
 
 #include "Constraints/Constraint.h"
+#include "Constraints/ConstraintScore.h"
 #include "Score/Score.h"
 #include "State/State.h"
 
 #include <cassert>
+#include <vector>
 
 namespace Heuristics {
     template<typename X, typename Y, typename Z, typename W>
@@ -89,18 +91,19 @@ namespace Evaluation {
 
         [[nodiscard]] Score::Score evaluateState(const ::State::State<X, Y, Z, W>& state) noexcept {
             Score::Score score {};
-            m_ConstraintScores.clear();
             m_TotalConstraintViolationCount = 0;
             m_ViolatedConstraintCount = 0;
+
+            size_t i = 0;
             for (auto it = m_Constraints.begin(); it != m_Constraints.end(); ++it) {
                 const auto& constraint = *it;
                 const auto constraintScore = constraint->evaluate(state);
                 score += constraintScore;
                 m_TotalConstraintViolationCount += constraintScore.violations().size();
                 m_ViolatedConstraintCount += constraintScore.violations().size() > 0;
-                m_ConstraintScores.emplace_back(constraintScore);
+                m_ConstraintScores[i++] = std::move(constraintScore);
             }
-            assert(m_ConstraintScores.size() == m_Constraints.size() && "Constraint scores size mismatch");
+
             return score;
         }
 

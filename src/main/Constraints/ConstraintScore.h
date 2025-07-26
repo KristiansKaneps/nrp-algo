@@ -19,8 +19,26 @@ namespace Constraints {
         explicit ConstraintScore(const Score& score, std::vector<Violation>&& violations) noexcept : m_Score(score),
             m_Violations(std::move(violations)) { }
 
-        ConstraintScore() noexcept {
-            m_Violations.shrink_to_fit();
+        ConstraintScore() noexcept {}
+
+        ConstraintScore(const ConstraintScore& other) noexcept : m_Score(other.m_Score), m_Violations(other.m_Violations) {}
+
+        ConstraintScore(ConstraintScore&& other) noexcept : m_Score(std::move(other.m_Score)), m_Violations(std::move(other.m_Violations)) {}
+
+        ConstraintScore& operator=(const ConstraintScore& other) noexcept {
+            if (this != &other) {
+                m_Score = other.m_Score;
+                m_Violations = other.m_Violations;
+            }
+            return *this;
+        }
+
+        ConstraintScore& operator=(ConstraintScore&& other) noexcept {
+            if (this != &other) {
+                m_Score = std::move(other.m_Score);
+                m_Violations = std::move(other.m_Violations);
+            }
+            return *this;
         }
 
         [[nodiscard]] const Score& score() const noexcept { return m_Score; }
