@@ -25,7 +25,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         build_type: [Release]
-        c_compiler: [gcc, clang, cl]
+        c_compiler: [gcc, clang-18, cl]
         include:
           - os: windows-latest
             c_compiler: cl
@@ -34,13 +34,13 @@ jobs:
             c_compiler: gcc
             cpp_compiler: g++
           - os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
+            c_compiler: clang-18
+            cpp_compiler: clang++-18
         exclude:
           - os: windows-latest
             c_compiler: gcc
           - os: windows-latest
-            c_compiler: clang
+            c_compiler: clang-18
           - os: ubuntu-latest
             c_compiler: cl
 
@@ -57,6 +57,15 @@ jobs:
     - name: Install required Linux dependencies
       if: runner.os == 'Linux'
       run: sudo apt update && sudo apt install -y xorg-dev
+
+    - name: Install Clang 18
+      if: runner.os == 'Linux' && matrix.c_compiler == 'clang-18'
+      run: |
+        sudo apt update
+        sudo apt install -y wget gnupg lsb-release software-properties-common
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh 18
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
