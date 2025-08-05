@@ -1,8 +1,6 @@
 #ifndef DLASLOCALSEARCHTASK_H
 #define DLASLOCALSEARCHTASK_H
 
-#define LOCALSEARCH_DEBUG
-
 #include "Search/LocalSearchTask.h"
 #include <array>
 #include <algorithm>
@@ -90,7 +88,7 @@ namespace Search::Task {
                 }
 
                 m_AppliedPerturbators.append(perturbators);
-                std::cout << "Applied perturbators size: " << m_AppliedPerturbators.size() << ", best score achieved before " << m_BestScoreAchievedBeforePerturbationCount << " perturbations; idle iteration count: " << m_IdleIterations << std::endl;
+                // std::cout << "Applied perturbators size: " << m_AppliedPerturbators.size() << ", best score achieved before " << m_BestScoreAchievedBeforePerturbationCount << " perturbations; idle iteration count: " << m_IdleIterations << std::endl;
             } else {
                 // Revert candidate
                 perturbators.revert(candidateState);
