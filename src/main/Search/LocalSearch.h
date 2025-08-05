@@ -73,7 +73,7 @@ namespace Search {
                 m_CountedSteps += 1;
                 const auto currentTimePoint = std::chrono::system_clock::now();
                 const auto currentTime = duration_cast<std::chrono::milliseconds>(currentTimePoint.time_since_epoch());
-                if (const auto delta = currentTime - m_StepCountTimePoint; delta >= 1s) {
+                if (const auto delta = currentTime - m_StepCountTimePoint; delta >= 5s) {
                     m_StepsPerSecond = m_CountedSteps * 1000 / (delta / 1ms);
                     m_CountedSteps = 0;
                     m_StepCountTimePoint = currentTime;
