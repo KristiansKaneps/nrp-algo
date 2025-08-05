@@ -115,50 +115,36 @@ namespace Heuristics {
             const Evaluation::Evaluator<X, Y, Z, W>& evaluator,
             const ::State::State<X, Y, Z, W>& state) noexcept {
             m_GeneratedPerturbators.clear();
-            size_t count = m_Random.randomInt(1, 5);
+            
+            size_t count = m_Random.randomInt(1, 2); // Reduced from 1-5
             m_GeneratedPerturbators.reserve(count);
 
-            // Smarter heuristics
-            if (m_Random.randomInt(0, 10) > 5) {
+            // Use simpler heuristics more frequently (80% of time)
+            if (m_Random.randomInt(0, 10) > 2) {
+                // Fast random perturbations (no constraint analysis needed)
+                const AutonomousPerturbator<X, Y, Z, W> *perturbTemplate = m_AvailablePerturbators[0];
+                for (size_t i = 0; i < count; ++i) {
+                    AutonomousPerturbator<X, Y, Z, W> *perturb = perturbTemplate->clone();
+                    perturb->configure(nullptr, state);
+                    if (!perturb->isIdentity()) {
+                        m_GeneratedPerturbators.emplace_back(perturb);
+                    } else {
+                        delete perturb;
+                    }
+                }
+            } else {
+                // Smarter heuristics (20% of time)
                 for (const auto* perturbTemplate : m_AvailablePerturbators) {
+                    if (m_GeneratedPerturbators.size() >= count) break;
                     auto* perturb = perturbTemplate->clone();
                     if (perturb->configureIfApplicable(evaluator, state) && !perturb->isIdentity()) {
                         m_GeneratedPerturbators.emplace_back(perturb);
-                        if (count > 0) --count;
                     } else {
                         delete perturb;
                     }
                 }
             }
 
-            // // Shift heuristics
-            // if (m_Random.randomInt(0, 10) > 9) {
-            //     const AutonomousPerturbator<X, Y, Z, W> *perturbTemplate = m_AvailablePerturbators[2];
-            //     AutonomousPerturbator<X, Y, Z, W> *perturb = perturbTemplate->clone();
-            //     perturb->configure(nullptr, state);
-            //     if (perturb->isIdentity()) {
-            //         delete perturb;
-            //     } else {
-            //         m_GeneratedPerturbators.emplace_back(perturb);
-            //     }
-            // }
-
-            // Brute heuristics
-            for (size_t i = 0; m_GeneratedPerturbators.size() < count && count < 1000; ++i) {
-                // const size_t perturbatorIndex = m_Random.randomInt(0, m_AvailablePerturbators.size() - 1);
-                const AutonomousPerturbator<X, Y, Z, W> *perturbTemplate = m_AvailablePerturbators[0];
-                AutonomousPerturbator<X, Y, Z, W> *perturb = perturbTemplate->clone();
-                perturb->configure(nullptr, state);
-                if (perturb->isIdentity()) {
-                    delete perturb;
-                    continue;
-                }
-                m_GeneratedPerturbators.emplace_back(perturb);
-            }
-            // AutonomousPerturbator<X, Y, Z, W> *perturb = m_AvailablePerturbators[0]->clone();
-            // perturb->configure(nullptr, state);
-            // m_GeneratedPerturbators.emplace_back(perturb);
-            // std::cout << "Generated perturbator count: " << m_GeneratedPerturbators.size() << std::endl;
             return PerturbatorChain(m_GeneratedPerturbators);
         }
 
