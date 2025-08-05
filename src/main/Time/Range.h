@@ -20,6 +20,8 @@ namespace Time {
 
         Range(const Range& other) noexcept : Range(other.m_Start, other.m_End) { }
 
+        ~Range() noexcept override = default;
+
         [[nodiscard]] PeriodType type() const noexcept override { return RANGE; }
 
         [[nodiscard]] const Instant& end() const noexcept { return m_End; }

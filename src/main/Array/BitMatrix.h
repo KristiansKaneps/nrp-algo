@@ -16,6 +16,8 @@ namespace BitMatrix {
             m_YSize(ySize),
             m_Array(xSize * ySize) { }
 
+        virtual ~BitMatrix() noexcept = default;
+
         [[nodiscard]] array_size_t // ReSharper disable once CppMemberFunctionMayBeStatic
         offsetX(const dimension_size_t y) const noexcept { // NOLINT(*-convert-member-functions-to-static)
             return y;
