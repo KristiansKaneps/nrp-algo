@@ -103,9 +103,9 @@ target_link_libraries(${PROJECT_NAME}_exec PRIVATE
 # Compiler options
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(${PROJECT_NAME} PRIVATE -Wno-shift-op-parentheses)
-    target_compile_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Release>:-O3 -march=native -flto>)
-    target_compile_options(${PROJECT_NAME}_exec PRIVATE $<$<CONFIG:Release>:-O3 -march=native -flto>)
-    target_link_options(${PROJECT_NAME}_exec PRIVATE $<$<CONFIG:Release>:-flto>)
+    target_compile_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Release>:-O3 -march=native -flto=thin>)
+    target_compile_options(${PROJECT_NAME}_exec PRIVATE $<$<CONFIG:Release>:-O3 -march=native -flto=thin>)
+    target_link_options(${PROJECT_NAME}_exec PRIVATE $<$<CONFIG:Release>:-flto=thin -fuse-ld=lld>)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     target_compile_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Release>:-O3 -march=native -flto>)
     target_compile_options(${PROJECT_NAME}_exec PRIVATE $<$<CONFIG:Release>:-O3 -march=native -flto>)
