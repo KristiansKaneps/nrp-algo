@@ -19,6 +19,22 @@ function(test testName)
     add_executable(${testName} ${testName}.cpp $<TARGET_OBJECTS:test_main>)
     target_include_directories(${testName} PRIVATE ${DOCTEST_INCLUDE_DIR})
     target_link_libraries(${testName} PRIVATE nrp)
+    # Compiler options
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_compile_options(${testName} PRIVATE -Wno-shift-op-parentheses)
+        target_compile_options(${testName} PRIVATE $<$<CONFIG:Release>:-O3 -march=native -flto>)
+        target_link_options(${testName} PRIVATE $<$<CONFIG:Release>:-flto>)
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        target_compile_options(${testName} PRIVATE $<$<CONFIG:Release>:-O3 -march=native -flto>)
+        target_link_options(${testName} PRIVATE $<$<CONFIG:Release>:-flto>)
+    elseif(MSVC)
+        target_compile_options(${testName} PRIVATE /wd4267)
+        target_compile_options(${testName} PRIVATE $<$<CONFIG:Release>:/O2 /Ob2 /GL>)
+        target_link_options(${testName} PRIVATE $<$<CONFIG:Release>:/LTCG>)
+    endif()
+    # Disable debug assertions in release builds
+    target_compile_definitions(${testName} PRIVATE $<$<CONFIG:Release>:NDEBUG>)
+    # Add test
     add_test(NAME ${testName} COMMAND ${testName})
 endfunction()
 
