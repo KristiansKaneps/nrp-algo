@@ -101,7 +101,12 @@ target_link_libraries(${PROJECT_NAME}_exec PRIVATE
 )
 
 # Compiler options
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if(MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE /wd4267)
+    target_compile_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Release>:/O2 /Ob2 /GL>)
+    target_compile_options(${PROJECT_NAME}_exec PRIVATE $<$<CONFIG:Release>:/O2 /Ob2 /GL>)
+    target_link_options(${PROJECT_NAME}_exec PRIVATE $<$<CONFIG:Release>:/LTCG>)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(${PROJECT_NAME} PRIVATE -Wno-shift-op-parentheses)
     target_compile_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Release>:-O3 -march=native -flto>)
     target_compile_options(${PROJECT_NAME}_exec PRIVATE $<$<CONFIG:Release>:-O3 -march=native -flto>)
@@ -110,11 +115,6 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     target_compile_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Release>:-O3 -march=native -flto>)
     target_compile_options(${PROJECT_NAME}_exec PRIVATE $<$<CONFIG:Release>:-O3 -march=native -flto>)
     target_link_options(${PROJECT_NAME}_exec PRIVATE $<$<CONFIG:Release>:-flto>)
-elseif(MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE /wd4267)
-    target_compile_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Release>:/O2 /Ob2 /GL>)
-    target_compile_options(${PROJECT_NAME}_exec PRIVATE $<$<CONFIG:Release>:/O2 /Ob2 /GL>)
-    target_link_options(${PROJECT_NAME}_exec PRIVATE $<$<CONFIG:Release>:/LTCG>)
 endif()
 
 # Disable debug assertions in release builds
