@@ -1,6 +1,6 @@
 #define ENABLE_SCORE_STATISTICS
 #define ENABLE_SCORE_STATISTICS_SCENE
-#define LOCALSEARCH_DEBUG
+// #define LOCALSEARCH_DEBUG
 // #define MEMORY_USAGE_DEBUG
 
 
@@ -49,6 +49,7 @@ void solve() {
     using std::chrono::high_resolution_clock;
     using std::chrono_literals::operator ""s;
 
+    // gp_AppState->state.random(0.1f);
     Search::LocalSearch localSearch(&gp_AppState->state, gp_AppState->constraints);
 
     bool mutexWasLocked = false;

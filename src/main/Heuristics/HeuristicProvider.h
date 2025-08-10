@@ -12,10 +12,12 @@
 #include "HyperHeuristics/TransformerModel.h"
 
 #include "Moves/AssignPerturbator.h"
+#include "Moves/HorizontalExchangePerturbator.h"
 #include "Moves/UnassignPerturbator.h"
 #include "Moves/RandomAssignmentTogglePerturbator.h"
 #include "Moves/RankedIntersectionTogglePerturbator.h"
 #include "Moves/ShiftByZPerturbator.h"
+#include "Moves/VerticalExchangePerturbator.h"
 
 #define HYPERHEURISTICS_HEURISTIC_COUNT 2
 #define HYPERHEURISTICS_INPUT_DIM 9
@@ -50,8 +52,10 @@ namespace Heuristics {
 
             m_AvailablePerturbators = {
                 new RandomAssignmentTogglePerturbator<X, Y, Z, W>(),
-                new RankedIntersectionTogglePerturbator<X, Y, Z, W>(constraints),
+                new VerticalExchangePerturbator<X, Y, Z, W>(),
+                new HorizontalExchangePerturbator<X, Y, Z, W>(),
                 new ShiftByZPerturbator<X, Y, Z, W>(),
+                new RankedIntersectionTogglePerturbator<X, Y, Z, W>(constraints),
             };
 
             torch::manual_seed(42);
@@ -116,7 +120,7 @@ namespace Heuristics {
             const ::State::State<X, Y, Z, W>& state) noexcept {
             m_GeneratedPerturbators.clear();
             
-            size_t count = m_Random.randomInt(1, 2); // Reduced from 1-5
+            size_t count = m_Random.randomInt(1, 2);
             m_GeneratedPerturbators.reserve(count);
 
             // Use simpler heuristics more frequently (80% of time)

@@ -81,6 +81,7 @@ namespace Search {
                     m_AverageStepsPerSecond += (static_cast<int64_t>(m_StepsPerSecond) - static_cast<int64_t>(m_AverageStepsPerSecond)) / static_cast<int64_t>(m_StepBatchCount);
                     const auto elapsedSeconds = (currentTimePoint.time_since_epoch() - m_StartTime.time_since_epoch()) / 1s;
                     std::cout << "States per second: " << m_StepsPerSecond << "; average: " << m_AverageStepsPerSecond << "; elapsed time: " << (elapsedSeconds / 60) << "m " << (elapsedSeconds % 60) << "s" << std::endl;
+                    std::cout << "Current best score: " << getBestScore() << "; delta: " << getDeltaScore() << std::endl;
                 }
 
                 return mp_Task->newBestFound();
@@ -97,6 +98,9 @@ namespace Search {
         // ReSharper disable once CppRedundantQualifier
         ::State::State<X, Y, Z, W> getBestState() const noexcept { return mp_Task->getOutputState(); }
         [[nodiscard]] Score::Score getBestScore() const noexcept { return mp_Task->getOutputScore(); }
+        [[nodiscard]] Score::Score getInitialScore() const noexcept { return mp_Task->getInitialScore(); }
+        [[nodiscard]] Score::Score getDeltaScore() const noexcept { return getBestScore() - getInitialScore(); }
+        [[nodiscard]] const Time::Instant& getStartTime() const noexcept { return m_StartTime; }
 
         [[nodiscard]] Score::Score evaluateCurrentBestState() const noexcept {
             Score::Score score {};
