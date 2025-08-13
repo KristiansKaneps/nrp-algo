@@ -112,6 +112,7 @@ void Application::mainLoop(const double dt, const uint64_t elapsedTicks) {
                 gp_AppState->state = gp_Update->state;
                 gp_AppState->score = gp_Update->score;
                 gp_AppState->scoreStatistics = gp_Update->scoreStatistics;
+                gp_AppState->localSearchDone = gp_Update->localSearchDone;
                 // ReSharper restore CppDFANullDereference
                 g_ConcurrentDataMutex.unlock();
 

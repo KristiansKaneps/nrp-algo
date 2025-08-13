@@ -24,6 +24,7 @@ struct LocalSearchUpdate {
     State::State<Shift, Employee, Day, Skill> state;
     Score::Score score;
     Statistics::ScoreStatistics scoreStatistics;
+    bool localSearchDone = false;
 };
 
 inline volatile bool g_LocalSearchShouldStop = false; // single bool should be atomic on most architectures

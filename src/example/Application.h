@@ -43,7 +43,7 @@ public:
         delete oldScene;
     }
 
-    void start() {
+    void start(const bool exitOnFinish = false) {
         m_WindowIsAlreadyClosed = false;
 
         #ifdef DISABLE_RAYLIB_LOGGING
@@ -78,18 +78,19 @@ public:
             const std::chrono::duration<double> elapsedTime = now - before;
             before = now;
             const double dt = elapsedTime.count();
-            mainLoop(dt, elapsedTicks++);
 
             if (IsWindowResized()) [[unlikely]] {
                 m_WindowDescriptor.width = GetScreenWidth();
                 m_WindowDescriptor.height = GetScreenHeight();
                 m_WindowDescriptor.targetFPS = getPreferableTargetFPS();
             }
+
+            mainLoop(dt, elapsedTicks++);
+
+            if (exitOnFinish && gp_AppState->localSearchDone) break;
         }
 
-        m_WindowIsAlreadyClosed = true;
-        CloseWindow();
-        onClose();
+        close();
     }
 
     void close() {

@@ -51,6 +51,8 @@ struct AppState {
     RenderCache renderCache;
 
     Statistics::ScoreStatistics scoreStatistics {};
+
+    bool localSearchDone = false;
 };
 
 inline AppState *gp_AppState = nullptr;

@@ -47,13 +47,13 @@ namespace Search {
         }
 
         void startStatistics() noexcept {
-            m_StartTime = std::chrono::time_point_cast<INSTANT_PRECISION>(std::chrono::system_clock::now());
             m_ScoreStatistics.startRecording(mp_Task->getInitialScore());
             m_CountedSteps = 0;
-            m_StepCountTimePoint = duration_cast<std::chrono::milliseconds>(m_StartTime.time_since_epoch());
             m_StepsPerSecond = 0;
             m_AverageStepsPerSecond = 0;
             m_StepBatchCount = 0;
+            m_StartTime = std::chrono::time_point_cast<INSTANT_PRECISION>(std::chrono::system_clock::now());
+            m_StepCountTimePoint = duration_cast<std::chrono::milliseconds>(m_StartTime.time_since_epoch());
         }
 
         void endStatistics() noexcept {
@@ -67,11 +67,10 @@ namespace Search {
             using namespace std::chrono_literals;
 
             // Finalizer
-            if (mp_Task->shouldStep()) [[likely]] {
+            if (const auto currentTimePoint = std::chrono::system_clock::now(); mp_Task->shouldStep() && shouldStep((currentTimePoint.time_since_epoch() - m_StartTime.time_since_epoch()) / 1s)) [[likely]] {
                 mp_Task->step(m_HeuristicProvider);
 
                 m_CountedSteps += 1;
-                const auto currentTimePoint = std::chrono::system_clock::now();
                 const auto currentTime = duration_cast<std::chrono::milliseconds>(currentTimePoint.time_since_epoch());
                 if (const auto delta = currentTime - m_StepCountTimePoint; delta >= 5s) {
                     m_StepsPerSecond = m_CountedSteps * 1000 / (delta / 1ms);
@@ -91,6 +90,10 @@ namespace Search {
                 // printBestScore();
                 return false;
             }
+        }
+
+        [[nodiscard]] bool shouldStep(const int64_t elapsedSeconds) const noexcept {
+            return elapsedSeconds < 10 * 60; // 10 minutes
         }
 
         [[nodiscard]] bool isDone() const noexcept { return m_Done; }
@@ -118,7 +121,7 @@ namespace Search {
 
     private:
         bool m_Done = false;
-        Time::Instant m_StartTime{};
+        Time::Instant m_StartTime = std::chrono::time_point_cast<INSTANT_PRECISION>(std::chrono::system_clock::now());
         uint64_t m_CountedSteps = 0;
         std::chrono::duration<int64_t, std::ratio<1, 1000>> m_StepCountTimePoint{};
         uint64_t m_StepsPerSecond = 0;
