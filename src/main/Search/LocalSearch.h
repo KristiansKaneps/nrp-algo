@@ -13,7 +13,15 @@
 #include "Search/Implementation/DlasLocalSearchTask.h"
 
 namespace Search {
-    enum class LocalSearchType { LAHC, DLAS };
+    enum class LocalSearchType { LAHC = 0, DLAS, __COUNT };
+
+    constexpr std::array<std::string_view, static_cast<size_t>(LocalSearchType::__COUNT)> LocalSearchTypeNames = {
+        "LAHC", "DLAS"
+    };
+
+    constexpr std::string_view LocalSearchTypeName(const LocalSearchType type) {
+        return LocalSearchTypeNames[static_cast<size_t>(type)];
+    }
     
     template<typename X, typename Y, typename Z, typename W>
     class LocalSearch {
@@ -21,7 +29,9 @@ namespace Search {
         // ReSharper disable CppRedundantQualifier
         explicit LocalSearch(const ::State::State<X, Y, Z, W> *initialState,
                              const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints,
-                             LocalSearchType type = LocalSearchType::DLAS) noexcept :
+                             const LocalSearchType type = LocalSearchType::DLAS,
+                             const uint64_t maxDurationInSeconds = 0) noexcept :
+            m_MaxDurationInSeconds(maxDurationInSeconds),
             mp_InitialState(initialState),
             m_Constraints(constraints),
             m_HeuristicProvider(::Heuristics::HeuristicProvider<X, Y, Z, W>(initialState, constraints)) {
@@ -93,7 +103,7 @@ namespace Search {
         }
 
         [[nodiscard]] bool shouldStep(const int64_t elapsedSeconds) const noexcept {
-            return elapsedSeconds < 10 * 60; // 10 minutes
+            return m_MaxDurationInSeconds != 0 && elapsedSeconds < m_MaxDurationInSeconds;
         }
 
         [[nodiscard]] bool isDone() const noexcept { return m_Done; }
@@ -121,6 +131,7 @@ namespace Search {
 
     private:
         bool m_Done = false;
+        uint64_t m_MaxDurationInSeconds = 0;
         Time::Instant m_StartTime = std::chrono::time_point_cast<INSTANT_PRECISION>(std::chrono::system_clock::now());
         uint64_t m_CountedSteps = 0;
         std::chrono::duration<int64_t, std::ratio<1, 1000>> m_StepCountTimePoint{};

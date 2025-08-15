@@ -4,11 +4,10 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <utility>
 
 #include "Utils/StringUtils.h"
 
-#define STATE_FILE_OUTPUT_DIRECTORY "notebooks/state_output/"
+#define DEFAULT_STATE_FILE_OUTPUT_DIRECTORY "state_output/"
 
 namespace IO {
     class StateFile {
@@ -18,15 +17,38 @@ namespace IO {
                 filename = String::getTimestampPrefix() + filename;
             }
 
-            const std::filesystem::path parentDir = std::filesystem::current_path().parent_path();
-            const std::filesystem::path fullPath = parentDir / STATE_FILE_OUTPUT_DIRECTORY;
+            const std::filesystem::path dir = std::filesystem::current_path();
+            const std::filesystem::path fullPath = dir / DEFAULT_STATE_FILE_OUTPUT_DIRECTORY;
 
             std::filesystem::create_directories(fullPath);
 
             m_Out = std::ofstream(fullPath / filename);
 
             if (!m_Out) {
-                std::cerr << "Failed to open file at: " << (fullPath / filename) << "\n";
+                std::cerr << "Failed to open file at: " << (fullPath / filename) << std::endl;
+            }
+        }
+
+        StateFile(const std::filesystem::path& directory, std::string filename, const bool prependTimestamp = true) {
+            if (prependTimestamp) {
+                filename = String::getTimestampPrefix() + filename;
+            }
+
+            std::filesystem::path fullPath;
+            if (directory.is_absolute()) {
+                fullPath = directory;
+            } else {
+                fullPath = std::filesystem::current_path() / directory;
+            }
+
+            const std::filesystem::path dir = std::filesystem::current_path();
+
+            std::filesystem::create_directories(fullPath);
+
+            m_Out = std::ofstream(fullPath / filename);
+
+            if (!m_Out) {
+                std::cerr << "Failed to open file at: " << (fullPath / filename) << std::endl;
             }
         }
 
