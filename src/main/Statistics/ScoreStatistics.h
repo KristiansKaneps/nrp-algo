@@ -57,7 +57,7 @@ namespace Statistics {
 
         void finishRecording() noexcept {
             #ifdef ENABLE_SCORE_STATISTICS
-            if (m_Points.size() == 0) return;
+            if (m_Points.empty()) return;
             if (m_MinScore > m_LastPoint.score) m_MinScore = m_LastPoint.score;
             if (m_MaxScore < m_LastPoint.score) m_MaxScore = m_LastPoint.score;
             m_Points.emplace_back(m_LastPoint);

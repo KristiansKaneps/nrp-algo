@@ -22,28 +22,35 @@ namespace Search {
     constexpr std::string_view LocalSearchTypeName(const LocalSearchType type) {
         return LocalSearchTypeNames[static_cast<size_t>(type)];
     }
-    
+
     template<typename X, typename Y, typename Z, typename W>
     class LocalSearch {
     public:
         // ReSharper disable CppRedundantQualifier
-        explicit LocalSearch(const ::State::State<X, Y, Z, W> *initialState,
-                             const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints,
+        explicit LocalSearch(const ::State::State<X, Y, Z, W>* initialState,
+                             const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& constraints,
                              const LocalSearchType type = LocalSearchType::DLAS,
-                             const uint64_t maxDurationInSeconds = 0) noexcept :
-            m_MaxDurationInSeconds(maxDurationInSeconds),
+                             const uint64_t maxDurationInSeconds = 0) noexcept : m_MaxDurationInSeconds(
+                maxDurationInSeconds),
             mp_InitialState(initialState),
             m_Constraints(constraints),
             m_HeuristicProvider(::Heuristics::HeuristicProvider<X, Y, Z, W>(initialState, constraints)) {
             switch (type) {
                 case LocalSearchType::LAHC:
-                    mp_Task = new Task::LahcLocalSearchTask<X, Y, Z, W>(*initialState, m_Constraints, m_ScoreStatistics);
+                    mp_Task = new Task::LahcLocalSearchTask<X, Y, Z,
+                        W>(*initialState, m_Constraints, m_ScoreStatistics);
                     break;
                 case LocalSearchType::DLAS:
-                    mp_Task = new Task::DlasLocalSearchTask<X, Y, Z, W>(*initialState, m_Constraints, m_ScoreStatistics);
+                    mp_Task = new Task::DlasLocalSearchTask<X, Y, Z,
+                        W>(*initialState, m_Constraints, m_ScoreStatistics);
+                    break;
+                default:
+                    mp_Task = new Task::DlasLocalSearchTask<X, Y, Z,
+                        W>(*initialState, m_Constraints, m_ScoreStatistics);
                     break;
             }
         }
+
         // ReSharper restore CppRedundantQualifier
 
         LocalSearch(const LocalSearch& other) noexcept = default;
@@ -62,8 +69,8 @@ namespace Search {
             m_StepsPerSecond = 0;
             m_AverageStepsPerSecond = 0;
             m_StepBatchCount = 0;
-            m_StartTime = std::chrono::time_point_cast<INSTANT_PRECISION>(std::chrono::system_clock::now());
-            m_StepCountTimePoint = duration_cast<std::chrono::milliseconds>(m_StartTime.time_since_epoch());
+            m_StartTime = std::chrono::steady_clock::now();
+            m_StepCountTimePoint = m_StartTime;
         }
 
         void endStatistics() noexcept {
@@ -76,30 +83,40 @@ namespace Search {
         bool step() noexcept {
             using namespace std::chrono_literals;
 
+            const auto stepStart = std::chrono::steady_clock::now();
+            const auto elapsedSeconds = (stepStart - m_StartTime) / 1s;
+
             // Finalizer
-            if (const auto currentTimePoint = std::chrono::system_clock::now(); mp_Task->shouldStep() && shouldStep((currentTimePoint.time_since_epoch() - m_StartTime.time_since_epoch()) / 1s)) [[likely]] {
-                mp_Task->step(m_HeuristicProvider);
-
-                m_CountedSteps += 1;
-                const auto currentTime = duration_cast<std::chrono::milliseconds>(currentTimePoint.time_since_epoch());
-                if (const auto delta = currentTime - m_StepCountTimePoint; delta >= 5s) {
-                    m_StepsPerSecond = m_CountedSteps * 1000 / (delta / 1ms);
-                    m_CountedSteps = 0;
-                    m_StepCountTimePoint = currentTime;
-                    m_StepBatchCount += 1;
-                    m_AverageStepsPerSecond += (static_cast<int64_t>(m_StepsPerSecond) - static_cast<int64_t>(m_AverageStepsPerSecond)) / static_cast<int64_t>(m_StepBatchCount);
-                    const auto elapsedSeconds = (currentTimePoint.time_since_epoch() - m_StartTime.time_since_epoch()) / 1s;
-                    std::cout << "States per second: " << m_StepsPerSecond << "; average: " << m_AverageStepsPerSecond << "; elapsed time: " << (elapsedSeconds / 60) << "m " << (elapsedSeconds % 60) << "s" << std::endl;
-                    std::cout << "Current best score: " << getBestScore() << "; delta: " << getDeltaScore() << std::endl;
-                }
-
-                return mp_Task->newBestFound();
-                // ReSharper disable once CppRedundantElseKeywordInsideCompoundStatement
-            } else {
+            if (!mp_Task->shouldStep() || !shouldStep(elapsedSeconds)) [[unlikely]] {
                 m_Done = true;
                 // printBestScore();
                 return false;
             }
+
+            mp_Task->step(m_HeuristicProvider);
+            m_CountedSteps += 1;
+
+            if (const double delta = std::chrono::duration_cast<std::chrono::duration<double>>(
+                stepStart - m_StepCountTimePoint).count(); delta >= 1.0) {
+                const double stepsThisInterval = m_CountedSteps / delta;
+
+                // Update running average
+                m_StepBatchCount += 1;
+                m_AverageStepsPerSecond += (stepsThisInterval - m_AverageStepsPerSecond) / m_StepBatchCount;
+
+                // Reset counters for next interval
+                m_CountedSteps = 0;
+                m_StepCountTimePoint = stepStart;
+
+                std::cout << "States per second: " << static_cast<int64_t>(stepsThisInterval)
+                        << "; average: " << static_cast<int64_t>(m_AverageStepsPerSecond)
+                        << "; elapsed time: " << (elapsedSeconds / 60) << "m " << (elapsedSeconds % 60) << 's' <<
+                        std::endl;
+                std::cout << "Current best score: " << getBestScore()
+                        << "; delta: " << getDeltaScore() << std::endl;
+            }
+
+            return mp_Task->newBestFound();
         }
 
         [[nodiscard]] bool shouldStep(const int64_t elapsedSeconds) const noexcept {
@@ -113,18 +130,34 @@ namespace Search {
         [[nodiscard]] Score::Score getBestScore() const noexcept { return mp_Task->getOutputScore(); }
         [[nodiscard]] Score::Score getInitialScore() const noexcept { return mp_Task->getInitialScore(); }
         [[nodiscard]] Score::Score getDeltaScore() const noexcept { return getBestScore() - getInitialScore(); }
-        [[nodiscard]] const Time::Instant& getStartTime() const noexcept { return m_StartTime; }
+
+        [[nodiscard]] const std::chrono::time_point<std::chrono::steady_clock>& getStartTime() const noexcept {
+            return m_StartTime;
+        }
+
+        [[nodiscard]] double getCurrentStepCountPerSecond() const noexcept {
+            return m_StepsPerSecond;
+        }
+
+        [[nodiscard]] double getAverageStepsPerSecond() const noexcept {
+            return m_AverageStepsPerSecond;
+        }
+
+        [[nodiscard]] uint64_t getMaxDurationInSeconds() const noexcept {
+            return m_MaxDurationInSeconds;
+        }
 
         [[nodiscard]] Score::Score evaluateCurrentBestState() const noexcept {
-            Score::Score score {};
+            Score::Score score{};
             // ReSharper disable once CppRedundantQualifier
-            for (::Constraints::Constraint<X, Y, Z, W> *constraint : m_Constraints)
+            for (::Constraints::Constraint<X, Y, Z, W>* constraint: m_Constraints)
                 score += constraint->evaluate(mp_Task->getOutputState());
             return score;
         }
 
         void printBestScore() const noexcept {
-            std::cout << "Best score: " << mp_Task->getOutputScore() << "; delta=" << (mp_Task->getOutputScore() - mp_Task->m_InitScore) << std::endl;
+            std::cout << "Best score: " << mp_Task->getOutputScore() << "; delta=" << (
+                mp_Task->getOutputScore() - mp_Task->m_InitScore) << std::endl;
         }
 
     protected:
@@ -132,15 +165,16 @@ namespace Search {
     private:
         bool m_Done = false;
         uint64_t m_MaxDurationInSeconds = 0;
-        Time::Instant m_StartTime = std::chrono::time_point_cast<INSTANT_PRECISION>(std::chrono::system_clock::now());
+        std::chrono::time_point<std::chrono::steady_clock> m_StartTime = std::chrono::time_point_cast<
+            std::chrono::nanoseconds>(std::chrono::steady_clock::now());
         uint64_t m_CountedSteps = 0;
-        std::chrono::duration<int64_t, std::ratio<1, 1000>> m_StepCountTimePoint{};
-        uint64_t m_StepsPerSecond = 0;
-        uint64_t m_AverageStepsPerSecond = 0;
-        uint64_t m_StepBatchCount = 0;
+        std::chrono::time_point<std::chrono::steady_clock> m_StepCountTimePoint = m_StartTime;
+        double m_StepsPerSecond = 0;
+        double m_AverageStepsPerSecond = 0;
+        int64_t m_StepBatchCount = 0;
 
         // ReSharper disable once CppRedundantQualifier
-        const ::State::State<X, Y, Z, W> *mp_InitialState;
+        const ::State::State<X, Y, Z, W>* mp_InitialState;
         // ReSharper disable once CppRedundantQualifier
         const std::vector<::Constraints::Constraint<X, Y, Z, W> *> m_Constraints;
         // ReSharper disable once CppRedundantQualifier
