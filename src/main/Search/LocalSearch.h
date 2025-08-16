@@ -87,7 +87,7 @@ namespace Search {
             const auto elapsedSeconds = (stepStart - m_StartTime) / 1s;
 
             // Finalizer
-            if (!mp_Task->shouldStep() || !shouldStep(elapsedSeconds)) [[unlikely]] {
+            if ((durationTerminationCriteriaIsIgnored() && !mp_Task->shouldStep()) || !shouldStep(elapsedSeconds)) [[unlikely]] {
                 m_Done = true;
                 // printBestScore();
                 return false;
@@ -117,6 +117,10 @@ namespace Search {
             }
 
             return mp_Task->newBestFound();
+        }
+
+        [[nodiscard]] bool durationTerminationCriteriaIsIgnored() const noexcept {
+            return m_MaxDurationInSeconds == 0;
         }
 
         [[nodiscard]] bool shouldStep(const int64_t elapsedSeconds) const noexcept {

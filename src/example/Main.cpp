@@ -124,6 +124,15 @@ void solve(const std::filesystem::path& outputDirectory, const Search::LocalSear
     }
 }
 
+static std::string_view trimBOM(const std::string_view& s) noexcept {
+    if (s.size() >= 3 &&
+        static_cast<unsigned char>(s[0]) == 0xEF &&
+        static_cast<unsigned char>(s[1]) == 0xBB &&
+        static_cast<unsigned char>(s[2]) == 0xBF)
+        return s.substr(3);
+    return s;
+}
+
 // ReSharper disable once CppDFAConstantFunctionResult
 int main(int argc, char** argv) {
     SetConsoleOutputToUTF8();
@@ -135,7 +144,7 @@ int main(int argc, char** argv) {
     if (argc > 1) {
         std::cout << "Arguments:";
         for (size_t i = 1; i < argc; ++i) {
-            args.insert(std::string_view(argv[i]));
+            args.insert(trimBOM(argv[i]));
             std::cout << " \"" << argv[i] << '"';
         }
         std::cout << std::endl;

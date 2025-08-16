@@ -111,10 +111,10 @@ namespace Search::Task {
         }
 
     private:
-        static constexpr int ITERATION_COUNT_AT_ZERO_SCORE_THRESHOLD = 2000;
-        static constexpr int ITERATION_COUNT_AT_FEASIBLE_SCORE_THRESHOLD = 4000;
-        static constexpr int MAX_FEASIBLE_IDLE_ITERATION_COUNT = 3000;
-        static constexpr int MAX_IDLE_ITERATION_COUNT = 500000;
+        static constexpr int ITERATION_COUNT_AT_ZERO_SCORE_THRESHOLD = 20000;
+        static constexpr int ITERATION_COUNT_AT_FEASIBLE_SCORE_THRESHOLD = 40000;
+        static constexpr int MAX_FEASIBLE_IDLE_ITERATION_COUNT = 30000;
+        static constexpr int MAX_IDLE_ITERATION_COUNT = 5000000;
         uint64_t m_IterationCountAtZeroScore = 0, m_IterationCountAtFeasibleScore = 0;
 
         static constexpr size_t Lh = 25;

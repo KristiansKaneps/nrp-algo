@@ -102,7 +102,7 @@ target_link_libraries(${PROJECT_NAME}_exec PRIVATE
 
 # Compiler options
 if(MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE /wd4267)
+    target_compile_options(${PROJECT_NAME} PRIVATE /utf-8 /wd4267)
     target_compile_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Release>:/O2 /Ob2 /GL>)
     target_compile_options(${PROJECT_NAME}_exec PRIVATE $<$<CONFIG:Release>:/O2 /Ob2 /GL>)
     target_link_options(${PROJECT_NAME}_exec PRIVATE $<$<CONFIG:Release>:/LTCG>)
