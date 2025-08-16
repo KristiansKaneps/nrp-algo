@@ -44,6 +44,7 @@
 using namespace Domain;
 
 static bool gs_Cli = true; // Is this app running as a CLI?
+static bool gs_Warmup = false; // Is this a warmup app instance?
 
 static void updateConcurrentData(const Search::LocalSearch<Shift, Employee, Day, Skill>& localSearch) {
     gp_Update->state = localSearch.getBestState();
@@ -109,7 +110,7 @@ void solve(const std::filesystem::path& outputDirectory, const Search::LocalSear
     const auto bestScore = localSearch.evaluateCurrentBestState();
     std::cout << "Best score: " << bestScore << "  Delta: " << (bestScore - initialScore) << std::endl;
 
-    {
+    if (!gs_Warmup) {
         const auto timestampPrefix = String::getTimestampPrefix();
         IO::StatisticsFile scoreStatisticsFile(outputDirectory,
                                                std::format("{}{}_score_statistics.csv", timestampPrefix,
@@ -143,6 +144,7 @@ int main(int argc, char** argv) {
     bool cli = false;
     bool gui = false;
     bool exitOnFinish = false;
+    bool warmup = false;
     std::filesystem::path outputDirectory = std::filesystem::current_path();
     Search::LocalSearchType searchType = Search::LocalSearchType::DLAS;
     uint64_t maxDuration = 0;
@@ -152,6 +154,7 @@ int main(int argc, char** argv) {
         {"--gui", [&] { gui = true; }},
         {"--exit", [&] { exitOnFinish = true; }},
         {"--exit-on-finish", [&] { exitOnFinish = true; }},
+        {"--warmup", [&] { warmup = true; }},
     };
 
     const std::unordered_map<std::string_view, Search::LocalSearchType> algoMap = {
@@ -200,6 +203,7 @@ int main(int argc, char** argv) {
     if (!cli && !gui) cli = true;
 
     gs_Cli = cli;
+    gs_Warmup = warmup;
 
     Example::create();
 
