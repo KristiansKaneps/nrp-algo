@@ -3,8 +3,9 @@
 // Released under the MIT license.
 //
 // Modified by Kristians Kaneps on 15.05.2025.
-// Changes include: Use relative resource path as name if input path
-// contains "resources/". Added C++ support.
+// Changes include:
+// Use relative resource path as name if input path contains "resources/". Added C++ support.
+// Custom `strcasestr` implementation for older compilers.
 //
 // This program is used to embed arbitrary data into a C binary. It takes
 // a list of files as an input, and produces a .c data file that contains
@@ -44,8 +45,7 @@ static const char *code =
     "  return NULL;\n"
     "}\n";
 
-#ifdef _WIN32
-const char *strcasestr(const char *haystack, const char *needle) {
+static const char *my_strcasestr(const char *haystack, const char *needle) {
     if (!*needle) return haystack;
     for (; *haystack; haystack++) {
         const char *h = haystack, *n = needle;
@@ -57,7 +57,6 @@ const char *strcasestr(const char *haystack, const char *needle) {
     }
     return NULL;
 }
-#endif
 
 int main(int argc, char *argv[]) {
     FILE *fp;
@@ -98,9 +97,12 @@ int main(int argc, char *argv[]) {
         for (char *p = normalized; *p; ++p) { if (*p == '\\') *p = '/'; }
 
         static const char *resourcesDir = "resources/";
-        const char *base = strcasestr(normalized, resourcesDir);
-        base += strlen(resourcesDir);
-        if (base != NULL) { printf("  {\"%s\", v%d, sizeof(v%d) - 1},\n", base, i, i); } else {
+        const char *base = my_strcasestr(normalized, resourcesDir);
+
+        if (base != NULL) {
+            base += strlen(resourcesDir);
+            printf("  {\"%s\", v%d, sizeof(v%d) - 1},\n", base, i, i);
+        } else {
             printf("  {\"%s\", v%d, sizeof(v%d) - 1},\n", argv[i], i, i);
         }
     }
