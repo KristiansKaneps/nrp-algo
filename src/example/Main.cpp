@@ -169,6 +169,7 @@ int main(int argc, char** argv) {
     const std::unordered_map<std::string_view, Search::LocalSearchType> algoMap = {
         {"LAHC", Search::LocalSearchType::LAHC},
         {"DLAS", Search::LocalSearchType::DLAS},
+        {"SA", Search::LocalSearchType::SA},
     };
 
     constexpr std::string_view algoPrefix = "--algorithm=";

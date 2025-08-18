@@ -11,12 +11,13 @@
 
 #include "Search/Implementation/LahcLocalSearchTask.h"
 #include "Search/Implementation/DlasLocalSearchTask.h"
+#include "Search/Implementation/SaLocalSearchTask.h"
 
 namespace Search {
-    enum class LocalSearchType { LAHC = 0, DLAS, __COUNT };
+    enum class LocalSearchType { LAHC = 0, DLAS, SA, __COUNT };
 
     constexpr std::array<std::string_view, static_cast<size_t>(LocalSearchType::__COUNT)> LocalSearchTypeNames = {
-        "LAHC", "DLAS"
+        "LAHC", "DLAS", "SA"
     };
 
     constexpr std::string_view LocalSearchTypeName(const LocalSearchType type) {
@@ -42,6 +43,10 @@ namespace Search {
                     break;
                 case LocalSearchType::DLAS:
                     mp_Task = new Task::DlasLocalSearchTask<X, Y, Z,
+                        W>(*initialState, m_Constraints, m_ScoreStatistics);
+                    break;
+                case LocalSearchType::SA:
+                    mp_Task = new Task::SaLocalSearchTask<X, Y, Z,
                         W>(*initialState, m_Constraints, m_ScoreStatistics);
                     break;
                 default:
