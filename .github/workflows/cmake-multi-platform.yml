@@ -54,7 +54,7 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-    - name: Install Clang
+    - name: "Linux: Install Clang"
       if: runner.os == 'Linux' && matrix.c_compiler == 'clang'
       run: |
         sudo apt update
@@ -66,7 +66,7 @@ jobs:
         sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 100
         clang++ --version
 
-    - name: Install required Linux dependencies
+    - name: "Linux: Install required dependencies"
       if: runner.os == 'Linux'
       run: sudo apt update && sudo apt install -y xorg-dev
 
