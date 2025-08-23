@@ -6,12 +6,12 @@
 using State::state_size_t;
 
 void Application::onStart() {
-    state().renderCache.employeeTotalWorkDuration = new uint64_t[state().state.sizeY()];
-    state().renderCache.dayCoverageValid = new bool[state().state.sizeZ()];
+    state().renderCache.employeeTotalWorkDuration = new uint64_t[state().state.sizeY()]();
+    state().renderCache.dayCoverageValid = new bool[state().state.sizeZ()]();
     state().renderCache.xw = new BitArray::BitArray(state().state.sizeX() * state().state.sizeW());
 
     state().renderCache.weekends.reserve(state().state.sizeZ());
-    state().renderCache.employeeAvailabilityPerDay = new std::vector<RenderCache::DayAvailability>[state().state.sizeY() * state().state.sizeZ()];
+    state().renderCache.employeeAvailabilityPerDay = new std::vector<RenderCache::DayAvailability>[state().state.sizeY() * state().state.sizeZ()]();
 
     for (axis_size_t z = 0; z < state().state.sizeZ(); ++z) {
         const uint8_t weekday = Time::InstantToWeekday(state().state.range().getDayAt(z, state().state.timeZone()));
