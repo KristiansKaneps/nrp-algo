@@ -48,9 +48,10 @@ namespace Moves {
         ::State::Location m_Location{};
 
         void apply(::State::State<X, Y, Z, W>& state) const noexcept {
-            state.assign(m_Location, state.get(m_Location) ^ 1);
-            for (int32_t i = 0; i < m_ZSideIncrement; ++i) {
-                state.assign(m_Location.x, m_Location.y, m_Location.z + i, m_Location.w, state.get(m_Location.x, m_Location.y, m_Location.z + i, m_Location.w) ^ 1);
+            for (int32_t i = 0; i <= m_ZSideIncrement; ++i) {
+                const auto zIdx = m_Location.z + i;
+                state.assign(m_Location.x, m_Location.y, zIdx, m_Location.w,
+                             state.get(m_Location.x, m_Location.y, zIdx, m_Location.w) ^ 1);
             }
         }
     };
