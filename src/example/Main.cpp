@@ -116,6 +116,12 @@ void solve(const std::filesystem::path& outputDirectory, const Search::LocalSear
                                                std::format("{}{}_score_statistics.csv", timestampPrefix,
                                                            Search::LocalSearchTypeName(localSearchType)), false);
         localSearch.scoreStatistics().write(scoreStatisticsFile);
+
+        IO::StatisticsFile stepsStatisticsFile(outputDirectory,
+                                               std::format("{}{}_steps_per_second.csv", timestampPrefix,
+                                                           Search::LocalSearchTypeName(localSearchType)), false);
+        localSearch.stepsStatistics().write(stepsStatisticsFile);
+
         IO::StateFile stateFile(outputDirectory,
                                 std::format("{}{}_solution.txt", timestampPrefix,
                                             Search::LocalSearchTypeName(localSearchType)), false);

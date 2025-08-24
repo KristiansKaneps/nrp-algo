@@ -6,6 +6,7 @@
 #include "Heuristics/HeuristicProvider.h"
 #include "Score/Score.h"
 #include "Statistics/ScoreStatistics.h"
+#include "Statistics/StepsPerSecondStatistics.h"
 
 #include "Search/LocalSearchTask.h"
 
@@ -73,23 +74,26 @@ namespace Search {
         ~LocalSearch() noexcept = default;
 
         [[nodiscard]] Statistics::ScoreStatistics scoreStatistics() const noexcept { return m_ScoreStatistics; }
+        [[nodiscard]] Statistics::StepsPerSecondStatistics stepsStatistics() const noexcept { return m_StepsStatistics; }
 
         void reset() noexcept {
             m_Done = false;
         }
 
         void startStatistics() noexcept {
-            m_ScoreStatistics.startRecording(mp_Task->getInitialScore());
             m_CountedSteps = 0;
             m_StepsPerSecond = 0;
             m_AverageStepsPerSecond = 0;
             m_StepBatchCount = 0;
             m_StartTime = std::chrono::steady_clock::now();
             m_StepCountTimePoint = m_StartTime;
+            m_ScoreStatistics.startRecording(mp_Task->getInitialScore());
+            m_StepsStatistics.startRecording();
         }
 
         void endStatistics() noexcept {
             m_ScoreStatistics.finishRecording();
+            m_StepsStatistics.finishRecording();
         }
 
         /**
@@ -119,7 +123,9 @@ namespace Search {
                 m_StepBatchCount += 1;
                 m_AverageStepsPerSecond += (stepsThisInterval - m_AverageStepsPerSecond) / m_StepBatchCount;
 
-                // Reset counters for next interval
+                // Record stats and reset counters for next interval
+                m_StepsStatistics.record(stepsThisInterval, m_AverageStepsPerSecond);
+                m_StepsPerSecond = stepsThisInterval;
                 m_CountedSteps = 0;
                 m_StepCountTimePoint = stepStart;
 
@@ -205,6 +211,7 @@ namespace Search {
         // ReSharper disable once CppRedundantQualifier
         ::Heuristics::HeuristicProvider<X, Y, Z, W> m_HeuristicProvider;
         Statistics::ScoreStatistics m_ScoreStatistics{};
+        Statistics::StepsPerSecondStatistics m_StepsStatistics{};
         Task::LocalSearchTask<X, Y, Z, W>* mp_Task;
     };
 }
