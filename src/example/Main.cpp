@@ -170,6 +170,9 @@ int main(int argc, char** argv) {
         {"LAHC", Search::LocalSearchType::LAHC},
         {"DLAS", Search::LocalSearchType::DLAS},
         {"SA", Search::LocalSearchType::SA},
+        {"TABU", Search::LocalSearchType::TABU_MOVE},
+        {"TABU_MOVE", Search::LocalSearchType::TABU_MOVE},
+        {"TABU_STATE", Search::LocalSearchType::TABU_STATE},
     };
 
     constexpr std::string_view algoPrefix = "--algorithm=";

@@ -12,12 +12,14 @@
 #include "Search/Implementation/LahcLocalSearchTask.h"
 #include "Search/Implementation/DlasLocalSearchTask.h"
 #include "Search/Implementation/SaLocalSearchTask.h"
+#include "Search/Implementation/TabuStateLocalSearchTask.h"
+#include "Search/Implementation/TabuMoveLocalSearchTask.h"
 
 namespace Search {
-    enum class LocalSearchType { LAHC = 0, DLAS, SA, __COUNT };
+    enum class LocalSearchType { LAHC = 0, DLAS, SA, TABU_STATE, TABU_MOVE, __COUNT };
 
     constexpr std::array<std::string_view, static_cast<size_t>(LocalSearchType::__COUNT)> LocalSearchTypeNames = {
-        "LAHC", "DLAS", "SA"
+        "LAHC", "DLAS", "SA", "TABU_STATE", "TABU_MOVE"
     };
 
     constexpr std::string_view LocalSearchTypeName(const LocalSearchType type) {
@@ -47,6 +49,14 @@ namespace Search {
                     break;
                 case LocalSearchType::SA:
                     mp_Task = new Task::SaLocalSearchTask<X, Y, Z,
+                        W>(*initialState, m_Constraints, m_ScoreStatistics);
+                    break;
+                case LocalSearchType::TABU_STATE:
+                    mp_Task = new Task::TabuStateLocalSearchTask<X, Y, Z,
+                        W>(*initialState, m_Constraints, m_ScoreStatistics);
+                    break;
+                case LocalSearchType::TABU_MOVE:
+                    mp_Task = new Task::TabuMoveLocalSearchTask<X, Y, Z,
                         W>(*initialState, m_Constraints, m_ScoreStatistics);
                     break;
                 default:
