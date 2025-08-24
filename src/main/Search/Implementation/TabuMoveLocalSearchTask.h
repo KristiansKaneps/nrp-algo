@@ -121,7 +121,7 @@ namespace Search::Task {
                 h ^= delta; h *= 1099511628211ULL; h = rotl(h, 13);
             }
             // Also mix count of changed bits for extra discrimination
-            h ^= (after.count() - before.count());
+            h ^= after.count() - before.count();
             return h;
         }
 
@@ -131,8 +131,7 @@ namespace Search::Task {
             while (m_TabuQueue.size() > m_TabuTenure) {
                 const uint64_t old = m_TabuQueue.front();
                 m_TabuQueue.pop_front();
-                auto it = m_TabuMap.find(old);
-                if (it != m_TabuMap.end()) {
+                if (auto it = m_TabuMap.find(old); it != m_TabuMap.end()) {
                     if (it->second <= 1) m_TabuMap.erase(it); else it->second -= 1;
                 }
             }
