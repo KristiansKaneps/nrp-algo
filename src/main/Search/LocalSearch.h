@@ -124,6 +124,12 @@ namespace Search {
             return mp_Task->newBestFound();
         }
 
+        void configureSa(const Task::SaLocalSearchTask<X, Y, Z, W>::Params& params) noexcept {
+            if (auto* saTask = dynamic_cast<Task::SaLocalSearchTask<X, Y, Z, W>*>(mp_Task)) {
+                saTask->setParams(params);
+            }
+        }
+
         [[nodiscard]] bool durationTerminationCriteriaIsIgnored() const noexcept {
             return m_MaxDurationInSeconds == 0;
         }
