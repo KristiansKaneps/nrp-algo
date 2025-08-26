@@ -163,6 +163,9 @@ int main(int argc, char** argv) {
     std::filesystem::path outputDirectory = std::filesystem::current_path();
     Search::LocalSearchType searchType = Search::LocalSearchType::DLAS;
     uint64_t maxDuration = 0;
+#if EXAMPLE == 4
+    std::string_view instance{};
+#endif
 
     const std::unordered_map<std::string_view, std::function<void()>> argActions = {
         {"--cli", [&] { cli = true; }},
@@ -184,6 +187,9 @@ int main(int argc, char** argv) {
     constexpr std::string_view algoPrefix = "--algorithm=";
     constexpr std::string_view outputDirectoryPrefix = "--out=";
     constexpr std::string_view maxDurationPrefix = "--duration="; // In seconds.
+#if EXAMPLE == 4
+    constexpr std::string_view instancePrefix = "--instance=";
+#endif
 
     for (const auto& arg: args) {
         if (arg.starts_with(outputDirectoryPrefix)) {
@@ -210,6 +216,10 @@ int main(int argc, char** argv) {
             if (ec != std::errc()) {
                 std::cerr << "Failed to parse duration: " << durationAsString << std::endl;
             }
+#if EXAMPLE == 4
+        } else if (arg.starts_with(instancePrefix)) {
+            instance = arg.substr(instancePrefix.size());
+#endif
         } else {
             if (auto it = argActions.find(arg); it != argActions.end()) {
                 it->second();
@@ -224,7 +234,18 @@ int main(int argc, char** argv) {
     gs_Cli = cli;
     gs_Warmup = warmup;
 
-    Example::create();
+    const Example::Options options =
+#if EXAMPLE == 4
+            {
+                .arg = instance
+            }
+#else
+            {
+            }
+#endif
+            ;
+
+    Example::create(options);
 
     std::thread solverThread(solve, outputDirectory, searchType, maxDuration);
 

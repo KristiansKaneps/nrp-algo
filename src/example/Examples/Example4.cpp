@@ -18,9 +18,13 @@
 
 using namespace Domain;
 
-void Example::create() {
+void Example::create(const Options& options) {
+    std::string resourceName = "Instance2.txt";
+    if (!options.arg.empty()) {
+        resourceName = options.arg;
+    }
 
-    NrpProblemInstances::NrpProblemInstanceParser parser("Instance2.txt");
+    NrpProblemInstances::NrpProblemInstanceParser parser(resourceName);
     parser.parse();
 
     const std::chrono::time_zone *const timeZone = parser.timeZone();

@@ -18,7 +18,7 @@
 
 using namespace Domain;
 
-void Example::create() {
+void Example::create(const Options& options) {
     std::tm tm = {};
     std::stringstream ss("2024-12-01T00:00:00Z");
     ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S%z");

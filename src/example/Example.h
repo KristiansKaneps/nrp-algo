@@ -10,7 +10,11 @@
 #include "ApplicationState.h"
 
 namespace Example {
-    void create();
+    struct Options {
+        std::string_view arg;
+    };
+
+    void create(const Options& options);
 }
 
 #endif //EXAMPLE_H
