@@ -2,7 +2,7 @@
 SECTION_HORIZON
 # All instances start on a Monday
 # The horizon length in days:
-28
+28,2014-01-06,2014-02-02
 
 SECTION_SHIFTS
 # ShiftID, Length in mins, Shifts which cannot follow this shift | separated
