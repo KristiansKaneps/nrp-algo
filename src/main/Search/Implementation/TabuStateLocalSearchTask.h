@@ -13,13 +13,20 @@ namespace Search::Task {
     class TabuStateLocalSearchTask : public LocalSearchTask<X, Y, Z, W> {
         using Base = LocalSearchTask<X, Y, Z, W>;
     public:
+        struct Params {
+            uint32_t tabuTenure = 1024;
+            int maxIdleIterationCount = 500000;
+            int iterAtZeroThreshold = 2000;
+            int iterAtFeasibleThreshold = 4000;
+            int maxFeasibleIdleIterationCount = 3000;
+        };
         TabuStateLocalSearchTask(const TabuStateLocalSearchTask&) = delete;
 
         explicit TabuStateLocalSearchTask(const ::State::State<X, Y, Z, W> inputState,
                                      const std::vector<::Constraints::Constraint<X, Y, Z, W> *>& constraints,
                                      Statistics::ScoreStatistics& scoreStatistics,
-                                     const uint32_t tabuTenure = 1024) noexcept
-                : Base(inputState, constraints, scoreStatistics), m_TabuTenure(tabuTenure) { }
+                                     const Params& params = Params{}) noexcept
+                : Base(inputState, constraints, scoreStatistics), m_Params(params), m_TabuTenure(params.tabuTenure) { }
 
         ~TabuStateLocalSearchTask() noexcept override = default;
 
@@ -31,6 +38,12 @@ namespace Search::Task {
             m_IterationCountAtFeasibleScore = 0;
             m_TabuQueue.clear();
             m_TabuSet.clear();
+            // m_AppliedPerturbators.clear();
+        }
+
+        void setParams(const Params& params) noexcept {
+            m_Params = params;
+            m_TabuTenure = params.tabuTenure;
         }
 
         void step(::Heuristics::HeuristicProvider<X, Y, Z, W>& heuristicProvider) noexcept override {
@@ -69,7 +82,7 @@ namespace Search::Task {
                     Base::m_ScoreStatistics.record(Base::m_CurrentScore);
                 }
 
-                m_AppliedPerturbators.append(perturbators);
+                // m_AppliedPerturbators.append(perturbators);
                 pushTabu(candidateHash);
             } else {
                 // Revert the candidate state
@@ -81,33 +94,30 @@ namespace Search::Task {
 
         [[nodiscard]] bool shouldStep() noexcept override {
             if (Base::m_OutputScore.isZero()) [[unlikely]] {
-                if (m_IterationCountAtZeroScore >= ITERATION_COUNT_AT_ZERO_SCORE_THRESHOLD) [[unlikely]] return m_IdleIterations < MAX_FEASIBLE_IDLE_ITERATION_COUNT >> 1;
+                if (m_IterationCountAtZeroScore >= static_cast<uint64_t>(m_Params.iterAtZeroThreshold)) [[unlikely]] return m_IdleIterations < static_cast<uint64_t>(m_Params.maxFeasibleIdleIterationCount) >> 1;
                 m_IterationCountAtZeroScore += 1;
                 return true;
             }
             if (Base::m_OutputScore.isFeasible()) [[unlikely]] {
-                if (m_IterationCountAtFeasibleScore >= ITERATION_COUNT_AT_FEASIBLE_SCORE_THRESHOLD) [[unlikely]] return m_IdleIterations < MAX_FEASIBLE_IDLE_ITERATION_COUNT;
+                if (m_IterationCountAtFeasibleScore >= static_cast<uint64_t>(m_Params.iterAtFeasibleThreshold)) [[unlikely]] return m_IdleIterations < static_cast<uint64_t>(m_Params.maxFeasibleIdleIterationCount);
                 m_IterationCountAtFeasibleScore += 1;
                 return true;
             }
-            return m_IdleIterations < MAX_IDLE_ITERATION_COUNT;
+            return m_IdleIterations < static_cast<uint64_t>(m_Params.maxIdleIterationCount);
         }
 
     private:
-        static constexpr int ITERATION_COUNT_AT_ZERO_SCORE_THRESHOLD = 2000;
-        static constexpr int ITERATION_COUNT_AT_FEASIBLE_SCORE_THRESHOLD = 4000;
-        static constexpr int MAX_FEASIBLE_IDLE_ITERATION_COUNT = 3000;
-        static constexpr int MAX_IDLE_ITERATION_COUNT = 500000;
         uint64_t m_IterationCountAtZeroScore = 0, m_IterationCountAtFeasibleScore = 0;
 
         uint64_t m_Iterations = 0;
         uint64_t m_IdleIterations = 0;
 
+        Params m_Params{};
         uint32_t m_TabuTenure;
         std::deque<uint64_t> m_TabuQueue{};
         std::unordered_set<uint64_t> m_TabuSet{};
 
-        ::Heuristics::PerturbatorChain<X, Y, Z, W> m_AppliedPerturbators{};
+        // ::Heuristics::PerturbatorChain<X, Y, Z, W> m_AppliedPerturbators{};
 
         static uint64_t rotl(const uint64_t x, const uint8_t r) noexcept {
             return (x << r) | (x >> (64 - r));

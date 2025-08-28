@@ -61,12 +61,62 @@ static void updateConcurrentData(const Search::LocalSearch<Shift, Employee, Day,
 }
 
 void solve(const std::filesystem::path& outputDirectory, const Search::LocalSearchType localSearchType,
-           const uint64_t maxDuration) {
+           const uint64_t maxDuration, const std::string_view preset) {
     using std::chrono::high_resolution_clock;
     using std::chrono_literals::operator ""s;
 
     // gp_AppState->state.random(0.1f);
     Search::LocalSearch localSearch(&gp_AppState->state, gp_AppState->constraints, localSearchType, maxDuration);
+
+    if (!preset.empty()) {
+        const auto p = preset;
+        if (p == "instance2") {
+            localSearch.configureLahc({.historyLength = 48, .maxIdleIterationCount = 500000});
+            localSearch.configureDlas({.historyLength = 48, .maxIdleIterationCount = 500000});
+            localSearch.configureTabuMove({.tabuTenure = 64, .maxIdleIterationCount = 500000});
+            localSearch.configureTabuState({.tabuTenure = 256, .maxIdleIterationCount = 500000});
+            localSearch.configureSa({
+                .initialTemperature = 15000.0, .minTemperature = 1e-8, .coolingRate = 0.999,
+                .stepsPerTemperature = 400, .reheatIdleThreshold = 4000, .reheatFactor = 2.0,
+                .hardTempMultiplier = 0.9, .strictTempMultiplier = 0.45,
+                .minPerturbatorsPerStep = 2, .maxPerturbatorsPerStep = 8,
+                .baseHardWorsenAcceptProb = 0.5, .baseStrictWorsenAcceptProb = 0.25,
+                .useEnergyAcceptanceHighTemp = false, .energyTempThreshold = 0.7,
+                .energyWeightStrict = 1e6, .energyWeightHard = 1e3, .energyWeightSoft = 1.0,
+                .globalAcceptFloor = 0.10
+            });
+        } else if (p == "instance7") {
+            localSearch.configureLahc({.historyLength = 96, .maxIdleIterationCount = 1200000});
+            localSearch.configureDlas({.historyLength = 96, .maxIdleIterationCount = 1200000});
+            localSearch.configureTabuMove({.tabuTenure = 128, .maxIdleIterationCount = 1200000});
+            localSearch.configureTabuState({.tabuTenure = 512, .maxIdleIterationCount = 1200000});
+            localSearch.configureSa({
+                .initialTemperature = 30000.0, .minTemperature = 1e-8, .coolingRate = 0.9992,
+                .stepsPerTemperature = 600, .reheatIdleThreshold = 6000, .reheatFactor = 2.5,
+                .hardTempMultiplier = 1.0, .strictTempMultiplier = 0.5,
+                .minPerturbatorsPerStep = 3, .maxPerturbatorsPerStep = 12,
+                .baseHardWorsenAcceptProb = 0.6, .baseStrictWorsenAcceptProb = 0.3,
+                .useEnergyAcceptanceHighTemp = true, .energyTempThreshold = 0.7,
+                .energyWeightStrict = 1e6, .energyWeightHard = 1e3, .energyWeightSoft = 1.0,
+                .globalAcceptFloor = 0.10
+            });
+        } else if (p == "instance11") {
+            localSearch.configureLahc({.historyLength = 160, .maxIdleIterationCount = 2000000});
+            localSearch.configureDlas({.historyLength = 160, .maxIdleIterationCount = 2000000});
+            localSearch.configureTabuMove({.tabuTenure = 256, .maxIdleIterationCount = 2000000});
+            localSearch.configureTabuState({.tabuTenure = 1024, .maxIdleIterationCount = 2000000});
+            localSearch.configureSa({
+                .initialTemperature = 60000.0, .minTemperature = 1e-8, .coolingRate = 0.9995,
+                .stepsPerTemperature = 800, .reheatIdleThreshold = 10000, .reheatFactor = 3.0,
+                .hardTempMultiplier = 1.0, .strictTempMultiplier = 0.5,
+                .minPerturbatorsPerStep = 4, .maxPerturbatorsPerStep = 16,
+                .baseHardWorsenAcceptProb = 0.6, .baseStrictWorsenAcceptProb = 0.3,
+                .useEnergyAcceptanceHighTemp = true, .energyTempThreshold = 0.6,
+                .energyWeightStrict = 1e6, .energyWeightHard = 1e3, .energyWeightSoft = 1.0,
+                .globalAcceptFloor = 0.08
+            });
+        }
+    }
 
     const auto initialScore = localSearch.evaluateCurrentBestState();
     std::cout << "Initial score: " << initialScore << std::endl;
@@ -113,18 +163,20 @@ void solve(const std::filesystem::path& outputDirectory, const Search::LocalSear
     if (!gs_Warmup) {
         const auto timestampPrefix = String::getTimestampPrefix();
         IO::StatisticsFile scoreStatisticsFile(outputDirectory,
-                                               std::format("{}{}_score_statistics.csv", timestampPrefix,
-                                                           Search::LocalSearchTypeName(localSearchType)), false);
+                                               std::format("{}{}_{}_score_statistics.csv", timestampPrefix,
+                                                           Search::LocalSearchTypeName(localSearchType), preset),
+                                               false);
         localSearch.scoreStatistics().write(scoreStatisticsFile);
 
         IO::StatisticsFile stepsStatisticsFile(outputDirectory,
-                                               std::format("{}{}_steps_per_second.csv", timestampPrefix,
-                                                           Search::LocalSearchTypeName(localSearchType)), false);
+                                               std::format("{}{}_{}_steps_per_second.csv", timestampPrefix,
+                                                           Search::LocalSearchTypeName(localSearchType), preset),
+                                               false);
         localSearch.stepsStatistics().write(stepsStatisticsFile);
 
         IO::StateFile stateFile(outputDirectory,
-                                std::format("{}{}_solution.txt", timestampPrefix,
-                                            Search::LocalSearchTypeName(localSearchType)), false);
+                                std::format("{}{}_{}_solution.txt", timestampPrefix,
+                                            Search::LocalSearchTypeName(localSearchType), preset), false);
         auto serializer = NrpProblemInstances::NrpProblemSerializer();
         serializer.serialize(stateFile, localSearch.getBestState());
     }
@@ -163,6 +215,7 @@ int main(int argc, char** argv) {
     std::filesystem::path outputDirectory = std::filesystem::current_path();
     Search::LocalSearchType searchType = Search::LocalSearchType::DLAS;
     uint64_t maxDuration = 0;
+    std::string preset{};
 #if EXAMPLE == 4
     std::string_view instance{};
 #endif
@@ -187,6 +240,7 @@ int main(int argc, char** argv) {
     constexpr std::string_view algoPrefix = "--algorithm=";
     constexpr std::string_view outputDirectoryPrefix = "--out=";
     constexpr std::string_view maxDurationPrefix = "--duration="; // In seconds.
+    constexpr std::string_view presetPrefix = "--preset="; // instance2/instance7/instance11
 #if EXAMPLE == 4
     constexpr std::string_view instancePrefix = "--instance=";
 #endif
@@ -216,6 +270,8 @@ int main(int argc, char** argv) {
             if (ec != std::errc()) {
                 std::cerr << "Failed to parse duration: " << durationAsString << std::endl;
             }
+        } else if (arg.starts_with(presetPrefix)) {
+            preset = std::string(arg.substr(presetPrefix.size()));
 #if EXAMPLE == 4
         } else if (arg.starts_with(instancePrefix)) {
             instance = arg.substr(instancePrefix.size());
@@ -247,12 +303,11 @@ int main(int argc, char** argv) {
 
     Example::create(options);
 
-    std::thread solverThread(solve, outputDirectory, searchType, maxDuration);
+    std::thread solverThread(solve, outputDirectory, searchType, maxDuration, preset);
 
     if (gui) [[unlikely]] {
         Application app(1280, 720, "NRP Algo");
         app.setScene<GUI::TimetableScene>();
-        // Application app(475, 163, "NRP Algo");
         app.start(exitOnFinish);
     }
 

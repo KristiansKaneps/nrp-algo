@@ -27,6 +27,13 @@ namespace Moves {
         [[nodiscard]] size_t size() const noexcept { return m_Perturbators.size(); }
         [[nodiscard]] bool empty() const noexcept { return m_Perturbators.empty(); }
 
+        void clear() noexcept {
+            if (m_DeletePerturbatorsOnDestroy)
+                for (auto *perturbator : m_Perturbators) { delete perturbator; }
+            m_DeletePerturbatorsOnDestroy = true;
+            m_Perturbators.clear();
+        }
+
         void modify(::State::State<X, Y, Z, W>& state) noexcept {
             for (auto *perturbator : m_Perturbators) perturbator->modify(state);
         }

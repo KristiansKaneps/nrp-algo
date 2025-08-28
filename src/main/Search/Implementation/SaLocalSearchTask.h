@@ -57,6 +57,7 @@ namespace Search::Task {
             m_IterationCountAtZeroScore = 0;
             m_IterationCountAtFeasibleScore = 0;
             resetTemperature();
+            // m_AppliedPerturbators.clear();
         }
 
         void setParams(const Params& params) noexcept {
@@ -161,7 +162,7 @@ namespace Search::Task {
                     Base::m_ScoreStatistics.record(Base::m_CurrentScore);
                 }
 
-                m_AppliedPerturbators.append(compoundPerturbators);
+                // m_AppliedPerturbators.append(compoundPerturbators);
             } else {
                 compoundPerturbators.revert(candidateState);
             }
@@ -200,7 +201,7 @@ namespace Search::Task {
         double m_Temperature = 0.0;
         uint32_t m_StepsSinceTempUpdate = 0;
 
-        ::Heuristics::PerturbatorChain<X, Y, Z, W> m_AppliedPerturbators{};
+        // ::Heuristics::PerturbatorChain<X, Y, Z, W> m_AppliedPerturbators{};
 
         static Score::score_t computeLexicographicDelta(const Score::Score& a, const Score::Score& b) noexcept {
             if (a.strict != b.strict) return a.strict - b.strict;

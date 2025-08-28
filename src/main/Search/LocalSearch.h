@@ -146,6 +146,30 @@ namespace Search {
             }
         }
 
+        void configureLahc(const Task::LahcLocalSearchTask<X, Y, Z, W>::Params& params) noexcept {
+            if (auto* lh = dynamic_cast<Task::LahcLocalSearchTask<X, Y, Z, W>*>(mp_Task)) {
+                lh->setParams(params);
+            }
+        }
+
+        void configureDlas(const Task::DlasLocalSearchTask<X, Y, Z, W>::Params& params) noexcept {
+            if (auto* dl = dynamic_cast<Task::DlasLocalSearchTask<X, Y, Z, W>*>(mp_Task)) {
+                dl->setParams(params);
+            }
+        }
+
+        void configureTabuMove(const Task::TabuMoveLocalSearchTask<X, Y, Z, W>::Params& params) noexcept {
+            if (auto* tm = dynamic_cast<Task::TabuMoveLocalSearchTask<X, Y, Z, W>*>(mp_Task)) {
+                tm->setParams(params);
+            }
+        }
+
+        void configureTabuState(const Task::TabuStateLocalSearchTask<X, Y, Z, W>::Params& params) noexcept {
+            if (auto* ts = dynamic_cast<Task::TabuStateLocalSearchTask<X, Y, Z, W>*>(mp_Task)) {
+                ts->setParams(params);
+            }
+        }
+
         [[nodiscard]] bool durationTerminationCriteriaIsIgnored() const noexcept {
             return m_MaxDurationInSeconds == 0;
         }

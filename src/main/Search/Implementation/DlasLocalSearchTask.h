@@ -10,14 +10,24 @@ namespace Search::Task {
     class DlasLocalSearchTask : public LocalSearchTask<X, Y, Z, W> {
         using Base = LocalSearchTask<X, Y, Z, W>;
     public:
+        struct Params {
+            size_t historyLength = 25; // active length <= LhMax
+            int maxIdleIterationCount = 5000000;
+            int iterAtZeroThreshold = 2000;
+            int iterAtFeasibleThreshold = 4000;
+            int maxFeasibleIdleIterationCount = 3000;
+        };
         DlasLocalSearchTask(const DlasLocalSearchTask&) = delete;
 
         explicit DlasLocalSearchTask(const ::State::State<X, Y, Z, W> inputState,
                                      const std::vector<::Constraints::Constraint<X, Y, Z, W> *> &constraints,
-                                     Statistics::ScoreStatistics &scoreStatistics) noexcept : Base(inputState, constraints, scoreStatistics) {
+                                     Statistics::ScoreStatistics &scoreStatistics,
+                                     const Params& params = Params{}) noexcept
+            : Base(inputState, constraints, scoreStatistics), m_Params(params) {
+            if (m_Params.historyLength == 0 || m_Params.historyLength > LhMax) m_Params.historyLength = 25;
             m_History.fill(Base::m_InitScore);
             m_PhiMin = Base::m_InitScore;
-            m_N = Lh;
+            m_N = m_Params.historyLength;
         }
 
         ~DlasLocalSearchTask() noexcept override = default;
@@ -26,11 +36,20 @@ namespace Search::Task {
             Base::reset(inputState);
             m_History.fill(Base::m_InitScore);
             m_PhiMin = Base::m_InitScore;
-            m_N = Lh;
+            m_N = m_Params.historyLength;
             m_Iterations = 0;
             m_IdleIterations = 0;
             m_IterationCountAtZeroScore = 0;
             m_IterationCountAtFeasibleScore = 0;
+            // m_AppliedPerturbators.clear();
+        }
+
+        void setParams(const Params& params) noexcept {
+            m_Params = params;
+            if (m_Params.historyLength == 0 || m_Params.historyLength > LhMax) m_Params.historyLength = 25;
+            m_History.fill(Base::m_InitScore);
+            m_PhiMin = Base::m_InitScore;
+            m_N = m_Params.historyLength;
         }
 
         void step(::Heuristics::HeuristicProvider<X, Y, Z, W> &heuristicProvider) noexcept override {
@@ -49,7 +68,7 @@ namespace Search::Task {
             if (candidateScore <= Base::m_CurrentScore) { m_IdleIterations++; } else { m_IdleIterations = 0; }
 
             // Compute history index
-            const uint32_t l = m_Iterations % Lh;
+            const uint32_t l = m_Iterations % static_cast<uint32_t>(m_Params.historyLength);
             Score::Score& phi_l = m_History[l];
 
             // DLAS acceptance criteria
@@ -87,7 +106,7 @@ namespace Search::Task {
                     }
                 }
 
-                m_AppliedPerturbators.append(perturbators);
+                // m_AppliedPerturbators.append(perturbators);
                 // std::cout << "Applied perturbators size: " << m_AppliedPerturbators.size() << ", best score achieved before " << m_BestScoreAchievedBeforePerturbationCount << " perturbations; idle iteration count: " << m_IdleIterations << std::endl;
             } else {
                 // Revert candidate
@@ -99,35 +118,33 @@ namespace Search::Task {
 
         [[nodiscard]] bool shouldStep() noexcept override {
             if (Base::m_OutputScore.isZero()) [[unlikely]] {
-                if (m_IterationCountAtZeroScore >= ITERATION_COUNT_AT_ZERO_SCORE_THRESHOLD) [[unlikely]] return m_IdleIterations < MAX_FEASIBLE_IDLE_ITERATION_COUNT >> 1;
+                if (m_IterationCountAtZeroScore >= static_cast<uint64_t>(m_Params.iterAtZeroThreshold)) [[unlikely]] return m_IdleIterations < static_cast<uint64_t>(m_Params.maxFeasibleIdleIterationCount) >> 1;
                 m_IterationCountAtZeroScore += 1;
                 return true;
             }
             if (Base::m_OutputScore.isFeasible()) [[unlikely]] {
-                if (m_IterationCountAtFeasibleScore >= ITERATION_COUNT_AT_FEASIBLE_SCORE_THRESHOLD) [[unlikely]] return m_IdleIterations < MAX_FEASIBLE_IDLE_ITERATION_COUNT;
+                if (m_IterationCountAtFeasibleScore >= static_cast<uint64_t>(m_Params.iterAtFeasibleThreshold)) [[unlikely]] return m_IdleIterations < static_cast<uint64_t>(m_Params.maxFeasibleIdleIterationCount);
                 m_IterationCountAtFeasibleScore += 1;
                 return true;
             }
-            return m_IdleIterations < MAX_IDLE_ITERATION_COUNT;
+            return m_IdleIterations < static_cast<uint64_t>(m_Params.maxIdleIterationCount);
         }
 
     private:
-        static constexpr int ITERATION_COUNT_AT_ZERO_SCORE_THRESHOLD = 2000;
-        static constexpr int ITERATION_COUNT_AT_FEASIBLE_SCORE_THRESHOLD = 4000;
-        static constexpr int MAX_FEASIBLE_IDLE_ITERATION_COUNT = 3000;
-        static constexpr int MAX_IDLE_ITERATION_COUNT = 500000;
         uint64_t m_IterationCountAtZeroScore = 0, m_IterationCountAtFeasibleScore = 0;
 
-        static constexpr size_t Lh = 25;
-        std::array<Score::Score, Lh> m_History{};
+        static constexpr size_t LhMax = 256;
+        std::array<Score::Score, LhMax> m_History{};
         Score::Score m_PhiMin;
-        size_t m_N = Lh;
+        size_t m_N = 25;
+
+        Params m_Params{};
 
         uint64_t m_Iterations = 0;
         uint64_t m_IdleIterations = 0;
 
         size_t m_BestScoreAchievedBeforePerturbationCount {};
-        ::Heuristics::PerturbatorChain<X, Y, Z, W> m_AppliedPerturbators {};
+        // ::Heuristics::PerturbatorChain<X, Y, Z, W> m_AppliedPerturbators {};
     };
 }
 
