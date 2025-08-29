@@ -13,9 +13,9 @@
 namespace Domain::Constraints {
     using DomainConstraint = ::Constraints::Constraint<Domain::Shift, Domain::Employee, Domain::Day, Domain::Skill>;
 
-    using axis_size_t = State::axis_size_t;
-    using state_size_t = State::state_size_t;
-    using score_t = Score::score_t;
+    using axis_size_t = ::State::axis_size_t;
+    using state_size_t = ::State::state_size_t;
+    using score_t = ::Score::score_t;
 
     using Score = ::Score::Score;
     using ConstraintScore = ::Constraints::ConstraintScore;
