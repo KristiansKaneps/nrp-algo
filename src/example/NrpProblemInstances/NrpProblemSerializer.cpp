@@ -12,15 +12,14 @@ namespace NrpProblemInstances {
     void NrpProblemSerializer::serializeTabbed(IO::StateFile& out, const Domain::State::DomainState& state) {
         for (::State::axis_size_t y = 0; y < state.sizeY(); ++y) {
             for (::State::axis_size_t z = 0; z < state.sizeZ(); ++z) {
+                std::string shiftName = "\t";
                 for (::State::axis_size_t x = 0; x < state.sizeX(); ++x) {
-                    if (!state.get(x, y, z)) {
-                        out << '\t';
-                    } else {
-                        const auto& shift = state.x()[x];
-                        out << shift.name();
+                    if (state.get(x, y, z)) {
+                        shiftName = state.x()[x].name() + '\t';
+                        break;
                     }
-
                 }
+                out << shiftName;
             }
             out << '\n';
         }
